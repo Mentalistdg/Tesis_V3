@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-12-13T20:02:48.966215",
+  "dataset": {
+    "rows": 6507,
+    "columns": 609,
+    "missing_pct": "2.30%",
+    "period": "2000-02-01 to 2025-12-12"
+  },
+  "variables": {
+    "base_from_bloomberg": 97,
+    "features_engineered": 512,
+    "new_vars_added": [
+      "I10",
+      "I11",
+      "I12",
+      "I13",
+      "I14",
+      "I15",
+      "I16",
+      "I17",
+      "I18",
+      "I19",
+      "I20"
+    ]
+  },
+  "issues": [],
+  "recommendations": [
+    "Dataset completo y listo para entrenamiento."
+  ]
+}

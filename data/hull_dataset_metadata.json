@@ -1,0 +1,49 @@
+{
+  "start_date": "2000-01-03 00:00:00",
+  "end_date": "2025-12-12 00:00:00",
+  "n_observations": 6527,
+  "n_variables": 98,
+  "variables_downloaded": 86,
+  "variables_failed": 5,
+  "failed_details": [
+    [
+      "E19",
+      "TABORCHG Index",
+      "PX_LAST",
+      "Sin datos"
+    ],
+    [
+      "P3",
+      "SPX Index",
+      "EQY_DVD_YLD_IND",
+      "Sin datos"
+    ],
+    [
+      "P6",
+      "SPY US Equity",
+      "PE_RATIO",
+      "Sin datos"
+    ],
+    [
+      "S2",
+      "PCUSINDX Index",
+      "PX_LAST",
+      "Sin datos"
+    ],
+    [
+      "S3",
+      "PCUSEQUI Index",
+      "PX_LAST",
+      "Sin datos"
+    ]
+  ],
+  "categories": {
+    "M": 18,
+    "E": 20,
+    "I": 9,
+    "P": 13,
+    "V": 13,
+    "S": 12,
+    "D": 9
+  }
+}

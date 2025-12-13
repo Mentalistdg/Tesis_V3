@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-12-13T17:27:08.371040",
+  "core_dataset": {
+    "file": "bloomberg_triple_screen_core.csv",
+    "stats": {
+      "n_rows": 6507,
+      "n_cols": 550,
+      "date_start": "2000-02-01",
+      "date_end": "2025-12-12",
+      "target_mean": 0.0002783046302969653,
+      "target_std": 0.012223944685923914,
+      "total_missing": "32057",
+      "total_cells": 3578850,
+      "missing_pct": 0.8957346633695181,
+      "ts_buy_signals": 1477,
+      "ts_sell_signals": 1768,
+      "ts_neutral": 3262
+    }
+  },
+  "full_dataset": {
+    "file": "bloomberg_triple_screen_full.csv",
+    "stats": {
+      "n_rows": 6507,
+      "n_cols": 567,
+      "date_start": "2000-02-01",
+      "date_end": "2025-12-12",
+      "target_mean": 0.0002783046302969653,
+      "target_std": 0.012223944685923914,
+      "total_missing": "141700",
+      "total_cells": 3689469,
+      "missing_pct": 3.8406610815811164,
+      "ts_buy_signals": 2,
+      "ts_sell_signals": 1,
+      "ts_neutral": 6504
+    }
+  },
+  "feature_groups": {
+    "Market (M)": 53,
+    "Economic (E)": 41,
+    "Interest (I)": 172,
+    "Commodities (P)": 18,
+    "Volatility (V)": 37,
+    "Sectors (S)": 14,
+    "Momentum (MOM)": 0,
+    "Daily Elder (D)": 18,
+    "Weekly Elder (W)": 14,
+    "Intraday (I)": 17,
+    "Triple Screen (TS)": 7,
+    "Technical": 27,
+    "Target/Meta": 6
+  },
+  "notes": [
+    "CORE: Dataset recomendado para entrenamiento (sin features intradiarios)",
+    "FULL: Incluye features intradiarios (con NaN para datos antiguos)",
+    "RECENT: Solo dias con datos intradiarios completos",
+    "Features Triple Pantalla: W_ (semanal), D_ (diario), TS_ (senales)"
+  ]
+}
