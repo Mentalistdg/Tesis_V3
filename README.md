@@ -1,372 +1,260 @@
-# Dataset Triple Pantalla Elder - Listo para Entrenamiento ML
+# Predicción del S&P 500 con Deep Learning y Triple Screen de Elder
 
-## Resumen Ejecutivo
-
-Dataset completo para prediccion de retornos del S&P 500 usando el sistema Triple Pantalla de Alexander Elder, con **647 features** derivados de 92 variables base de Bloomberg, incluyendo estimadores de volatilidad intradiaria estilo hedge fund.
-
-| Metrica | Valor |
-|---------|-------|
-| **Filas** | 6,507 (dias de trading) |
-| **Columnas** | 647 features |
-| **Periodo** | 2000-01-03 a 2025-12-12 |
-| **Missing** | ~3% |
-| **Variables Base Bloomberg** | 92 |
-| **Target** | market_forward_excess_returns |
+**Autor:** David González Canón
+**Fecha:** Diciembre 2025
+**Institución:** Maestría en Inteligencia de Negocios para Finanzas
 
 ---
 
-## Que se Hizo (Resumen del Pipeline)
+## Descripción del Proyecto
 
-### 1. Descarga de Datos de Bloomberg
-- 92 variables base descargadas via Bloomberg API
-- Variables recuperadas que se habian perdido en pipeline: V3, V12, V13, M12
-- Variables de tasas adicionales descargadas: I10-I20
+Pipeline de Machine Learning para la predicción de retornos del S&P 500, combinando:
 
-### 2. Feature Engineering (Estilo Hedge Fund)
-- 500+ features derivados de variables base
-- Retornos multi-horizonte (1d, 5d, 21d, 63d, 126d, 252d)
-- Indicadores tecnicos (RSI, MACD, Bollinger, ATR)
-- Cross-asset correlations
-- Regime features
-
-### 3. Sistema Triple Pantalla de Elder
-- Pantalla 1 (Semanal): MACD, tendencia, impulse
-- Pantalla 2 (Diario): Force Index, Elder Ray
-- Senales combinadas: TS_BUY_SETUP, TS_SELL_SETUP, TS_SIGNAL
-
-### 4. Datos Intradiarios
-- Descargados barras de 30 minutos de Bloomberg (limite: 136 dias)
-- Implementados **proxy features de volatilidad intradiaria** para periodo historico completo:
-  - Parkinson Volatility (1980)
-  - Garman-Klass Volatility (1980)
-  - Rogers-Satchell Volatility (1991)
-  - Yang-Zhang Volatility (2000)
-  - Features de microestructura (gaps, velas, posicion del cierre)
-
-### 5. Imputacion Robusta
-- Forward-fill para precios (sin data leakage)
-- Metodologia que preserva integridad temporal
+- **Sistema Triple Screen de Alexander Elder** (análisis técnico clásico)
+- **Estimadores de volatilidad OHLC** (Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang)
+- **21 modelos de ML/DL** incluyendo DLinear, TCN, TFT, N-BEATS, XGBoost, LightGBM
+- **92 variables base de Bloomberg** transformadas en **647 características**
 
 ---
 
-## Estructura de Archivos
+## Resultados Principales
+
+| Modelo | Retorno | Sharpe | Max Drawdown | Costos Trans. | Retorno Neto |
+|--------|---------|--------|--------------|---------------|--------------|
+| **DLinear** | 238.0% | 0.865 | -46.8% | 2.96% | 228.1% |
+| Ensemble (3 modelos) | 95.7% | 0.931 | -22.8% | - | - |
+| Buy & Hold (benchmark) | 96.2% | 0.846 | -25.4% | 0% | 96.2% |
+
+**Período de prueba:** Octubre 2020 - Diciembre 2025 (1,302 días)
+
+---
+
+## Estructura del Proyecto
 
 ```
-TRANSFER_TO_TRAINING_PC/
-├── README.md                                    # Este archivo
+Tesis_V3/
 │
-├── data/
-│   │
-│   │  === DATASETS PRINCIPALES ===
-│   ├── bloomberg_triple_screen_core.csv        # PRINCIPAL (647 cols, 44 MB)
-│   ├── bloomberg_triple_screen_full.csv        # Con intradiarios extra
-│   ├── bloomberg_triple_screen_recent.csv      # Solo datos recientes
-│   │
-│   │  === DATOS RAW DE BLOOMBERG ===
-│   ├── hull_dataset_raw.csv                    # Datos crudos (98 cols)
-│   ├── RAW_tesis_raw.csv                       # Raw 2015-2025
-│   ├── RAW_improved_variables.csv              # Raw commodities 2000-2025
-│   ├── RAW_bil_risk_free.csv                   # Tasa libre de riesgo
-│   │
-│   │  === DATOS INTRADIARIOS ===
-│   ├── spy_intraday_30min_max.csv              # Barras 30 min (136 dias)
-│   │
-│   │  === VERIFICACION ===
-│   ├── BLOOMBERG_RAW_VERIFICATION.csv          # Para verificar vs Bloomberg
-│   ├── BLOOMBERG_TICKER_MAPPING.csv            # Mapeo codigo -> ticker
-│   ├── VERIFICACION_RAPIDA.csv                 # Ultimos 30 dias
-│   ├── verification_values.csv                 # Primeros/ultimos valores
-│   └── variable_verification_report.json       # Reporte completo
+├── data/                              # Datos
+│   ├── bloomberg_triple_screen_core.csv   # Dataset principal (647 features, 45MB)
+│   ├── BLOOMBERG_RAW_DATA.csv             # Datos raw de Bloomberg (92 variables)
+│   ├── BLOOMBERG_TICKER_MAPPING.csv       # Mapeo de tickers Bloomberg
+│   ├── RAW_bil_risk_free.csv              # Tasa libre de riesgo diaria
+│   ├── spy_intraday_30min_max.csv         # Datos intraday para vol OHLC
+│   └── dataset_metadata.json              # Metadata del dataset
 │
-└── scripts/
-    ├── tesis_data_config.py                    # Configuracion de variables
-    ├── feature_engineering_hedge_fund.py       # Feature engineering
-    ├── elder_indicators_multifreq.py           # Indicadores Elder
-    ├── robust_imputation.py                    # Imputacion
-    ├── intraday_proxy_features.py              # Proxy volatilidad intradiaria
-    ├── validate_final_dataset.py               # Validacion
-    └── audit_complete_pipeline.py              # Auditoria
+├── scripts/                           # Scripts de Python
+│   ├── ml_pipeline_bloomberg.py           # Pipeline sklearn (Ridge, RF, XGB)
+│   ├── ml_pipeline_darts_extended.py      # Pipeline Darts (DLinear, TCN, TFT)
+│   ├── feature_engineering_hedge_fund.py  # Ingeniería de 647 features
+│   ├── elder_indicators_multifreq.py      # Sistema Triple Screen de Elder
+│   ├── intraday_proxy_features.py         # Estimadores volatilidad OHLC
+│   ├── robust_imputation.py               # Imputación anti-leakage
+│   ├── validate_final_dataset.py          # Validación del dataset
+│   ├── tesis_data_config.py               # Configuración de variables
+│   └── academic_enhancements.py           # Análisis estadístico (Gu et al. 2020)
+│
+├── models/                            # Modelos entrenados
+│   ├── best_pipeline_bloomberg.pkl        # Mejor modelo sklearn
+│   └── model_info_bloomberg.json          # Metadata del modelo
+│
+├── results/                           # Resultados
+│   ├── model_comparison_extended.csv      # Comparación de 21 modelos
+│   ├── pipeline_summary_extended.json     # Resumen del pipeline
+│   ├── comparison_improvements.csv        # Mejoras (DD control, ensemble)
+│   ├── academic_enhancements_results.json # Tests de significancia estadística
+│   ├── feature_importance_permutation.csv # Importancia de features
+│   └── walk_forward_expanding.csv         # Walk-forward validation
+│
+├── paper/                             # Paper académico
+│   ├── paper_triple_screen_ml.tex         # Paper LaTeX (español, ~50 páginas)
+│   ├── paper_triple_screen_ml.pdf         # Paper compilado
+│   ├── generate_paper_figures.py          # Script generador de figuras
+│   ├── figures/                           # 8 figuras PNG
+│   │   ├── fig1_cumulative_returns.png
+│   │   ├── fig2_position_distribution.png
+│   │   ├── fig3_drawdown.png
+│   │   └── ...
+│   └── tables/                            # 4 tablas LaTeX
+│
+├── _archive/                          # Archivos archivados (no esenciales)
+│
+└── README.md                          # Este archivo
 ```
 
 ---
 
-## Dataset Principal: bloomberg_triple_screen_core.csv
+## Ejecución del Pipeline
 
-### Dimensiones
-- **Filas**: 6,507 dias de trading
-- **Columnas**: 647 features
-- **Periodo**: 2000-01-03 a 2025-12-12
+### 1. Pipeline Principal (sklearn)
 
-### Categorias de Features (647 total)
+```bash
+python scripts/ml_pipeline_bloomberg.py
+```
 
-| Categoria | Prefijo | Cantidad | Descripcion |
-|-----------|---------|----------|-------------|
-| Mercado | M | ~50 | ETFs, indices, sectores |
-| Economicas | E | ~40 | PIB, empleo, inflacion |
-| Tasas | I | ~170 | Treasuries, spreads, credit |
-| Commodities | P | ~20 | Oil, gold, indices |
-| Volatilidad | V | ~40 | VIX, MOVE, term structure |
-| Sentimiento | S | ~15 | AAII, put/call, breadth |
-| Elder Semanal | W_ | ~15 | MACD, trend, impulse |
-| Elder Diario | D_ | ~20 | Force Index, Elder Ray |
-| Triple Screen | TS_ | ~7 | Senales combinadas |
-| **Intradiario Proxy** | VOL_, INTRA_, GAP_, CANDLE_ | **38** | **Estimadores hedge fund** |
-| SPY Features | SPY_ | ~60 | OHLCV y derivados |
-| Otros | - | ~200 | Momentum, ratios, etc. |
+Entrena: Ridge, Lasso, ElasticNet, Random Forest, XGBoost, LightGBM
+
+### 2. Pipeline Extendido (Darts Deep Learning)
+
+```bash
+python scripts/ml_pipeline_darts_extended.py
+```
+
+Entrena: DLinear, N-BEATS, TCN, TFT, TiDE, NLinear, TSMixer, N-HiTS
+
+### 3. Análisis Académico
+
+```bash
+python scripts/academic_enhancements.py
+```
+
+Ejecuta:
+- Bootstrap Sharpe Ratio con intervalos de confianza
+- Test de significancia del Alpha (Jensen)
+- Walk-forward validation (12 ventanas)
+- Análisis de regímenes de mercado
+- Importancia de features (SHAP, permutation)
+
+### 4. Generar Figuras del Paper
+
+```bash
+cd paper && python generate_paper_figures.py
+```
+
+### 5. Compilar Paper
+
+```bash
+cd paper
+pdflatex paper_triple_screen_ml.tex
+pdflatex paper_triple_screen_ml.tex  # Segunda pasada para referencias
+```
 
 ---
 
-## Features de Volatilidad Intradiaria (Metodologia Hedge Fund)
+## Dataset: 647 Features
 
-Cuando no hay datos intradiarios historicos, los hedge funds usan estimadores basados en OHLC:
+### Variables Base de Bloomberg (92 variables)
 
-### Estimadores de Volatilidad Implementados
+| Categoría | Código | Cantidad | Ejemplos |
+|-----------|--------|----------|----------|
+| Mercado | M1-M18 | 18 | SPY, QQQ, IWM, XLF, TLT |
+| Económicas | E1-E10 | 10 | GDP, NFP, CPI, PMI |
+| Tasas | I1-I20 | 20 | FDTR, Treasuries 2Y-30Y, Spreads |
+| Commodities | P1-P13 | 13 | CL1 (Oil), GC1 (Gold), DXY |
+| Volatilidad | V1-V13 | 13 | VIX, MOVE, Term Structure |
+| Sentimiento | S1-S11 | 11 | AAII, Put/Call, TRIN |
+| Calendario | D1-D7 | 7 | Lunes, Viernes, Fin de mes |
 
-| Estimador | Eficiencia vs Close-to-Close | Periodo |
-|-----------|------------------------------|---------|
-| Parkinson (1980) | 5x | 21d, 63d |
-| Garman-Klass (1980) | 8x | 21d, 63d |
-| Rogers-Satchell (1991) | Robusto a drift | 21d |
-| Yang-Zhang (2000) | Maneja gaps overnight | 21d, 63d |
+### Transformaciones (647 features totales)
 
-### Features de Microestructura
+| Tipo | Descripción |
+|------|-------------|
+| Retornos multi-horizonte | 1d, 5d, 21d, 63d, 126d, 252d |
+| Indicadores técnicos | RSI, MACD, Bollinger %B, ATR |
+| Triple Screen Elder | MACD semanal, Force Index, Elder Ray, Impulse |
+| Volatilidad OHLC | Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang |
+| Correlaciones cross-asset | SPY-TLT, SPY-GLD, SPY-VIX |
+| Rezagos y estadísticas | lag 1-7, MA 5-63, std móvil |
 
-| Feature | Descripcion |
-|---------|-------------|
-| INTRA_RANGE_PCT | Rango del dia como % del precio |
-| INTRA_CLOSE_POSITION | Donde cerro dentro del rango (0-1) |
-| GAP_OVERNIGHT | Gap de apertura vs cierre anterior |
-| GAP_VS_ATR | Gap normalizado por ATR |
-| CANDLE_BODY_PCT | Tamano del cuerpo vs rango |
-| PRICE_EFFICIENCY | Cuanto se movio vs cuanto recorrio |
-| CLV | Close Location Value |
-| BUYING_PRESSURE_21 | % dias cierre en parte alta |
+---
 
-### Cobertura de Datos Intradiarios
+## Costos de Transacción
 
-```
-2000-01-03 a 2025-06-01: Proxy features (estimadores OHLC)
-2025-06-02 a 2025-12-12: Datos reales 30 min + proxy
-```
+Se asume **15 basis points (0.15%)** por unidad de cambio de posición.
+
+| Modelo | Turnover Anual | Costos | Retorno Neto |
+|--------|----------------|--------|--------------|
+| DLinear | 3.8x | 2.96% | 228.1% |
+| TiDE | 323.9x | 250.9% | **-84.5%** |
+
+**Hallazgo clave**: El turnover destruye la rentabilidad de modelos complejos. DLinear funciona porque mantiene posiciones estables.
 
 ---
 
 ## Variable Target
 
 ```python
-market_forward_excess_returns = retorno_dia_siguiente - tasa_libre_riesgo
+target = market_forward_excess_returns = retorno_dia_siguiente - tasa_libre_riesgo
 ```
 
-| Estadistica | Valor |
+| Estadística | Valor |
 |-------------|-------|
 | Media | 0.028% diario |
 | Std | 1.22% |
-| Min | -11.9% |
-| Max | +10.2% |
 | % Positivos | 54.1% |
 
-**IMPORTANTE**: El target ya tiene shift(-1) aplicado. NO hay data leakage.
+**Nota**: El target ya tiene `shift(-1)` aplicado. NO hay data leakage.
 
 ---
 
-## Variables Base de Bloomberg (92 Total)
-
-### Resumen por Categoria
-
-| Categoria | Variables | Cobertura |
-|-----------|-----------|-----------|
-| Mercado (M) | M1-M18 | 18/18 OK |
-| Economicas (E) | E1-E10 | 10/10 OK |
-| Tasas (I) | I1-I20 | 20/20 OK |
-| Commodities (P) | P1-P13 | 13/13 OK |
-| Volatilidad (V) | V1-V13 | 13/13 OK |
-| Sentimiento (S) | S1-S11 | 11/11 OK |
-| Dummy (D) | D1-D7 | 7/7 Calculadas |
-
-### Variables con Cobertura Parcial (datos no disponibles antes de cierta fecha)
-
-| Variable | Ticker | Desde | Cobertura |
-|----------|--------|-------|-----------|
-| V3 | VIX1M Index | 2008 | 69% |
-| M12 | FNERTR Index | 2015 | 39% |
-| I14 | USSWAP10 Index | 2011 | 53% |
-| I15 | CDX IG | 2011 | 55% |
-| I16 | CDX HY | 2011 | 55% |
-
----
-
-## Sistema Triple Pantalla de Elder
-
-### Pantalla 1 - Semanal (Tendencia)
-| Feature | Descripcion |
-|---------|-------------|
-| W_MACD | MACD semanal (12,26,9) |
-| W_MACD_HIST | Histograma MACD |
-| W_TREND | Direccion tendencia (+1/-1) |
-| W_IMPULSE | Sistema Impulse |
-
-### Pantalla 2 - Diario (Osciladores)
-| Feature | Descripcion |
-|---------|-------------|
-| D_FORCE_INDEX_2 | Force Index 2 dias |
-| D_FORCE_INDEX_13 | Force Index 13 dias |
-| D_BULL_POWER | Elder Ray Bull |
-| D_BEAR_POWER | Elder Ray Bear |
-
-### Senales Combinadas
-| Feature | Descripcion |
-|---------|-------------|
-| TS_BUY_SETUP | Tendencia alcista + pullback |
-| TS_SELL_SETUP | Tendencia bajista + rally |
-| TS_SIGNAL | Senal final (+1, 0, -1) |
-| TS_ALIGNMENT | Alineacion de pantallas |
-
----
-
-## Uso para Entrenamiento
+## Uso del Dataset
 
 ```python
 import pandas as pd
-import numpy as np
 
 # Cargar datos
-df = pd.read_csv('data/bloomberg_triple_screen_core.csv')
-df['date'] = pd.to_datetime(df['date'])
+df = pd.read_csv('data/bloomberg_triple_screen_core.csv', index_col=0, parse_dates=True)
 
-# Columnas a excluir (no son features)
+# Excluir columnas no-features
 exclude = ['date', 'date_id', 'forward_returns', 'risk_free_rate',
            'market_forward_excess_returns']
+feature_cols = [c for c in df.columns if c not in exclude]
 
 # Features y target
-feature_cols = [c for c in df.columns if c not in exclude]
 X = df[feature_cols]
 y = df['market_forward_excess_returns']
 
+# Split temporal (NUNCA shuffle)
+split_idx = int(len(df) * 0.8)
+X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
+y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
+
 print(f"Features: {len(feature_cols)}")
-print(f"Samples: {len(df)}")
-
-# Split temporal (NUNCA usar shuffle)
-train = df[df['date'] < '2020-01-01']
-val = df[(df['date'] >= '2020-01-01') & (df['date'] < '2023-01-01')]
-test = df[df['date'] >= '2023-01-01']
-
-print(f"Train: {len(train):,} ({train['date'].min().date()} - {train['date'].max().date()})")
-print(f"Val:   {len(val):,} ({val['date'].min().date()} - {val['date'].max().date()})")
-print(f"Test:  {len(test):,} ({test['date'].min().date()} - {test['date'].max().date()})")
+print(f"Train: {len(X_train)}, Test: {len(X_test)}")
 ```
 
 ---
 
-## Verificacion de Datos contra Bloomberg
-
-### Archivos para Verificacion
-
-1. **VERIFICACION_RAPIDA.csv** - Ultimos 30 dias con tickers Bloomberg
-2. **BLOOMBERG_TICKER_MAPPING.csv** - Mapeo de codigos a tickers
-3. **hull_dataset_raw.csv** - Datos crudos sin transformar
-
-### Como Verificar
+## Dependencias
 
 ```
-En Bloomberg Terminal:
-
-1. Para SPY: SPY US Equity <GO> → HP <GO>
-2. Para VIX: VIX Index <GO> → HP <GO>
-3. Para 10Y: USGG10YR Index <GO> → HP <GO>
-
-Comparar valores con VERIFICACION_RAPIDA.csv
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+xgboost>=2.0
+lightgbm>=4.0
+darts>=0.26
+shap>=0.43
+matplotlib>=3.7
+seaborn>=0.12
 ```
 
 ---
 
-## Scripts de Referencia
+## Referencias Académicas
 
-| Script | Descripcion |
-|--------|-------------|
-| `ml_pipeline_bloomberg.py` | **PIPELINE DE ENTRENAMIENTO ML** |
-| `tesis_data_config.py` | Definicion de 92 variables y tickers Bloomberg |
-| `feature_engineering_hedge_fund.py` | Transformacion de variables a 500+ features |
-| `elder_indicators_multifreq.py` | Implementacion Triple Pantalla Elder |
-| `intraday_proxy_features.py` | Estimadores volatilidad intradiaria |
-| `robust_imputation.py` | Imputacion preservando integridad temporal |
-| `validate_final_dataset.py` | Validacion anti-leakage |
-| `audit_complete_pipeline.py` | Auditoria completa de variables |
+- **Fama, E. F. (1970)**. Efficient Capital Markets. *Journal of Finance*.
+- **Gu, S., Kelly, B., & Xiu, D. (2020)**. Empirical Asset Pricing via Machine Learning. *Review of Financial Studies*.
+- **Elder, A. (1993)**. Trading for a Living. *Wiley*.
+- **Zeng, A. et al. (2023)**. Are Transformers Effective for Time Series Forecasting? *AAAI*.
+- **Yang, D. & Zhang, Q. (2000)**. Drift-Independent Volatility Estimation. *Journal of Business*.
+- **Garman, M. & Klass, M. (1980)**. On the Estimation of Security Price Volatilities. *Journal of Business*.
 
 ---
 
-## Pipeline de Entrenamiento ML
+## Archivos Archivados
 
-El archivo `scripts/ml_pipeline_bloomberg.py` contiene el pipeline completo listo para ejecutar.
+La carpeta `_archive/` contiene versiones anteriores y archivos temporales que se mantienen por referencia:
 
-### Requisitos
-
-```bash
-pip install pandas numpy scikit-learn joblib xgboost lightgbm
-```
-
-### Ejecucion
-
-```bash
-cd TRANSFER_TO_TRAINING_PC
-python scripts/ml_pipeline_bloomberg.py
-```
-
-### Que Hace el Pipeline
-
-1. **Carga datos**: `bloomberg_triple_screen_core.csv` (647 features)
-2. **Valida anti-leakage**: Verifica que no hay contaminacion de datos futuros
-3. **Split temporal**: 80% train / 20% test (sin shuffle)
-4. **Entrena modelos**:
-   - Ridge, Lasso, ElasticNet
-   - Random Forest, Gradient Boosting
-   - XGBoost, LightGBM (si estan instalados)
-5. **Evalua estrategia**: Sharpe ratio, retornos, direccion
-6. **Guarda resultados**:
-   - `models/best_pipeline_bloomberg.pkl` - Modelo entrenado
-   - `models/model_info_bloomberg.json` - Metadata
-   - `results/model_comparison_bloomberg.csv` - Comparacion
-
-### Arquitectura Anti-Data Leakage
-
-- Split temporal (no aleatorio)
-- TimeSeriesSplit para cross-validation
-- Preprocessing fit SOLO en train
-- Features calculados solo con datos pasados
+- `bloomberg_triple_screen_full.csv` - Versión anterior del dataset
+- `hull_dataset_*` - Referencias antiguas
+- `*VERIFICATION*.csv` - Archivos de verificación temporal
 
 ---
 
-## Notas Importantes
+## Licencia
 
-1. **NO usar shuffle** - Los datos son series temporales, el orden importa
-
-2. **Data Leakage** - El target ya tiene shift(-1), NO aplicar de nuevo
-
-3. **Missing Values** - ~3%, ya imputados con forward-fill
-
-4. **Volatilidad Intradiaria** - Usa proxy features para periodo historico, datos reales solo para ultimos 136 dias
-
-5. **Variables Parciales** - Algunas variables (V3, M12, I14-I16) tienen datos desde fechas posteriores a 2000
-
-6. **TS_SIGNAL** - Puede usarse como feature adicional o como filtro post-modelo
+Proyecto académico para la Maestría en Inteligencia de Negocios para Finanzas.
 
 ---
 
-## Auditoria Final
-
-| Check | Resultado |
-|-------|-----------|
-| Variables Bloomberg | 92/92 (100%) |
-| Features totales | 647 |
-| Data leakage | Ninguno detectado |
-| Target verificado | Correlacion 0.9994 con t+1 |
-| Proxy intradiarios | 38 features implementados |
-| Datos intradiarios reales | 136 dias (30 min bars) |
-
----
-
-## Generado
-
-- **Fecha**: 2025-12-13
-- **Fuente**: Bloomberg Terminal
-- **Metodologia**: Triple Pantalla Elder + Proxy Intradiario Hedge Fund
-- **Periodo**: 2000-01-03 a 2025-12-12
+**Última actualización:** Diciembre 2025

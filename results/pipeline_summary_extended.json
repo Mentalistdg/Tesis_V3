@@ -1,0 +1,20 @@
+{
+  "timestamp": "2025-12-14T17:30:01.349522",
+  "total_models": 21,
+  "sklearn_models": 7,
+  "darts_classic_models": 3,
+  "darts_ml_models": 3,
+  "darts_dl_models": 8,
+  "best_model": "DARTS_DLinear",
+  "best_strategy_return": 2.380154873885272,
+  "best_sharpe": 0.8650587936413816,
+  "market_return": 0.9618060177870458,
+  "test_period": "2020-10-08 to 2025-12-12",
+  "strategy_type": "long_short_leveraged",
+  "position_range": "[-2, +2]",
+  "best_mean_position": 1.965656110494218,
+  "best_pct_short": 0.38402457757296465,
+  "best_pct_long": 99.61597542242704,
+  "best_pct_leveraged_short": 0.0,
+  "best_pct_leveraged_long": 98.07987711213516
+}
