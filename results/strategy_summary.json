@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-01-03T22:35:30.739450",
+  "config": {
+    "initial_capital": 10000,
+    "min_position_change": 1,
+    "volatility_target": 0.15,
+    "volatility_lookback": 21,
+    "n_bootstrap": 10000,
+    "confidence_level": 0.95,
+    "original_scale": 500,
+    "calibrated_scale": 1.0
+  },
+  "initial_capital": 10000,
+  "test_period": {
+    "start": "2020-10-07",
+    "end": "2025-12-11",
+    "n_days": 1302
+  },
+  "benchmark": {
+    "spy_final_value": 20007.043080174386,
+    "spy_total_return": 1.0007043080174385
+  },
+  "best_model": {
+    "name": "GradientBoosting",
+    "method": "optimized",
+    "params": {
+      "q_long_extreme": 20,
+      "q_long_moderate": 70,
+      "q_short_extreme": 20,
+      "q_short_moderate": 30
+    },
+    "final_value": 104757.47572665797,
+    "profit_loss": 94757.47572665797,
+    "sharpe": 1.874700374179056,
+    "sharpe_ci": [
+      0.7267708970079356,
+      2.467584822729205
+    ],
+    "prob_sharpe_positive": 1.0
+  },
+  "models_beating_benchmark": 14,
+  "total_models": 18
+}

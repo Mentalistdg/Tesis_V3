@@ -6,18 +6,20 @@ ML PIPELINE EXTENDIDO - SKLEARN + DARTS (CON ESTRATEGIA LONG/SHORT)
 
 Pipeline que compara enfoques CLASICOS (sklearn) vs MODERNOS (Darts).
 
-ESTRATEGIA DE POSICIONES [-2, +2]:
+ESTRATEGIA DE POSICIONES DISCRETAS (UPRO/SPXU Style):
 ================================================================================
-La estrategia permite posiciones long Y short, incluyendo apalancamiento:
+La estrategia usa 5 niveles DISCRETOS de posicion (ETF simple o ETF 3x):
 
-    -2: Short apalancado (2x short)
-    -1: Short simple (100% short)
-     0: Risk-free (neutral, 100% tasa libre riesgo)
-    +1: Long simple (100% long)
-    +2: Long apalancado (2x long)
+    -3: Short apalancado 3x (SPXU)
+    -1: Short simple (SH / inverse ETF)
+     0: Cash (risk-free, 100% tasa libre riesgo)
+    +1: Long simple (SPY)
+    +3: Long apalancado 3x (UPRO)
 
-La funcion sigmoide mapea predicciones del modelo a este rango continuo:
-    position = 4 / (1 + exp(-scale * prediction)) - 2
+La funcion sigmoide mapea predicciones a un valor continuo [-3, +3],
+luego se discretiza a los 5 niveles permitidos:
+    continuous = 6 / (1 + exp(-scale * prediction)) - 3
+    position = discretize(continuous) -> {-3, -1, 0, +1, +3}
 
 Calculo de retornos:
     return = rf + position * (market_return - rf)
@@ -277,27 +279,35 @@ def rmse(y_true, y_pred):
 
 def prediction_to_position(predictions, scale=500):
     """
-    Convierte predicciones a posiciones [-2, +2].
+    Convierte predicciones a posiciones DISCRETAS: -3, -1, 0, +1, +3.
 
-    Posiciones:
-        -2: Short apalancado (leveraged short)
-        -1: Short simple
-         0: Risk-free (neutral)
-        +1: Long simple
-        +2: Long apalancado (leveraged long)
+    Solo 5 niveles (ETF sin apalancamiento o ETF 3x):
+        -3: Short apalancado 3x (SPXU)
+        -1: Short simple (SH / inverse ETF)
+         0: Cash (risk-free)
+        +1: Long simple (SPY)
+        +3: Long apalancado 3x (UPRO)
 
-    La sigmoide mapea predicciones a este rango continuo:
-    - Predicciones muy negativas -> -2 (short agresivo)
-    - Predicciones negativas -> entre -2 y 0 (short)
-    - Predicciones cercanas a 0 -> cerca de 0 (neutral)
-    - Predicciones positivas -> entre 0 y +2 (long)
-    - Predicciones muy positivas -> +2 (long agresivo)
+    La sigmoide mapea predicciones a un valor continuo, luego se discretiza:
+    - Predicciones muy negativas (< -2) -> -3 (SPXU)
+    - Predicciones negativas (-2 a -0.5) -> -1 (short simple)
+    - Predicciones neutras (-0.5 a +0.5) -> 0 (cash)
+    - Predicciones positivas (+0.5 a +2) -> +1 (SPY)
+    - Predicciones muy positivas (> +2) -> +3 (UPRO)
     """
     predictions = np.array(predictions).flatten()
-    # Sigmoid que mapea a [-2, +2] en vez de [0, 2]
-    # Formula: 4 / (1 + exp(-scale * predictions)) - 2
-    positions = 4 / (1 + np.exp(-scale * predictions)) - 2
-    positions = np.clip(positions, -2, 2)
+
+    # Paso 1: Sigmoid que mapea a [-3, +3] continuo
+    continuous_pos = 6 / (1 + np.exp(-scale * predictions)) - 3
+
+    # Paso 2: Discretizar a los 5 niveles permitidos: -3, -1, 0, +1, +3
+    positions = np.zeros_like(continuous_pos)
+    positions[continuous_pos <= -2] = -3      # SPXU (3x short)
+    positions[(continuous_pos > -2) & (continuous_pos <= -0.5)] = -1   # Short simple
+    positions[(continuous_pos > -0.5) & (continuous_pos < 0.5)] = 0    # Cash
+    positions[(continuous_pos >= 0.5) & (continuous_pos < 2)] = 1      # SPY (long simple)
+    positions[continuous_pos >= 2] = 3        # UPRO (3x long)
+
     return positions
 
 def calculate_strategy_returns(positions, forward_returns, risk_free_rate):
@@ -307,20 +317,20 @@ def calculate_strategy_returns(positions, forward_returns, risk_free_rate):
     Formula unificada:
         return = rf + pos * (market_return - rf)
 
-    Ejemplos:
-        pos = +2: 2x long apalancado = rf + 2*(market - rf) = 2*market - rf
-        pos = +1: 100% long = rf + 1*(market - rf) = market
-        pos =  0: 100% risk-free = rf
-        pos = -1: 100% short = rf - 1*(market - rf) = 2*rf - market
-        pos = -2: 2x short apalancado = rf - 2*(market - rf) = 3*rf - 2*market
+    Solo 5 posiciones discretas (estilo UPRO/SPXU):
+        pos = +3: UPRO (3x long) = rf + 3*(market - rf) = 3*market - 2*rf
+        pos = +1: SPY (100% long) = rf + 1*(market - rf) = market
+        pos =  0: Cash (risk-free) = rf
+        pos = -1: SH (100% short) = rf - 1*(market - rf) = 2*rf - market
+        pos = -3: SPXU (3x short) = rf - 3*(market - rf) = 4*rf - 3*market
 
     Cuando el mercado sube (market > rf):
-        - Posiciones positivas ganan
-        - Posiciones negativas pierden
+        - Posiciones positivas ganan (+1, +3)
+        - Posiciones negativas pierden (-1, -3)
 
     Cuando el mercado baja (market < rf):
-        - Posiciones positivas pierden
-        - Posiciones negativas ganan
+        - Posiciones positivas pierden (+1, +3)
+        - Posiciones negativas ganan (-1, -3)
     """
     positions = np.array(positions).flatten()
     forward_returns = np.array(forward_returns).flatten()
@@ -344,8 +354,8 @@ def evaluate_predictions(y_true, y_pred, forward_returns, risk_free_rate,
     Metricas de posiciones:
     - pct_short: % de tiempo en posiciones short (pos < 0)
     - pct_long: % de tiempo en posiciones long (pos > 0)
-    - pct_leveraged_short: % en short apalancado (pos <= -1.5)
-    - pct_leveraged_long: % en long apalancado (pos >= 1.5)
+    - pct_leveraged_short: % en SPXU (pos == -3)
+    - pct_leveraged_long: % en UPRO (pos == +3)
 
     Metricas de produccion (estándar hedge fund):
     - turnover: Cambio promedio diario en posicion (indicador de costos)
@@ -431,8 +441,8 @@ def evaluate_predictions(y_true, y_pred, forward_returns, risk_free_rate,
     pct_short = np.mean(positions < 0) * 100
     pct_long = np.mean(positions > 0) * 100
     pct_neutral = np.mean(np.abs(positions) < 0.1) * 100
-    pct_leveraged_short = np.mean(positions <= -1.5) * 100
-    pct_leveraged_long = np.mean(positions >= 1.5) * 100
+    pct_leveraged_short = np.mean(positions == -3) * 100  # % en SPXU
+    pct_leveraged_long = np.mean(positions == 3) * 100    # % en UPRO
 
     # Analisis de rendimiento por tipo de posicion
     short_mask = positions < 0
@@ -1490,8 +1500,8 @@ if results:
     print(f"  + % Tiempo en Short: {best_metrics['pct_short']:.1f}%")
     print(f"  + % Tiempo en Long: {best_metrics['pct_long']:.1f}%")
     print(f"  + % Tiempo Neutral (<0.1): {best_metrics['pct_neutral']:.1f}%")
-    print(f"  + % Short Apalancado (<=-1.5): {best_metrics['pct_leveraged_short']:.1f}%")
-    print(f"  + % Long Apalancado (>=1.5): {best_metrics['pct_leveraged_long']:.1f}%")
+    print(f"  + % en SPXU (pos=-3): {best_metrics['pct_leveraged_short']:.1f}%")
+    print(f"  + % en UPRO (pos=+3): {best_metrics['pct_leveraged_long']:.1f}%")
     print(f"  + Retorno Promedio en Short: {best_metrics['avg_return_short']*100:.4f}%")
     print(f"  + Retorno Promedio en Long: {best_metrics['avg_return_long']*100:.4f}%")
 
@@ -1551,8 +1561,8 @@ if results:
         'market_return': float(best_metrics['market_return']),
         'test_period': f"{dates_test.iloc[0].date()} to {dates_test.iloc[-1].date()}",
         # Metricas de posiciones del mejor modelo
-        'strategy_type': 'long_short_leveraged',
-        'position_range': '[-2, +2]',
+        'strategy_type': 'long_short_3x_leveraged',
+        'position_range': '{-3, -1, 0, +1, +3}',
         'best_mean_position': float(best_metrics['mean_position']),
         'best_pct_short': float(best_metrics['pct_short']),
         'best_pct_long': float(best_metrics['pct_long']),
@@ -1781,13 +1791,18 @@ if 'DARTS_DLinear' in results:
     # Usamos una aproximacion basada en los retornos del mercado y la posicion promedio
     mean_pos = dlinear_metrics['mean_position']
 
-    # Crear posiciones simuladas (casi siempre 2x long como indica el modelo)
+    # Crear posiciones simuladas discretas basadas en la posicion promedio
     n_test = len(forward_returns_test)
-    simulated_positions = np.full(n_test, mean_pos)
-    # Agregar algo de variacion
     np.random.seed(42)
-    simulated_positions += np.random.normal(0, 0.05, n_test)
-    simulated_positions = np.clip(simulated_positions, -2, 2)
+    # Generar posiciones continuas alrededor de la media
+    continuous_pos = np.full(n_test, mean_pos) + np.random.normal(0, 0.5, n_test)
+    # Discretizar a los 5 niveles permitidos: -3, -1, 0, +1, +3
+    simulated_positions = np.zeros(n_test)
+    simulated_positions[continuous_pos <= -2] = -3
+    simulated_positions[(continuous_pos > -2) & (continuous_pos <= -0.5)] = -1
+    simulated_positions[(continuous_pos > -0.5) & (continuous_pos < 0.5)] = 0
+    simulated_positions[(continuous_pos >= 0.5) & (continuous_pos < 2)] = 1
+    simulated_positions[continuous_pos >= 2] = 3
 
     # Aplicar control de drawdown
     pos_controlled, ret_controlled, dd_stats = apply_drawdown_control(
@@ -1849,11 +1864,16 @@ if len(available_models) >= 2:
 
     print(f"\n  Posicion promedio del ensemble: {ensemble_position:.3f}")
 
-    # Crear posiciones de ensemble
-    ensemble_positions = np.full(n_test, ensemble_position)
+    # Crear posiciones de ensemble discretas
     np.random.seed(123)
-    ensemble_positions += np.random.normal(0, 0.1, n_test)
-    ensemble_positions = np.clip(ensemble_positions, -2, 2)
+    continuous_ens = np.full(n_test, ensemble_position) + np.random.normal(0, 0.3, n_test)
+    # Discretizar a los 5 niveles: -3, -1, 0, +1, +3
+    ensemble_positions = np.zeros(n_test)
+    ensemble_positions[continuous_ens <= -2] = -3
+    ensemble_positions[(continuous_ens > -2) & (continuous_ens <= -0.5)] = -1
+    ensemble_positions[(continuous_ens > -0.5) & (continuous_ens < 0.5)] = 0
+    ensemble_positions[(continuous_ens >= 0.5) & (continuous_ens < 2)] = 1
+    ensemble_positions[continuous_ens >= 2] = 3
 
     # Calcular retornos del ensemble
     ensemble_returns = risk_free_test + ensemble_positions * (forward_returns_test - risk_free_test)

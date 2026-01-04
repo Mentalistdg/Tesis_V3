@@ -1,16 +1,16 @@
 {
-  "model_name": "Lasso",
-  "training_date": "2025-12-13T21:01:08.677216",
-  "n_features": 642,
-  "train_period": "2000-02-01 to 2020-10-07",
-  "test_period": "2020-10-08 to 2025-12-12",
+  "model_name": "RandomForest",
+  "training_date": "2025-12-17T18:01:08.016893",
+  "n_features": 477,
+  "train_period": "2000-02-15 to 2020-10-08",
+  "test_period": "2020-10-09 to 2025-12-11",
   "performance": {
-    "test_rmse": 0.010828668304187697,
-    "test_r2": -0.0011750318276853022,
-    "test_directional_accuracy": 0.543778801843318,
-    "strategy_return": 1.0808765988788194,
-    "market_return": 0.9618060177870458,
-    "strategy_sharpe": 0.8462181312099882
+    "test_rmse": 0.01113113102867946,
+    "test_r2": -0.061800148284982814,
+    "test_directional_accuracy": 0.5015384615384615,
+    "strategy_return": 1.6277129064262836,
+    "market_return": 0.9655758973620276,
+    "strategy_sharpe": 1.0556802438399309
   },
   "anti_leakage_measures": [
     "Temporal train/test split (not random)",

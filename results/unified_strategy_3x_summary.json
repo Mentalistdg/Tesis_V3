@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-12-18T11:47:11.219630",
+  "config": {
+    "leverage_max": 3.0,
+    "sigmoid_scale": 500,
+    "test_size": 0.2,
+    "random_state": 42
+  },
+  "test_period": {
+    "start": "2020-10-09",
+    "end": "2025-12-11",
+    "days": 1300
+  },
+  "benchmarks": {
+    "market_1x": {
+      "return": 0.9869395992503947,
+      "sharpe": 0.7458429599346195
+    },
+    "market_3x": {
+      "return": 3.9806402519368342,
+      "sharpe": 0.8235896578179429,
+      "max_dd": -0.6383324248567019
+    }
+  },
+  "best_model": {
+    "name": "SF_AutoTheta",
+    "strategy_return": 2.5697232415166105,
+    "excess_vs_market": 1.5873965873433382,
+    "sharpe": 0.7435941243224264
+  }
+}

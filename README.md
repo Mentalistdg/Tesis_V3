@@ -43,12 +43,10 @@ Tesis_V3/
 │   └── dataset_metadata.json              # Metadata del dataset
 │
 ├── scripts/                           # Scripts de Python
-│   ├── ml_pipeline_bloomberg.py           # Pipeline sklearn (Ridge, RF, XGB)
-│   ├── ml_pipeline_darts_extended.py      # Pipeline Darts (DLinear, TCN, TFT)
+│   ├── ml_pipeline_darts_extended.py      # Pipeline principal (19 modelos, posiciones discretas)
 │   ├── feature_engineering_hedge_fund.py  # Ingeniería de 647 features
 │   ├── elder_indicators_multifreq.py      # Sistema Triple Screen de Elder
-│   ├── intraday_proxy_features.py         # Estimadores volatilidad OHLC
-│   ├── robust_imputation.py               # Imputación anti-leakage
+│   ├── generate_app_data.py               # Genera datos para app web
 │   ├── validate_final_dataset.py          # Validación del dataset
 │   ├── tesis_data_config.py               # Configuración de variables
 │   └── academic_enhancements.py           # Análisis estadístico (Gu et al. 2020)
@@ -85,21 +83,22 @@ Tesis_V3/
 
 ## Ejecución del Pipeline
 
-### 1. Pipeline Principal (sklearn)
-
-```bash
-python scripts/ml_pipeline_bloomberg.py
-```
-
-Entrena: Ridge, Lasso, ElasticNet, Random Forest, XGBoost, LightGBM
-
-### 2. Pipeline Extendido (Darts Deep Learning)
+### 1. Pipeline Principal (19 modelos)
 
 ```bash
 python scripts/ml_pipeline_darts_extended.py
 ```
 
-Entrena: DLinear, N-BEATS, TCN, TFT, TiDE, NLinear, TSMixer, N-HiTS
+Entrena 19 modelos con estrategia de posiciones discretas {-3, -1, 0, +1, +3}:
+- **Sklearn:** Ridge, Lasso, ElasticNet, RandomForest, GradientBoosting, XGBoost, LightGBM
+- **Darts:** DLinear, N-BEATS, TCN, TFT, TiDE, NLinear, TSMixer, N-HiTS
+- **Time Series:** AutoARIMA, AutoETS, Prophet, GARCH
+
+### 2. Generar Datos para App Web
+
+```bash
+python scripts/generate_app_data.py
+```
 
 ### 3. Análisis Académico
 
@@ -245,9 +244,15 @@ seaborn>=0.12
 
 La carpeta `_archive/` contiene versiones anteriores y archivos temporales que se mantienen por referencia:
 
+**Scripts archivados:**
+- `ml_pipeline_bloomberg.py` - Pipeline sklearn anterior (superseded por ml_pipeline_darts_extended.py)
+- `unified_model_comparison.py` - Comparación de modelos anterior
+- `calculate_proper_returns.py`, `forecasting_quick.py`, `prepare_data.py`
+- `robust_imputation.py`, `intraday_proxy_features.py`, `leakage_diagnostic.py`
+
+**Datos archivados:**
 - `bloomberg_triple_screen_full.csv` - Versión anterior del dataset
 - `hull_dataset_*` - Referencias antiguas
-- `*VERIFICATION*.csv` - Archivos de verificación temporal
 
 ---
 

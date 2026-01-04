@@ -1,0 +1,34 @@
+{
+  "timestamp": "2025-12-18T11:00:32.471070",
+  "test_period": {
+    "start": "2020-10-09",
+    "end": "2025-12-11",
+    "days": 1300
+  },
+  "market_benchmark": {
+    "total_return": 0.9869395992503947,
+    "annualized_return": 0.14247432204125943,
+    "sharpe_ratio": 0.8624630067596051,
+    "max_drawdown": -0.25360574407067027
+  },
+  "best_model_by_strategy": {
+    "long_cash": {
+      "model": "GradientBoosting",
+      "strategy_return": 1.0847054265449727,
+      "excess_return": 0.09776582729457806,
+      "sharpe": 0.924128672242728
+    },
+    "long_short": {
+      "model": "GradientBoosting",
+      "strategy_return": 1.1809843332188485,
+      "excess_return": 0.1940447339684539,
+      "sharpe": 0.9681712485919302
+    },
+    "sigmoid": {
+      "model": "RandomForest",
+      "strategy_return": 0.5453998079589379,
+      "excess_return": -0.4415397912914567,
+      "sharpe": 0.9722610672787485
+    }
+  }
+}

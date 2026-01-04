@@ -33,3 +33,24 @@ nul
 .env
 .venv/
 venv/
+
+# Node.js
+node_modules/
+dist/
+.npm
+
+# ML/Data Science
+catboost_info/
+*.npz
+scripts/catboost_info/
+
+# Temporary files
+*.tmp
+temp_*.py
+temp_*.npz
+
+# Large data backups (keep originals)
+_archive/data/*_BACKUP*.csv
+
+# Jupyter
+.ipynb_checkpoints/
