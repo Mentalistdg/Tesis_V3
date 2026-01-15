@@ -184,7 +184,13 @@ export default function OverviewPage() {
   function getModelSummary(modelName: string) {
     const detail = modelDetails[modelName];
     if (!detail?.trades?.length) {
-      return { finalCapital: INITIAL_CAPITAL, totalTxCosts: 0, netReturn: 0, grossReturn: 0 };
+      return {
+        finalCapital: INITIAL_CAPITAL,
+        totalTxCosts: 0,
+        netReturn: 0,
+        grossReturn: 0,
+        costBreakdown: { expense: 0, trading: 0, volDrag: 0, total: 0 }
+      };
     }
     return calculateSummaryFromTrades(detail.trades, INITIAL_CAPITAL);
   }
@@ -211,14 +217,16 @@ export default function OverviewPage() {
   }
 
   // Create Buy & Hold as a virtual model for comparison
+  const spyFinalValue = modelsData.benchmark.spy_final_value ?? modelsData.benchmark.final_value ?? modelsData.config.initial_capital;
+  const spyTotalReturn = modelsData.benchmark.spy_total_return ?? modelsData.benchmark.total_return ?? 0;
   const buyAndHoldModel: ModelSummary = {
     model: 'Buy & Hold (SPY)',
     category: 'Benchmark',
-    final_equity: modelsData.benchmark.spy_final_value,
-    profit_loss: modelsData.benchmark.spy_final_value - modelsData.config.initial_capital,
-    total_return: modelsData.benchmark.spy_total_return,
+    final_equity: spyFinalValue,
+    profit_loss: spyFinalValue - modelsData.config.initial_capital,
+    total_return: spyTotalReturn,
     annual_return: marketData.metrics.annual_return,
-    market_return: modelsData.benchmark.spy_total_return,
+    market_return: spyTotalReturn,
     excess_return: 0,
     sharpe: marketData.metrics.sharpe,
     sharpe_ci_lower: 0,
@@ -236,13 +244,29 @@ export default function OverviewPage() {
     pct_short: 0,
     pct_3x_short: 0,
     transaction_costs: 0,
-    optimal_params: { q_long_extreme: 0, q_long_moderate: 0, q_short_extreme: 0, q_short_moderate: 0 },
+    optimal_params: { q_3x: 0, q_1x: 0 },
     return_improvement: 0,
     sharpe_improvement: 0,
   };
 
   const allModels = [...modelsData.models, buyAndHoldModel];
+
+  // Get net return for sorting (what investors actually earn after costs)
+  const getNetReturn = (model: ModelSummary): number => {
+    if (model.category === 'Benchmark') {
+      return model.total_return; // SPY has no tx costs
+    }
+    const summary = getModelSummary(model.model);
+    return summary?.netReturn ?? model.total_return;
+  };
+
   const sortedModels = allModels.sort((a, b) => {
+    // When sorting by 'total_return', use net return (actual investor return)
+    if (sortKey === 'total_return') {
+      const aVal = getNetReturn(a);
+      const bVal = getNetReturn(b);
+      return sortDesc ? bVal - aVal : aVal - bVal;
+    }
     const aVal = a[sortKey];
     const bVal = b[sortKey];
     if (typeof aVal === 'number' && typeof bVal === 'number') {
@@ -251,13 +275,18 @@ export default function OverviewPage() {
     return 0;
   });
 
-  const bestModel = modelsData.best_model;
-  const bestSharpe = modelsData.models.reduce((best, m) => m.sharpe > best.sharpe ? m : best);
-  const lowestDD = modelsData.models.reduce((best, m) => m.max_drawdown > best.max_drawdown ? m : best);
-  const beatingMarket = modelsData.models_beating_benchmark;
+  // Derive best model from models array (first model in list, or null if empty)
+  const bestModel = modelsData.models.length > 0 ? modelsData.models[0] : null;
+  const bestSharpe = modelsData.models.length > 0
+    ? modelsData.models.reduce((best, m) => m.sharpe > best.sharpe ? m : best)
+    : null;
+  const lowestDD = modelsData.models.length > 0
+    ? modelsData.models.reduce((best, m) => m.max_drawdown > best.max_drawdown ? m : best)
+    : null;
+  const beatingMarket = modelsData.models_beating_spy ?? modelsData.models_beating_benchmark ?? 0;
 
   // Calculate trade-based summary for best model (consistent with all pages)
-  const bestModelSummary = getModelSummary(bestModel.name);
+  const bestModelSummary = bestModel ? getModelSummary(bestModel.model) : null;
 
   // Get top 5 model names for legend (from chartData state)
   const top5Models = chartData.map(m => m.name);
@@ -269,7 +298,7 @@ export default function OverviewPage() {
         <div>
           <h2 className="text-xl font-semibold text-white">Optimized Strategy Performance</h2>
           <p className="text-sm text-[#737373] mt-1">
-            Initial Capital: {formatCurrency(modelsData.config.initial_capital)} | Bootstrap: {modelsData.config.n_bootstrap.toLocaleString()} samples
+            Initial Capital: {formatCurrency(modelsData.config.initial_capital)}{modelsData.config.n_bootstrap ? ` | Bootstrap: ${modelsData.config.n_bootstrap.toLocaleString()} samples` : ''} | Strategy: {modelsData.strategy ?? 'Optimized'}
           </p>
         </div>
         <span className="text-sm text-[#737373]">
@@ -277,42 +306,42 @@ export default function OverviewPage() {
         </span>
       </div>
 
-      {/* Best Model Highlight */}
+      {/* Best Model Highlight - LONG-ONLY */}
       <div className="card bg-gradient-to-r from-[#111111] to-[#1a1a1a] border-l-4 border-[#00c853]">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <div className="flex items-center gap-2 text-[#00c853] mb-1">
               <Award className="w-5 h-5" />
-              <span className="font-medium">Best Model: {bestModel.name}</span>
+              <span className="font-medium">Best Model: {bestModel?.model ?? 'N/A'}</span>
+              <span className="text-xs bg-[#00c853]/20 px-2 py-0.5 rounded">LONG-ONLY</span>
             </div>
             <div className="text-3xl font-bold text-[#00c853]">
-              {formatCurrency(bestModelSummary.finalCapital)}
+              {bestModelSummary ? formatCurrency(bestModelSummary.finalCapital) : 'N/A'}
             </div>
             <div className="text-sm text-[#737373] mt-1">
-              P&L: +{formatCurrency(bestModelSummary.finalCapital - INITIAL_CAPITAL)} ({(bestModelSummary.netReturn * 100).toFixed(0)}%)
+              {bestModelSummary && (
+                <>P&L: +{formatCurrency(bestModelSummary.finalCapital - INITIAL_CAPITAL)} ({(bestModelSummary.netReturn * 100).toFixed(0)}%)</>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
               <div className="text-sm text-[#737373]">Sharpe</div>
-              <div className="text-xl font-semibold text-white">{bestModel.sharpe.toFixed(2)}</div>
-              <div className="text-xs text-[#737373]">
-                [{bestModel.sharpe_ci[0].toFixed(2)}, {bestModel.sharpe_ci[1].toFixed(2)}]
-              </div>
+              <div className="text-xl font-semibold text-white">{bestModel?.sharpe?.toFixed(2) ?? 'N/A'}</div>
             </div>
             <div>
-              <div className="text-sm text-[#737373]">P(Sharpe &gt; 0)</div>
+              <div className="text-sm text-[#737373]">Return</div>
               <div className="text-xl font-semibold text-[#00c853]">
-                {(bestModel.prob_sharpe_positive * 100).toFixed(1)}%
+                +{((bestModel?.total_return ?? 0) * 100).toFixed(0)}%
               </div>
             </div>
             <div>
-              <div className="text-sm text-[#737373]">Long Extreme</div>
-              <div className="text-xl font-semibold text-white">{bestModel.params.q_long_extreme}%</div>
+              <div className="text-sm text-[#737373]">3x UPRO</div>
+              <div className="text-xl font-semibold text-white">{(bestModel?.pct_3x_long ?? 0).toFixed(0)}%</div>
             </div>
             <div>
-              <div className="text-sm text-[#737373]">Short Extreme</div>
-              <div className="text-xl font-semibold text-white">{bestModel.params.q_short_extreme}%</div>
+              <div className="text-sm text-[#737373]">Cash</div>
+              <div className="text-xl font-semibold text-white">{(bestModel?.pct_cash ?? 0).toFixed(0)}%</div>
             </div>
           </div>
         </div>
@@ -326,9 +355,9 @@ export default function OverviewPage() {
             <span className="metric-label">Best Sharpe</span>
           </div>
           <div className="metric-value text-[#c41e3a]">
-            {bestSharpe.sharpe.toFixed(2)}
+            {bestSharpe?.sharpe.toFixed(2) ?? 'N/A'}
           </div>
-          <div className="text-sm text-[#737373] mt-1">{bestSharpe.model}</div>
+          <div className="text-sm text-[#737373] mt-1">{bestSharpe?.model ?? '-'}</div>
         </div>
 
         <div className="metric-card">
@@ -337,9 +366,9 @@ export default function OverviewPage() {
             <span className="metric-label">Lowest Drawdown</span>
           </div>
           <div className="metric-value text-[#00c853]">
-            {(lowestDD.max_drawdown * 100).toFixed(1)}%
+            {lowestDD ? (lowestDD.max_drawdown * 100).toFixed(1) : 'N/A'}%
           </div>
-          <div className="text-sm text-[#737373] mt-1">{lowestDD.model}</div>
+          <div className="text-sm text-[#737373] mt-1">{lowestDD?.model ?? '-'}</div>
         </div>
 
         <div className="metric-card">
@@ -361,10 +390,10 @@ export default function OverviewPage() {
             <span className="metric-label">SPY Benchmark</span>
           </div>
           <div className="metric-value text-[#525252]">
-            {formatCurrency(modelsData.benchmark.spy_final_value)}
+            {formatCurrency(spyFinalValue)}
           </div>
           <div className="text-sm text-[#737373] mt-1">
-            +{(modelsData.benchmark.spy_total_return * 100).toFixed(0)}% return
+            +{(spyTotalReturn * 100).toFixed(0)}% return
           </div>
         </div>
       </div>
@@ -412,6 +441,7 @@ export default function OverviewPage() {
                 >
                   Final Capital {sortKey === 'final_equity' && (sortDesc ? '↓' : '↑')}
                 </th>
+                <th className="w-16 text-right">Gross Ret</th>
                 <th
                   className="w-20 text-right cursor-pointer hover:text-white"
                   onClick={() => handleSort('total_return')}
@@ -452,9 +482,9 @@ export default function OverviewPage() {
                 const isBenchmark = model.category === 'Benchmark';
                 // Use trade-based calculation for consistency with Trades page
                 const summary = !isBenchmark ? getModelSummary(model.model) : null;
+                const grossReturn = summary?.grossReturn ?? model.total_return;
                 const netReturn = summary?.netReturn ?? model.total_return;
-                const spyReturn = modelsData.benchmark.spy_total_return;
-                const excessReturn = netReturn - spyReturn;
+                const excessReturn = netReturn - spyTotalReturn;
                 // Annualize: (1 + total)^(252/days) - 1
                 const years = modelsData.test_period.n_days / 252;
                 const annualReturn = Math.pow(1 + netReturn, 1 / years) - 1;
@@ -476,14 +506,21 @@ export default function OverviewPage() {
                       "text-right font-mono",
                       isBenchmark ? "text-[#525252]" : "text-[#00c853]"
                     )}>
-                      {formatCurrency(summary ? summary.finalCapital : model.final_equity)}
+                      {formatCurrency(summary ? summary.finalCapital : (model.final_equity ?? INITIAL_CAPITAL))}
+                    </td>
+                    <td className={clsx(
+                      "text-right font-mono",
+                      isBenchmark ? "text-[#525252]" :
+                      grossReturn >= 0 ? "text-[#a3a3a3]" : "text-[#737373]"
+                    )}>
+                      {isBenchmark ? `${(grossReturn * 100).toFixed(0)}%` : `${(grossReturn * 100).toFixed(0)}%`}
                     </td>
                     <td className={clsx(
                       "text-right font-mono font-semibold",
-                      isBenchmark ? "text-[#525252]" :
+                      isBenchmark ? "text-[#00c853]" :
                       netReturn >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
                     )}>
-                      {(netReturn * 100).toFixed(0)}%
+                      {isBenchmark ? `${(netReturn * 100).toFixed(0)}%` : `${(netReturn * 100).toFixed(0)}%`}
                     </td>
                     <td className={clsx(
                       "text-right font-mono",
@@ -506,7 +543,7 @@ export default function OverviewPage() {
                       )}>
                         {model.sharpe.toFixed(2)}
                       </span>
-                      {!isBenchmark && (
+                      {!isBenchmark && model.sharpe_ci_lower !== undefined && model.sharpe_ci_upper !== undefined && (
                         <div className="text-xs text-[#525252]">
                           [{model.sharpe_ci_lower.toFixed(1)}, {model.sharpe_ci_upper.toFixed(1)}]
                         </div>
@@ -515,10 +552,10 @@ export default function OverviewPage() {
                     <td className={clsx(
                       "text-right font-mono",
                       isBenchmark ? "text-[#525252]" :
-                      model.prob_sharpe_positive >= 0.99 ? "text-[#00c853]" :
-                      model.prob_sharpe_positive >= 0.95 ? "text-[#a3a3a3]" : "text-[#525252]"
+                      (model.prob_sharpe_positive ?? 0) >= 0.99 ? "text-[#00c853]" :
+                      (model.prob_sharpe_positive ?? 0) >= 0.95 ? "text-[#a3a3a3]" : "text-[#525252]"
                     )}>
-                      {isBenchmark ? "-" : `${(model.prob_sharpe_positive * 100).toFixed(0)}%`}
+                      {isBenchmark ? "-" : model.prob_sharpe_positive !== undefined ? `${(model.prob_sharpe_positive * 100).toFixed(0)}%` : "-"}
                     </td>
                     <td className={clsx(
                       "text-right font-mono",
@@ -540,65 +577,63 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* Position Distribution Summary */}
+      {/* Position Distribution & Cost Breakdown - LONG-ONLY */}
       <div className="card">
-        <h3 className="text-lg font-medium mb-4 text-white">Position Distribution by Model</h3>
+        <h3 className="text-lg font-medium mb-4 text-white">Position Distribution & Cost Breakdown (LONG-ONLY)</h3>
         <div className="overflow-x-auto">
           <table className="table-dark">
             <thead>
               <tr>
                 <th className="w-32">Model</th>
-                <th className="w-24 text-center">3x Long</th>
-                <th className="w-24 text-center">1x Long</th>
+                <th className="w-24 text-center">+3x UPRO</th>
+                <th className="w-24 text-center">+1x SPY</th>
                 <th className="w-24 text-center">Cash</th>
-                <th className="w-24 text-center">1x Short</th>
-                <th className="w-24 text-center">3x Short</th>
-                <th className="w-24 text-right">Tx Costs</th>
-                <th className="w-28 text-right">Params</th>
+                <th className="w-20 text-right">Trading</th>
+                <th className="w-20 text-right">Expense</th>
+                <th className="w-20 text-right">VolDrag</th>
+                <th className="w-20 text-right">Total</th>
               </tr>
             </thead>
             <tbody>
-              {sortedModels.slice(0, 10).filter(m => m.category !== 'Benchmark').map((model) => {
+              {sortedModels.filter(m => m.category !== 'Benchmark').map((model) => {
                 const summary = getModelSummary(model.model);
+                const costs = summary?.costBreakdown;
+                // For LONG-ONLY: pct_3x = UPRO, pct_1x = SPY, pct_cash = Cash
+                const pctUpro = model.pct_3x ?? model.pct_3x_long ?? 0;
+                const pctSpy = model.pct_1x ?? (model.pct_long - (model.pct_3x ?? model.pct_3x_long ?? 0));
+                const pctCash = model.pct_cash ?? 0;
                 return (
                   <tr key={model.model}>
                     <td className="font-medium text-white">{model.model}</td>
                     <td className="text-center">
-                      <div className="inline-block w-12 h-4 rounded" style={{
-                        background: `linear-gradient(to right, #00c853 ${model.pct_3x_long}%, #1a1a1a ${model.pct_3x_long}%)`,
+                      <div className="inline-block w-12 h-3 rounded" style={{
+                        background: `linear-gradient(to right, #00c853 ${pctUpro}%, #1a1a1a ${pctUpro}%)`,
                       }} />
-                      <span className="ml-2 text-xs text-[#a3a3a3]">{model.pct_3x_long.toFixed(0)}%</span>
+                      <span className="ml-1 text-xs text-[#a3a3a3]">{pctUpro.toFixed(0)}%</span>
                     </td>
                     <td className="text-center">
-                      <div className="inline-block w-12 h-4 rounded" style={{
-                        background: `linear-gradient(to right, #22c55e ${model.pct_long}%, #1a1a1a ${model.pct_long}%)`,
+                      <div className="inline-block w-12 h-3 rounded" style={{
+                        background: `linear-gradient(to right, #22d3ee ${pctSpy}%, #1a1a1a ${pctSpy}%)`,
                       }} />
-                      <span className="ml-2 text-xs text-[#a3a3a3]">{model.pct_long.toFixed(0)}%</span>
+                      <span className="ml-1 text-xs text-[#a3a3a3]">{pctSpy.toFixed(0)}%</span>
                     </td>
                     <td className="text-center">
-                      <div className="inline-block w-12 h-4 rounded" style={{
-                        background: `linear-gradient(to right, #525252 ${model.pct_cash}%, #1a1a1a ${model.pct_cash}%)`,
+                      <div className="inline-block w-12 h-3 rounded" style={{
+                        background: `linear-gradient(to right, #525252 ${pctCash}%, #1a1a1a ${pctCash}%)`,
                       }} />
-                      <span className="ml-2 text-xs text-[#a3a3a3]">{model.pct_cash.toFixed(0)}%</span>
+                      <span className="ml-1 text-xs text-[#a3a3a3]">{pctCash.toFixed(0)}%</span>
                     </td>
-                    <td className="text-center">
-                      <div className="inline-block w-12 h-4 rounded" style={{
-                        background: `linear-gradient(to right, #f97316 ${model.pct_short}%, #1a1a1a ${model.pct_short}%)`,
-                      }} />
-                      <span className="ml-2 text-xs text-[#a3a3a3]">{model.pct_short.toFixed(0)}%</span>
+                    <td className="text-right font-mono text-[#a3a3a3]">
+                      ${(costs?.trading ?? 0).toFixed(0)}
                     </td>
-                    <td className="text-center">
-                      <div className="inline-block w-12 h-4 rounded" style={{
-                        background: `linear-gradient(to right, #c41e3a ${model.pct_3x_short}%, #1a1a1a ${model.pct_3x_short}%)`,
-                      }} />
-                      <span className="ml-2 text-xs text-[#a3a3a3]">{model.pct_3x_short.toFixed(0)}%</span>
+                    <td className="text-right font-mono text-[#a3a3a3]">
+                      ${(costs?.expense ?? 0).toFixed(0)}
                     </td>
-                    <td className="text-right font-mono text-[#f59e0b]">
-                      -${summary.totalTxCosts.toFixed(0)}
+                    <td className="text-right font-mono text-[#a3a3a3]">
+                      ${(costs?.volDrag ?? 0).toFixed(0)}
                     </td>
-                    <td className="text-right text-xs text-[#525252]">
-                      L:{model.optimal_params.q_long_extreme}/{model.optimal_params.q_long_moderate}
-                      S:{model.optimal_params.q_short_extreme}/{model.optimal_params.q_short_moderate}
+                    <td className="text-right font-mono text-[#f59e0b] font-semibold">
+                      -${(costs?.total ?? 0).toFixed(0)}
                     </td>
                   </tr>
                 );

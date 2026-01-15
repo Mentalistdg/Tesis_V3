@@ -1,0 +1,57 @@
+# =============================================================================
+# REQUIREMENTS.TXT - Dependencias del Proyecto
+# =============================================================================
+#
+# Instalar con: pip install -r requirements.txt
+#
+# NOTA: Se recomienda usar un entorno virtual:
+#   python -m venv venv
+#   venv\Scripts\activate     (Windows)
+#   source venv/bin/activate  (Linux/Mac)
+#   pip install -r requirements.txt
+#
+# =============================================================================
+
+# Core Data Science
+pandas>=1.5.0
+numpy>=1.21.0
+scipy>=1.9.0
+
+# Machine Learning - Clasico
+scikit-learn>=1.0.0
+
+# Gradient Boosting
+xgboost>=1.7.0
+lightgbm>=3.3.0
+catboost>=1.1.0
+
+# Deep Learning - PyTorch
+torch>=2.0.0
+
+# Time Series - Darts (incluye Prophet, N-BEATS, TFT, etc.)
+darts>=0.24.0
+
+# GARCH Models
+arch>=5.3.0
+
+# Utilidades
+joblib>=1.2.0
+tqdm>=4.64.0
+
+# =============================================================================
+# NOTAS:
+# =============================================================================
+#
+# 1. PyTorch: Si tiene GPU NVIDIA, puede instalar la version CUDA:
+#    pip install torch --index-url https://download.pytorch.org/whl/cu118
+#
+# 2. Darts incluye automaticamente:
+#    - prophet (Facebook Prophet)
+#    - pytorch-lightning
+#    - tensorboard
+#
+# 3. Tiempo de instalacion estimado: 5-10 minutos
+#
+# 4. Espacio en disco requerido: ~3-5 GB (principalmente PyTorch)
+#
+# =============================================================================

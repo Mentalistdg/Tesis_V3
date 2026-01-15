@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 """
 ================================================================================
-TRAIN_MODELS.PY - Entrenamiento de Modelos con Mejores Practicas Hedge Fund
+TRAIN_MODELS.PY - Entrenamiento con Sistema de Checkpoints
 ================================================================================
 
-Este script entrena 19 modelos de ML/DL y guarda los artefactos necesarios
-para evaluacion posterior de estrategias de trading.
+Este script entrena 23 modelos de ML/DL y guarda los artefactos usando un
+sistema de checkpoints con sobrescritura automatica para optimizar memoria
+y espacio en disco.
+
+CHECKPOINT SYSTEM:
+- Cada modelo se guarda individualmente despues de entrenar
+- Memoria se libera inmediatamente despues de guardar (gc.collect)
+- trained_artifacts.pkl solo contiene paths + predicciones (ligero)
+- Modelos disponibles para reload individual si es necesario
 
 ANTI-LEAKAGE MEASURES:
 1. Split temporal estricto (sin shuffle)
@@ -14,15 +21,20 @@ ANTI-LEAKAGE MEASURES:
 4. Validacion de no-solapamiento temporal
 5. Forward fill only para imputacion (no backward fill)
 
-MODELOS (19 total):
+MODELOS (23 total):
 - sklearn (8): Ridge, Lasso, ElasticNet, RandomForest, GradientBoosting,
                XGBoost, LightGBM, CatBoost
 - Darts Classic (4): AutoARIMA, AutoETS, AutoTheta, SeasonalNaive
 - Darts ML (2): Prophet, GARCH
 - Darts DL (5): DLinear, N-BEATS, N-HiTS, TCN, TFT
+- PyTorch Custom (4): CNN-LSTM, LSTM+Attention, Bi-LSTM, Bi-GRU
 
 OUTPUT:
-- models/trained_artifacts.pkl: Modelos entrenados + predicciones + metadata
+- models/trained_artifacts.pkl: Metadata + paths + predicciones (ligero)
+- models/checkpoints/sklearn/*.joblib: Modelos sklearn/boosting
+- models/checkpoints/darts/*/: Modelos Darts DL
+- models/checkpoints/pytorch/*.pt: Modelos PyTorch custom (CNN-LSTM, Attention, Bi-LSTM, Bi-GRU)
+- models/checkpoints/preprocessors.joblib: Scaler + Imputer
 
 USAGE:
     python scripts/train_models.py
@@ -38,7 +50,10 @@ import os
 import json
 import logging
 import pickle
+import gc
+import shutil
 from datetime import datetime
+from pathlib import Path
 
 # =============================================================================
 # SUPRIMIR WARNINGS
@@ -55,6 +70,13 @@ os.environ['DARTS_DISABLE_PLOTLY'] = '1'
 
 # Suprimir logging de cmdstanpy (usado por Prophet)
 logging.getLogger("cmdstanpy").setLevel(logging.ERROR)
+
+# =============================================================================
+# SEMILLA GLOBAL PARA REPRODUCIBILIDAD
+# =============================================================================
+GLOBAL_SEED = 42
+np.random.seed(GLOBAL_SEED)
+print(f"Semilla global de reproducibilidad establecida: {GLOBAL_SEED}")
 
 # =============================================================================
 # IMPORTS SKLEARN
@@ -161,6 +183,25 @@ if DARTS_AVAILABLE:
     except ImportError:
         DLINEAR_AVAILABLE = False
 
+    # RNN Model (NO USADO - bidirectional no soportado en Darts RNNModel)
+    # Bi-LSTM y Bi-GRU se implementan como PyTorch custom en PASO 6B
+    try:
+        from darts.models import RNNModel
+        RNN_AVAILABLE = True
+    except ImportError:
+        RNN_AVAILABLE = False
+
+# =============================================================================
+# IMPORTS PYTORCH (para modelos custom: CNN-LSTM, Attention)
+# =============================================================================
+try:
+    import torch
+    import torch.nn as nn
+    from torch.utils.data import DataLoader, TensorDataset
+    PYTORCH_AVAILABLE = True
+except ImportError:
+    PYTORCH_AVAILABLE = False
+
 # =============================================================================
 # IMPORTS GARCH (arch library)
 # =============================================================================
@@ -200,6 +241,118 @@ CONFIG = {
     'batch_size': 32,
 }
 
+# =============================================================================
+# CHECKPOINT CONFIGURATION
+# =============================================================================
+CHECKPOINT_DIR = os.path.join(OUTPUT_DIR, "checkpoints")
+CHECKPOINT_SKLEARN_DIR = os.path.join(CHECKPOINT_DIR, "sklearn")
+CHECKPOINT_DARTS_DIR = os.path.join(CHECKPOINT_DIR, "darts")
+CHECKPOINT_PYTORCH_DIR = os.path.join(CHECKPOINT_DIR, "pytorch")
+
+# =============================================================================
+# CHECKPOINT HELPER FUNCTIONS
+# =============================================================================
+
+def setup_checkpoint_dirs(clean_existing: bool = True):
+    """
+    Configura los directorios de checkpoints.
+    Si clean_existing=True, elimina checkpoints anteriores para evitar inconsistencias.
+    """
+    dirs = [CHECKPOINT_DIR, CHECKPOINT_SKLEARN_DIR, CHECKPOINT_DARTS_DIR, CHECKPOINT_PYTORCH_DIR]
+
+    if clean_existing and os.path.exists(CHECKPOINT_DIR):
+        print(f"  Limpiando checkpoints anteriores: {CHECKPOINT_DIR}")
+        shutil.rmtree(CHECKPOINT_DIR)
+
+    for d in dirs:
+        os.makedirs(d, exist_ok=True)
+
+    print(f"  Directorios de checkpoint creados:")
+    print(f"    - sklearn:  {CHECKPOINT_SKLEARN_DIR}")
+    print(f"    - darts:    {CHECKPOINT_DARTS_DIR}")
+    print(f"    - pytorch:  {CHECKPOINT_PYTORCH_DIR}")
+
+
+def save_sklearn_model(model, model_name: str) -> str:
+    """
+    Guarda un modelo sklearn/boosting usando joblib.
+    Retorna la ruta relativa al archivo guardado.
+    """
+    filename = f"{model_name}.joblib"
+    filepath = os.path.join(CHECKPOINT_SKLEARN_DIR, filename)
+
+    # Sobrescribir si existe
+    joblib.dump(model, filepath)
+
+    # Retornar ruta relativa desde models/
+    return os.path.join("checkpoints", "sklearn", filename)
+
+
+def save_darts_model(model, model_name: str) -> str:
+    """
+    Guarda un modelo Darts usando model.save().
+    Retorna la ruta relativa al archivo guardado.
+    """
+    # Darts guarda en un directorio, no un archivo
+    model_dir = os.path.join(CHECKPOINT_DARTS_DIR, model_name)
+
+    # Eliminar si existe para sobrescribir
+    if os.path.exists(model_dir):
+        shutil.rmtree(model_dir)
+
+    model.save(model_dir)
+
+    return os.path.join("checkpoints", "darts", model_name)
+
+
+def save_pytorch_model(model, model_name: str, model_config: dict = None) -> str:
+    """
+    Guarda un modelo PyTorch usando torch.save().
+    Guarda tanto state_dict como config para poder reconstruir.
+    """
+    filename = f"{model_name}.pt"
+    filepath = os.path.join(CHECKPOINT_PYTORCH_DIR, filename)
+
+    save_dict = {
+        'state_dict': model.state_dict(),
+        'config': model_config or {}
+    }
+
+    torch.save(save_dict, filepath)
+
+    return os.path.join("checkpoints", "pytorch", filename)
+
+
+def save_preprocessors(scaler, imputer, feature_cols: list) -> str:
+    """
+    Guarda los preprocesadores (scaler, imputer, feature_cols) en un archivo separado.
+    Esto es crucial para poder usar los modelos en produccion.
+    """
+    filepath = os.path.join(CHECKPOINT_DIR, "preprocessors.joblib")
+
+    preprocessors = {
+        'scaler': scaler,
+        'imputer': imputer,
+        'feature_cols': feature_cols
+    }
+
+    joblib.dump(preprocessors, filepath)
+
+    return os.path.join("checkpoints", "preprocessors.joblib")
+
+
+def free_memory(obj, obj_name: str = "object"):
+    """
+    Libera memoria eliminando el objeto y forzando garbage collection.
+    """
+    del obj
+    gc.collect()
+
+    # Si PyTorch esta disponible, limpiar cache de CUDA
+    if PYTORCH_AVAILABLE and torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
 print("="*80)
 print("TRAIN_MODELS.PY - Entrenamiento con Mejores Practicas Hedge Fund")
 print("="*80)
@@ -229,6 +382,7 @@ if DARTS_AVAILABLE:
     print(f"  - TFT: {'OK' if TFT_AVAILABLE else 'NO'}")
     print(f"  - DLinear: {'OK' if DLINEAR_AVAILABLE else 'NO'}")
 print(f"  GARCH (arch): {'OK' if GARCH_AVAILABLE else 'NO'}")
+print(f"  PyTorch (CNN-LSTM, Attention, Bi-LSTM, Bi-GRU): {'OK' if PYTORCH_AVAILABLE else 'NO'}")
 
 # =============================================================================
 # FUNCIONES AUXILIARES
@@ -559,6 +713,17 @@ artifacts = {
 }
 
 # =============================================================================
+# CONFIGURAR DIRECTORIOS DE CHECKPOINTS
+# =============================================================================
+print("\n" + "="*80)
+print("CONFIGURACION DE CHECKPOINTS")
+print("="*80)
+setup_checkpoint_dirs(clean_existing=True)
+
+# Variable para trackear preprocessors guardados (se guardan una vez con sklearn)
+_preprocessors_saved = False
+
+# =============================================================================
 # PASO 3: PREPARAR DATOS PARA DARTS
 # =============================================================================
 if DARTS_AVAILABLE:
@@ -664,12 +829,15 @@ sklearn_configs = {
         'params': {'regressor__alpha': [0.01, 0.1, 1, 10, 100]}
     },
     'Lasso': {
-        'model': Lasso(random_state=CONFIG['random_state'], max_iter=2000),
-        'params': {'regressor__alpha': [0.0001, 0.001, 0.01, 0.1]}
+        'model': Lasso(random_state=CONFIG['random_state'], max_iter=5000),
+        # Alpha pequeño para datos financieros con retornos ~0.001
+        # Valores grandes (>0.001) causan que todos los coeficientes sean cero
+        'params': {'regressor__alpha': [1e-7, 1e-6, 1e-5, 1e-4, 1e-3]}
     },
     'ElasticNet': {
-        'model': ElasticNet(random_state=CONFIG['random_state'], max_iter=2000),
-        'params': {'regressor__alpha': [0.001, 0.01, 0.1], 'regressor__l1_ratio': [0.3, 0.5, 0.7]}
+        'model': ElasticNet(random_state=CONFIG['random_state'], max_iter=5000),
+        # Alpha pequeño para datos financieros con retornos ~0.001
+        'params': {'regressor__alpha': [1e-7, 1e-6, 1e-5, 1e-4, 1e-3], 'regressor__l1_ratio': [0.3, 0.5, 0.7, 0.9]}
     },
     'RandomForest': {
         'model': RandomForestRegressor(random_state=CONFIG['random_state'], n_jobs=-1),
@@ -725,17 +893,25 @@ for name, config in sklearn_configs.items():
 
         training_time = time.time() - start_time
 
-        # Guardar artefactos
+        # === CHECKPOINT: Guardar modelo a disco ===
+        model_path = save_sklearn_model(best_model, name)
+        print(f"    [CHECKPOINT] Guardado: {model_path}")
+
+        # Guardar artefactos (solo path, no modelo)
         artifacts['models'][name] = {
-            'model': best_model,
-            'train_predictions': train_predictions,
-            'test_predictions': test_predictions,
+            'model_path': model_path,  # Path en lugar de objeto
+            'train_predictions': train_predictions.tolist(),  # Convertir a lista para serialización
+            'test_predictions': test_predictions.tolist(),
             'best_params': grid_search.best_params_,
             'cv_score': -grid_search.best_score_,  # MSE
             'metrics': metrics,
             'training_time': training_time,
             'model_type': 'sklearn',
         }
+
+        # === LIBERAR MEMORIA ===
+        del best_model, grid_search
+        gc.collect()
 
         print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | "
               f"R2: {metrics['r2']:.4f} | Time: {training_time:.1f}s")
@@ -776,17 +952,31 @@ if CATBOOST_AVAILABLE:
         metrics = evaluate_basic_metrics(y_test.values, test_predictions)
         training_time = time.time() - start_time
 
-        # Guardar artefactos
+        # === CHECKPOINT: Guardar modelo y preprocessors a disco ===
+        model_path = save_sklearn_model(model, 'CatBoost')
+        print(f"    [CHECKPOINT] Guardado: {model_path}")
+
+        # Guardar preprocessors (solo una vez, con CatBoost que los usa)
+        if not _preprocessors_saved:
+            preprocessors_path = save_preprocessors(scaler, imputer, feature_cols)
+            print(f"    [CHECKPOINT] Preprocessors guardados: {preprocessors_path}")
+            artifacts['metadata']['preprocessors_path'] = preprocessors_path
+            _preprocessors_saved = True
+
+        # Guardar artefactos (solo path, no modelo)
         artifacts['models']['CatBoost'] = {
-            'model': model,
-            'preprocessor': {'imputer': imputer, 'scaler': scaler},
-            'train_predictions': train_predictions,
-            'test_predictions': test_predictions,
+            'model_path': model_path,
+            'train_predictions': train_predictions.tolist(),
+            'test_predictions': test_predictions.tolist(),
             'best_params': {'iterations': 200, 'learning_rate': 0.05, 'depth': 6},
             'metrics': metrics,
             'training_time': training_time,
             'model_type': 'sklearn',
         }
+
+        # === LIBERAR MEMORIA ===
+        del model
+        gc.collect()
 
         print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | "
               f"R2: {metrics['r2']:.4f} | Time: {training_time:.1f}s")
@@ -832,15 +1022,20 @@ if DARTS_AVAILABLE:
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
             training_time = time.time() - start_time
 
+            # Modelos clasicos no se guardan (se re-entrenan para nuevas predicciones)
             artifacts['models']['AutoARIMA'] = {
-                'model': None,  # No guardar modelo Darts
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
+                'model_path': None,  # Modelos clasicos no se persisten
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
                 'best_params': 'auto',
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_classic',
             }
+
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
 
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
@@ -866,14 +1061,18 @@ if DARTS_AVAILABLE:
             training_time = time.time() - start_time
 
             artifacts['models']['ExponentialSmoothing'] = {
-                'model': None,
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
+                'model_path': None,
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
                 'best_params': 'default',
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_classic',
             }
+
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
 
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
@@ -885,19 +1084,19 @@ if DARTS_AVAILABLE:
         start_time = time.time()
         try:
             # Shift data to positive for Theta compatibility
-            target_min = float(target_train_unscaled.min().values()[0])
+            target_min = float(target_train_unscaled.all_values().min())
             shift_value = abs(target_min) + 0.01 if target_min <= 0 else 0
 
             if shift_value > 0:
-                # Crear serie shifted
-                target_shifted_df = target_train_unscaled.pd_dataframe() + shift_value
+                # Crear serie shifted usando to_dataframe() (Darts >= 0.24)
+                target_shifted_df = target_train_unscaled.to_dataframe() + shift_value
                 target_shifted = TimeSeries.from_dataframe(
                     target_shifted_df.reset_index(), 'date', target_col, freq='B'
                 )
             else:
                 target_shifted = target_train_unscaled
 
-            model = Theta(season_mode='additive')
+            model = Theta()
             model.fit(target_shifted)
 
             test_pred_shifted = batch_predict_darts(model, n_test, show_warnings=False)
@@ -914,14 +1113,18 @@ if DARTS_AVAILABLE:
             training_time = time.time() - start_time
 
             artifacts['models']['Theta'] = {
-                'model': None,
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
-                'best_params': {'season_mode': 'additive', 'shift': shift_value},
+                'model_path': None,
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
+                'best_params': {'shift': shift_value},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_classic',
             }
+
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
 
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
@@ -947,14 +1150,18 @@ if DARTS_AVAILABLE:
             training_time = time.time() - start_time
 
             artifacts['models']['Prophet'] = {
-                'model': None,
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
+                'model_path': None,
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
                 'best_params': 'default',
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_classic',
             }
+
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
 
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
@@ -981,14 +1188,18 @@ if DARTS_AVAILABLE:
             training_time = time.time() - start_time
 
             artifacts['models']['SeasonalNaive'] = {
-                'model': None,
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
+                'model_path': None,
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
                 'best_params': {'K': 5},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_classic',
             }
+
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
 
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
@@ -1039,14 +1250,18 @@ if GARCH_AVAILABLE:
         training_time = time.time() - start_time
 
         artifacts['models']['GARCH'] = {
-            'model': None,
-            'train_predictions': train_predictions,
-            'test_predictions': test_predictions,
+            'model_path': None,  # GARCH se re-entrena para nuevas predicciones
+            'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+            'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
             'best_params': {'p': 1, 'q': 1, 'mean': 'AR', 'lags': 1},
             'metrics': metrics,
             'training_time': training_time,
             'model_type': 'garch',
         }
+
+        # === LIBERAR MEMORIA ===
+        del model_fit
+        gc.collect()
 
         print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
 
@@ -1110,15 +1325,23 @@ if DARTS_AVAILABLE:
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
             training_time = time.time() - start_time
 
+            # === CHECKPOINT: Guardar modelo Darts a disco ===
+            model_path = save_darts_model(model, 'DLinear')
+            print(f"    [CHECKPOINT] Guardado: {model_path}")
+
             artifacts['models']['DLinear'] = {
-                'model': None,
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
+                'model_path': model_path,
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
                 'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
             }
+
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
 
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
@@ -1159,15 +1382,23 @@ if DARTS_AVAILABLE:
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
             training_time = time.time() - start_time
 
+            # === CHECKPOINT: Guardar modelo Darts a disco ===
+            model_path = save_darts_model(model, 'NBEATS')
+            print(f"    [CHECKPOINT] Guardado: {model_path}")
+
             artifacts['models']['NBEATS'] = {
-                'model': None,
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
+                'model_path': model_path,
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
                 'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
             }
+
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
 
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
@@ -1208,15 +1439,23 @@ if DARTS_AVAILABLE:
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
             training_time = time.time() - start_time
 
+            # === CHECKPOINT: Guardar modelo Darts a disco ===
+            model_path = save_darts_model(model, 'NHiTS')
+            print(f"    [CHECKPOINT] Guardado: {model_path}")
+
             artifacts['models']['NHiTS'] = {
-                'model': None,
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
+                'model_path': model_path,
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
                 'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
             }
+
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
 
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
@@ -1257,15 +1496,23 @@ if DARTS_AVAILABLE:
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
             training_time = time.time() - start_time
 
+            # === CHECKPOINT: Guardar modelo Darts a disco ===
+            model_path = save_darts_model(model, 'TCN')
+            print(f"    [CHECKPOINT] Guardado: {model_path}")
+
             artifacts['models']['TCN'] = {
-                'model': None,
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
+                'model_path': model_path,
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
                 'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
             }
+
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
 
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
@@ -1307,44 +1554,486 @@ if DARTS_AVAILABLE:
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
             training_time = time.time() - start_time
 
+            # === CHECKPOINT: Guardar modelo Darts a disco ===
+            model_path = save_darts_model(model, 'TFT')
+            print(f"    [CHECKPOINT] Guardado: {model_path}")
+
             artifacts['models']['TFT'] = {
-                'model': None,
-                'train_predictions': train_predictions,
-                'test_predictions': test_predictions,
+                'model_path': model_path,
+                'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
+                'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
                 'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
             }
 
+            # === LIBERAR MEMORIA ===
+            del model
+            gc.collect()
+
             print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
         except Exception as e:
             print(f"    [ERROR] {str(e)}")
 
+    # =========================================================================
+    # NOTA: Bi-LSTM y Bi-GRU se implementan como PyTorch custom en PASO 6B
+    # (Darts RNNModel no soporta bidirectional=True)
+    # =========================================================================
+
 # =============================================================================
-# PASO 7: GUARDAR ARTEFACTOS
+# PASO 6B: MODELOS CUSTOM PYTORCH (CNN-LSTM, LSTM+Attention, Bi-LSTM, Bi-GRU)
+# =============================================================================
+if PYTORCH_AVAILABLE:
+    print("\n" + "="*80)
+    print("PASO 6B: Entrenar Modelos Custom PyTorch")
+    print("="*80)
+
+    # =========================================================================
+    # SEMILLAS PARA REPRODUCIBILIDAD EN PYTORCH
+    # =========================================================================
+    SEED = 42
+    torch.manual_seed(SEED)
+    np.random.seed(SEED)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(SEED)
+        torch.cuda.manual_seed_all(SEED)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+    print(f"  Semilla de reproducibilidad establecida: {SEED}")
+
+    # Preparar datos para PyTorch
+    def prepare_sequences_pytorch(X, y, lookback):
+        """Crear secuencias para modelos PyTorch."""
+        X_seq, y_seq = [], []
+        for i in range(lookback, len(X)):
+            X_seq.append(X[i-lookback:i])
+            y_seq.append(y[i])
+        return np.array(X_seq), np.array(y_seq)
+
+    # Usar features escalados
+    X_train_np = X_train_scaled
+    X_test_np = X_test_scaled
+    y_train_np = y_train.values
+    y_test_np = y_test.values
+
+    lookback = CONFIG['input_chunk_length']
+
+    # Preparar secuencias
+    X_train_seq, y_train_seq = prepare_sequences_pytorch(X_train_np, y_train_np, lookback)
+    X_test_seq, y_test_seq = prepare_sequences_pytorch(
+        np.vstack([X_train_np[-lookback:], X_test_np]),
+        np.concatenate([y_train_np[-lookback:], y_test_np]),
+        lookback
+    )
+
+    # Convertir a tensores
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"  Usando dispositivo: {device}")
+
+    X_train_tensor = torch.FloatTensor(X_train_seq).to(device)
+    y_train_tensor = torch.FloatTensor(y_train_seq).unsqueeze(1).to(device)
+    X_test_tensor = torch.FloatTensor(X_test_seq).to(device)
+
+    n_features = X_train_seq.shape[2]
+
+    # =========================================================================
+    # CNN-LSTM Hibrido
+    # =========================================================================
+    class CNNLSTM(nn.Module):
+        """Modelo hibrido CNN-LSTM para series temporales."""
+        def __init__(self, n_features, lookback, hidden_dim=64, n_filters=64):
+            super(CNNLSTM, self).__init__()
+            self.conv1 = nn.Conv1d(n_features, n_filters, kernel_size=3, padding=1)
+            self.conv2 = nn.Conv1d(n_filters, n_filters*2, kernel_size=3, padding=1)
+            self.pool = nn.MaxPool1d(2)
+            self.dropout = nn.Dropout(0.2)
+
+            # Calcular dimension despues de conv+pool
+            conv_out_len = lookback // 2  # Despues de un MaxPool1d(2)
+
+            self.lstm = nn.LSTM(
+                input_size=n_filters*2,
+                hidden_size=hidden_dim,
+                num_layers=2,
+                batch_first=True,
+                dropout=0.1,
+                bidirectional=False
+            )
+            self.fc = nn.Linear(hidden_dim, 1)
+
+        def forward(self, x):
+            # x: (batch, seq_len, features) -> (batch, features, seq_len) para Conv1d
+            x = x.permute(0, 2, 1)
+            x = torch.relu(self.conv1(x))
+            x = torch.relu(self.conv2(x))
+            x = self.pool(x)
+            x = self.dropout(x)
+            # (batch, channels, seq_len) -> (batch, seq_len, channels) para LSTM
+            x = x.permute(0, 2, 1)
+            lstm_out, _ = self.lstm(x)
+            # Tomar el ultimo output
+            out = self.fc(lstm_out[:, -1, :])
+            return out
+
+    print(f"\n  Entrenando: CNN-LSTM (Hibrido)")
+    start_time = time.time()
+    try:
+        model_cnnlstm = CNNLSTM(n_features, lookback, hidden_dim=64, n_filters=64).to(device)
+        criterion = nn.MSELoss()
+        optimizer = torch.optim.Adam(model_cnnlstm.parameters(), lr=0.001)
+
+        # Training loop
+        train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+        train_loader = DataLoader(train_dataset, batch_size=CONFIG['batch_size'], shuffle=False)
+
+        model_cnnlstm.train()
+        for epoch in range(CONFIG['n_epochs']):
+            epoch_loss = 0
+            for batch_X, batch_y in train_loader:
+                optimizer.zero_grad()
+                outputs = model_cnnlstm(batch_X)
+                loss = criterion(outputs, batch_y)
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+
+        # Predicciones
+        model_cnnlstm.eval()
+        with torch.no_grad():
+            test_predictions = model_cnnlstm(X_test_tensor).cpu().numpy().flatten()
+            train_predictions_cnnlstm = model_cnnlstm(X_train_tensor).cpu().numpy().flatten()
+
+        metrics = evaluate_basic_metrics(y_test_seq[:len(test_predictions)], test_predictions)
+        training_time = time.time() - start_time
+
+        # === CHECKPOINT: Guardar modelo PyTorch a disco ===
+        model_config = {'n_features': n_features, 'lookback': lookback, 'hidden_dim': 64, 'n_filters': 64}
+        model_path = save_pytorch_model(model_cnnlstm, 'CNN_LSTM', model_config)
+        print(f"    [CHECKPOINT] Guardado: {model_path}")
+
+        artifacts['models']['CNN_LSTM'] = {
+            'model_path': model_path,
+            'train_predictions': train_predictions_cnnlstm.tolist(),
+            'test_predictions': test_predictions.tolist(),
+            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 64, 'n_filters': 64},
+            'metrics': metrics,
+            'training_time': training_time,
+            'model_type': 'pytorch_hybrid',
+        }
+
+        # === LIBERAR MEMORIA ===
+        del model_cnnlstm
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
+    except Exception as e:
+        print(f"    [ERROR] {str(e)}")
+
+    # =========================================================================
+    # LSTM + Attention (Luong Style)
+    # =========================================================================
+    class LuongAttention(nn.Module):
+        """Mecanismo de atencion estilo Luong (dot product)."""
+        def __init__(self, hidden_dim):
+            super(LuongAttention, self).__init__()
+            self.hidden_dim = hidden_dim
+
+        def forward(self, lstm_output, final_hidden):
+            # lstm_output: (batch, seq_len, hidden_dim)
+            # final_hidden: (batch, hidden_dim)
+            # Score = dot product
+            final_hidden = final_hidden.unsqueeze(2)  # (batch, hidden_dim, 1)
+            attention_scores = torch.bmm(lstm_output, final_hidden).squeeze(2)  # (batch, seq_len)
+            attention_weights = torch.softmax(attention_scores, dim=1)  # (batch, seq_len)
+            # Context vector = weighted sum
+            context = torch.bmm(attention_weights.unsqueeze(1), lstm_output).squeeze(1)  # (batch, hidden_dim)
+            return context, attention_weights
+
+    class LSTMAttention(nn.Module):
+        """LSTM con mecanismo de atencion Luong."""
+        def __init__(self, n_features, hidden_dim=64):
+            super(LSTMAttention, self).__init__()
+            self.lstm = nn.LSTM(
+                input_size=n_features,
+                hidden_size=hidden_dim,
+                num_layers=2,
+                batch_first=True,
+                dropout=0.1,
+                bidirectional=True
+            )
+            self.attention = LuongAttention(hidden_dim * 2)  # *2 por bidirectional
+            self.fc = nn.Linear(hidden_dim * 2, 1)
+            self.dropout = nn.Dropout(0.2)
+
+        def forward(self, x):
+            # x: (batch, seq_len, features)
+            lstm_out, (h_n, c_n) = self.lstm(x)
+            # lstm_out: (batch, seq_len, hidden_dim*2)
+            # Concatenar las ultimas hidden states de ambas direcciones
+            final_hidden = torch.cat((h_n[-2,:,:], h_n[-1,:,:]), dim=1)  # (batch, hidden_dim*2)
+            context, attn_weights = self.attention(lstm_out, final_hidden)
+            context = self.dropout(context)
+            out = self.fc(context)
+            return out
+
+    print(f"\n  Entrenando: LSTM+Attention (Luong Style)")
+    start_time = time.time()
+    try:
+        model_attention = LSTMAttention(n_features, hidden_dim=64).to(device)
+        criterion = nn.MSELoss()
+        optimizer = torch.optim.Adam(model_attention.parameters(), lr=0.001)
+
+        # Training loop
+        model_attention.train()
+        for epoch in range(CONFIG['n_epochs']):
+            epoch_loss = 0
+            for batch_X, batch_y in train_loader:
+                optimizer.zero_grad()
+                outputs = model_attention(batch_X)
+                loss = criterion(outputs, batch_y)
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+
+        # Predicciones
+        model_attention.eval()
+        with torch.no_grad():
+            test_predictions = model_attention(X_test_tensor).cpu().numpy().flatten()
+            train_predictions_attn = model_attention(X_train_tensor).cpu().numpy().flatten()
+
+        metrics = evaluate_basic_metrics(y_test_seq[:len(test_predictions)], test_predictions)
+        training_time = time.time() - start_time
+
+        # === CHECKPOINT: Guardar modelo PyTorch a disco ===
+        model_config = {'n_features': n_features, 'hidden_dim': 64, 'attention': 'Luong'}
+        model_path = save_pytorch_model(model_attention, 'LSTM_Attention', model_config)
+        print(f"    [CHECKPOINT] Guardado: {model_path}")
+
+        artifacts['models']['LSTM_Attention'] = {
+            'model_path': model_path,
+            'train_predictions': train_predictions_attn.tolist(),
+            'test_predictions': test_predictions.tolist(),
+            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 64, 'attention': 'Luong'},
+            'metrics': metrics,
+            'training_time': training_time,
+            'model_type': 'pytorch_attention',
+        }
+
+        # === LIBERAR MEMORIA ===
+        del model_attention
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
+    except Exception as e:
+        print(f"    [ERROR] {str(e)}")
+
+    # =========================================================================
+    # Bi-LSTM (Bidirectional LSTM) - PyTorch Custom
+    # =========================================================================
+    class BiLSTM(nn.Module):
+        """Bidirectional LSTM para series temporales."""
+        def __init__(self, n_features, hidden_dim=64, n_layers=2, dropout=0.1):
+            super(BiLSTM, self).__init__()
+            self.lstm = nn.LSTM(
+                input_size=n_features,
+                hidden_size=hidden_dim,
+                num_layers=n_layers,
+                batch_first=True,
+                dropout=dropout if n_layers > 1 else 0,
+                bidirectional=True
+            )
+            self.fc = nn.Linear(hidden_dim * 2, 1)  # *2 por bidirectional
+            self.dropout = nn.Dropout(dropout)
+
+        def forward(self, x):
+            # x: (batch, seq_len, features)
+            lstm_out, (h_n, c_n) = self.lstm(x)
+            # Concatenar las ultimas hidden states de ambas direcciones
+            final_hidden = torch.cat((h_n[-2,:,:], h_n[-1,:,:]), dim=1)
+            out = self.dropout(final_hidden)
+            out = self.fc(out)
+            return out
+
+    print(f"\n  Entrenando: Bi-LSTM (Bidirectional LSTM)")
+    start_time = time.time()
+    try:
+        model_bilstm = BiLSTM(n_features, hidden_dim=64, n_layers=2, dropout=0.1).to(device)
+        criterion = nn.MSELoss()
+        optimizer = torch.optim.Adam(model_bilstm.parameters(), lr=0.001)
+
+        # Training loop
+        model_bilstm.train()
+        for epoch in range(CONFIG['n_epochs']):
+            epoch_loss = 0
+            for batch_X, batch_y in train_loader:
+                optimizer.zero_grad()
+                outputs = model_bilstm(batch_X)
+                loss = criterion(outputs, batch_y)
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+
+        # Predicciones
+        model_bilstm.eval()
+        with torch.no_grad():
+            test_predictions = model_bilstm(X_test_tensor).cpu().numpy().flatten()
+            train_predictions_bilstm = model_bilstm(X_train_tensor).cpu().numpy().flatten()
+
+        metrics = evaluate_basic_metrics(y_test_seq[:len(test_predictions)], test_predictions)
+        training_time = time.time() - start_time
+
+        # === CHECKPOINT: Guardar modelo PyTorch a disco ===
+        model_config = {'n_features': n_features, 'hidden_dim': 64, 'n_layers': 2, 'bidirectional': True}
+        model_path = save_pytorch_model(model_bilstm, 'BiLSTM', model_config)
+        print(f"    [CHECKPOINT] Guardado: {model_path}")
+
+        artifacts['models']['BiLSTM'] = {
+            'model_path': model_path,
+            'train_predictions': train_predictions_bilstm.tolist(),
+            'test_predictions': test_predictions.tolist(),
+            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 64, 'bidirectional': True},
+            'metrics': metrics,
+            'training_time': training_time,
+            'model_type': 'pytorch_bilstm',
+        }
+
+        # === LIBERAR MEMORIA ===
+        del model_bilstm
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
+    except Exception as e:
+        print(f"    [ERROR] {str(e)}")
+
+    # =========================================================================
+    # Bi-GRU (Bidirectional GRU) - PyTorch Custom
+    # =========================================================================
+    class BiGRU(nn.Module):
+        """Bidirectional GRU para series temporales."""
+        def __init__(self, n_features, hidden_dim=64, n_layers=2, dropout=0.1):
+            super(BiGRU, self).__init__()
+            self.gru = nn.GRU(
+                input_size=n_features,
+                hidden_size=hidden_dim,
+                num_layers=n_layers,
+                batch_first=True,
+                dropout=dropout if n_layers > 1 else 0,
+                bidirectional=True
+            )
+            self.fc = nn.Linear(hidden_dim * 2, 1)  # *2 por bidirectional
+            self.dropout = nn.Dropout(dropout)
+
+        def forward(self, x):
+            # x: (batch, seq_len, features)
+            gru_out, h_n = self.gru(x)
+            # Concatenar las ultimas hidden states de ambas direcciones
+            final_hidden = torch.cat((h_n[-2,:,:], h_n[-1,:,:]), dim=1)
+            out = self.dropout(final_hidden)
+            out = self.fc(out)
+            return out
+
+    print(f"\n  Entrenando: Bi-GRU (Bidirectional GRU)")
+    start_time = time.time()
+    try:
+        model_bigru = BiGRU(n_features, hidden_dim=64, n_layers=2, dropout=0.1).to(device)
+        criterion = nn.MSELoss()
+        optimizer = torch.optim.Adam(model_bigru.parameters(), lr=0.001)
+
+        # Training loop
+        model_bigru.train()
+        for epoch in range(CONFIG['n_epochs']):
+            epoch_loss = 0
+            for batch_X, batch_y in train_loader:
+                optimizer.zero_grad()
+                outputs = model_bigru(batch_X)
+                loss = criterion(outputs, batch_y)
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+
+        # Predicciones
+        model_bigru.eval()
+        with torch.no_grad():
+            test_predictions = model_bigru(X_test_tensor).cpu().numpy().flatten()
+            train_predictions_bigru = model_bigru(X_train_tensor).cpu().numpy().flatten()
+
+        metrics = evaluate_basic_metrics(y_test_seq[:len(test_predictions)], test_predictions)
+        training_time = time.time() - start_time
+
+        # === CHECKPOINT: Guardar modelo PyTorch a disco ===
+        model_config = {'n_features': n_features, 'hidden_dim': 64, 'n_layers': 2, 'bidirectional': True}
+        model_path = save_pytorch_model(model_bigru, 'BiGRU', model_config)
+        print(f"    [CHECKPOINT] Guardado: {model_path}")
+
+        artifacts['models']['BiGRU'] = {
+            'model_path': model_path,
+            'train_predictions': train_predictions_bigru.tolist(),
+            'test_predictions': test_predictions.tolist(),
+            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 64, 'bidirectional': True},
+            'metrics': metrics,
+            'training_time': training_time,
+            'model_type': 'pytorch_bigru',
+        }
+
+        # === LIBERAR MEMORIA ===
+        del model_bigru
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
+    except Exception as e:
+        print(f"    [ERROR] {str(e)}")
+
+# =============================================================================
+# PASO 7: GUARDAR ARTEFACTOS (Metadata + Paths)
 # =============================================================================
 print("\n" + "="*80)
-print("PASO 7: Guardar Artefactos")
+print("PASO 7: Guardar Artefactos (Checkpoint System)")
 print("="*80)
 
 output_path = os.path.join(OUTPUT_DIR, OUTPUT_FILE)
-print(f"  + Guardando en: {output_path}")
+print(f"  + Guardando metadata en: {output_path}")
 
-# Guardar con pickle
+# Guardar con pickle (ahora solo contiene metadata y paths, no modelos)
 with open(output_path, 'wb') as f:
     pickle.dump(artifacts, f)
 
-# Calcular tamano del archivo
+# Calcular tamano del archivo principal
 file_size_mb = os.path.getsize(output_path) / (1024 * 1024)
-print(f"  + Tamano del archivo: {file_size_mb:.2f} MB")
+print(f"  + Tamano de artifacts.pkl: {file_size_mb:.2f} MB")
+
+# Calcular tamano total de checkpoints
+def get_dir_size(path):
+    total = 0
+    if os.path.exists(path):
+        for dirpath, dirnames, filenames in os.walk(path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                total += os.path.getsize(fp)
+    return total
+
+checkpoints_size_mb = get_dir_size(CHECKPOINT_DIR) / (1024 * 1024)
+print(f"  + Tamano de checkpoints/: {checkpoints_size_mb:.2f} MB")
+print(f"  + Tamano TOTAL en disco: {file_size_mb + checkpoints_size_mb:.2f} MB")
 
 # Resumen de modelos guardados
 print(f"\n  + Modelos entrenados: {len(artifacts['models'])}")
+print(f"\n  CHECKPOINTS GUARDADOS:")
 for name, data in artifacts['models'].items():
     model_type = data.get('model_type', 'unknown')
-    has_model = data.get('model') is not None
-    print(f"    - {name}: {model_type} | modelo guardado: {'SI' if has_model else 'NO'}")
+    model_path = data.get('model_path', None)
+    if model_path:
+        print(f"    - {name}: {model_type} -> {model_path}")
+    else:
+        print(f"    - {name}: {model_type} (no persistido - se re-entrena)")
 
 # =============================================================================
 # PASO 8: RESUMEN FINAL

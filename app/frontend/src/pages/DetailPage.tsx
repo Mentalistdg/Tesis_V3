@@ -313,7 +313,8 @@ export default function DetailPage() {
     ...baseMetrics,
     isFiltered: false,
   };
-  const params = modelData.optimal_params;
+  // Backend LONG-ONLY uses 'params' field, not 'optimal_params'
+  const params = (modelData as any).params ?? modelData.optimal_params ?? { q_3x: 10, q_1x: 30 };
 
   // Calculate summary from trades (consistent with Trades page)
   const tradeSummary = modelData.trades && modelData.trades.length > 0
@@ -361,28 +362,24 @@ export default function DetailPage() {
         </div>
       </div>
 
-      {/* Optimal Parameters Card */}
+      {/* Optimal Parameters Card - LONG-ONLY */}
       <div className="card bg-gradient-to-r from-[#111111] to-[#1a1a1a] border-l-4 border-[#c41e3a]">
         <div className="flex items-center gap-2 mb-4">
           <Settings className="w-5 h-5 text-[#c41e3a]" />
-          <h3 className="font-medium text-white">Optimal Position Parameters</h3>
+          <h3 className="font-medium text-white">Optimal Position Parameters (Long-Only)</h3>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="text-center p-3 bg-[#0a0a0a] rounded">
-            <div className="text-xs text-[#525252] mb-1">Long Extreme (3x)</div>
-            <div className="text-2xl font-bold text-[#00c853]">Top {params.q_long_extreme}%</div>
+            <div className="text-xs text-[#525252] mb-1">3x Long (UPRO)</div>
+            <div className="text-2xl font-bold text-[#00c853]">Top {params.q_3x ?? params.q_long_extreme ?? 10}%</div>
           </div>
           <div className="text-center p-3 bg-[#0a0a0a] rounded">
-            <div className="text-xs text-[#525252] mb-1">Long Moderate (1x)</div>
-            <div className="text-2xl font-bold text-[#22c55e]">Top {params.q_long_moderate}%</div>
+            <div className="text-xs text-[#525252] mb-1">1x Long (SPY)</div>
+            <div className="text-2xl font-bold text-[#22c55e]">Top {params.q_1x ?? params.q_long_moderate ?? 30}%</div>
           </div>
           <div className="text-center p-3 bg-[#0a0a0a] rounded">
-            <div className="text-xs text-[#525252] mb-1">Short Moderate (-1x)</div>
-            <div className="text-2xl font-bold text-[#f97316]">Bottom {params.q_short_moderate}%</div>
-          </div>
-          <div className="text-center p-3 bg-[#0a0a0a] rounded">
-            <div className="text-xs text-[#525252] mb-1">Short Extreme (-3x)</div>
-            <div className="text-2xl font-bold text-[#c41e3a]">Bottom {params.q_short_extreme}%</div>
+            <div className="text-xs text-[#525252] mb-1">Cash</div>
+            <div className="text-2xl font-bold text-[#525252]">Remaining</div>
           </div>
         </div>
       </div>
@@ -485,7 +482,7 @@ export default function DetailPage() {
             {(tradeSummary.netReturn * 100).toFixed(0)}%
           </div>
           <div className="text-xs text-[#f59e0b] mt-1">
-            Tx: -${tradeSummary.totalTxCosts.toFixed(0)}
+            Tx: -${(tradeSummary.totalTxCosts ?? 0).toFixed(0)}
           </div>
         </div>
 
@@ -495,21 +492,25 @@ export default function DetailPage() {
             <span className="metric-label">Sharpe Ratio</span>
           </div>
           <div className="metric-value text-white">{metrics.sharpe.toFixed(2)}</div>
-          <div className="text-xs text-[#525252] mt-1">
-            [{metrics.sharpe_ci_lower.toFixed(2)}, {metrics.sharpe_ci_upper.toFixed(2)}]
-          </div>
+          {metrics.sharpe_ci_lower !== undefined && metrics.sharpe_ci_upper !== undefined && (
+            <div className="text-xs text-[#525252] mt-1">
+              [{metrics.sharpe_ci_lower.toFixed(2)}, {metrics.sharpe_ci_upper.toFixed(2)}]
+            </div>
+          )}
         </div>
 
-        <div className="metric-card">
-          <div className="metric-label">P(Sharpe &gt; 0)</div>
-          <div className={clsx(
-            "metric-value",
-            metrics.prob_sharpe_positive >= 0.99 ? "text-[#00c853]" :
-            metrics.prob_sharpe_positive >= 0.95 ? "text-white" : "text-[#737373]"
-          )}>
-            {(metrics.prob_sharpe_positive * 100).toFixed(1)}%
+        {metrics.prob_sharpe_positive !== undefined && (
+          <div className="metric-card">
+            <div className="metric-label">P(Sharpe &gt; 0)</div>
+            <div className={clsx(
+              "metric-value",
+              metrics.prob_sharpe_positive >= 0.99 ? "text-[#00c853]" :
+              metrics.prob_sharpe_positive >= 0.95 ? "text-white" : "text-[#737373]"
+            )}>
+              {(metrics.prob_sharpe_positive * 100).toFixed(1)}%
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="metric-card">
           <div className="metric-label">Sortino</div>
@@ -534,19 +535,23 @@ export default function DetailPage() {
 
       {/* Secondary Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <div className="metric-card">
-          <div className="metric-label">Win Rate</div>
-          <div className="metric-value text-[#a3a3a3]">
-            {(metrics.win_rate * 100).toFixed(1)}%
+        {metrics.win_rate !== undefined && (
+          <div className="metric-card">
+            <div className="metric-label">Win Rate</div>
+            <div className="metric-value text-[#a3a3a3]">
+              {(metrics.win_rate * 100).toFixed(1)}%
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="metric-card">
-          <div className="metric-label">Dir. Accuracy</div>
-          <div className="metric-value text-[#a3a3a3]">
-            {(metrics.dir_accuracy * 100).toFixed(1)}%
+        {metrics.dir_accuracy !== undefined && (
+          <div className="metric-card">
+            <div className="metric-label">Dir. Accuracy</div>
+            <div className="metric-value text-[#a3a3a3]">
+              {(metrics.dir_accuracy * 100).toFixed(1)}%
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="metric-card">
           <div className="metric-label">Total Trades</div>
@@ -556,62 +561,56 @@ export default function DetailPage() {
         <div className="metric-card">
           <div className="metric-label">Trans. Costs</div>
           <div className="metric-value text-[#f59e0b]">
-            -${tradeSummary.totalTxCosts.toFixed(0)}
+            -${(tradeSummary.totalTxCosts ?? 0).toFixed(0)}
           </div>
         </div>
 
-        <div className="metric-card">
-          <div className="metric-label">Original Sharpe</div>
-          <div className="metric-value text-[#525252]">
-            {metrics.orig_sharpe.toFixed(2)}
+        {metrics.orig_sharpe !== undefined && (
+          <div className="metric-card">
+            <div className="metric-label">Original Sharpe</div>
+            <div className="metric-value text-[#525252]">
+              {metrics.orig_sharpe.toFixed(2)}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="metric-card">
-          <div className="metric-label">Sharpe Improvement</div>
-          <div className={clsx(
-            "metric-value",
-            metrics.sharpe_improvement > 0 ? "text-[#00c853]" : "text-[#c41e3a]"
-          )}>
-            {metrics.sharpe_improvement > 0 ? '+' : ''}{metrics.sharpe_improvement.toFixed(2)}
+        {metrics.sharpe_improvement !== undefined && (
+          <div className="metric-card">
+            <div className="metric-label">Sharpe Improvement</div>
+            <div className={clsx(
+              "metric-value",
+              metrics.sharpe_improvement > 0 ? "text-[#00c853]" : "text-[#c41e3a]"
+            )}>
+              {metrics.sharpe_improvement > 0 ? '+' : ''}{metrics.sharpe_improvement.toFixed(2)}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Position Distribution */}
+      {/* Position Distribution - LONG-ONLY */}
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
           <BarChart2 className="w-5 h-5 text-[#737373]" />
-          <h3 className="font-medium text-white">Position Distribution</h3>
+          <h3 className="font-medium text-white">Position Distribution (Long-Only)</h3>
         </div>
         <div className="flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-[#00c853]" />
-            <span className="text-sm text-[#a3a3a3]">3x Long: {metrics.pct_3x_long.toFixed(1)}%</span>
+            <span className="text-sm text-[#a3a3a3]">3x UPRO: {(metrics.pct_3x_long ?? metrics.pct_3x ?? 0).toFixed(1)}%</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-[#22c55e]" />
-            <span className="text-sm text-[#a3a3a3]">1x Long: {metrics.pct_long.toFixed(1)}%</span>
+            <div className="w-4 h-4 rounded bg-[#22d3ee]" />
+            <span className="text-sm text-[#a3a3a3]">1x SPY: {(metrics.pct_1x ?? ((metrics.pct_long ?? 0) - (metrics.pct_3x_long ?? 0))).toFixed(1)}%</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-[#525252]" />
-            <span className="text-sm text-[#a3a3a3]">Cash: {metrics.pct_cash.toFixed(1)}%</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-[#f97316]" />
-            <span className="text-sm text-[#a3a3a3]">1x Short: {metrics.pct_short.toFixed(1)}%</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-[#c41e3a]" />
-            <span className="text-sm text-[#a3a3a3]">3x Short: {metrics.pct_3x_short.toFixed(1)}%</span>
+            <span className="text-sm text-[#a3a3a3]">Cash: {(metrics.pct_cash ?? 0).toFixed(1)}%</span>
           </div>
         </div>
         <div className="mt-4 h-8 rounded overflow-hidden flex">
-          <div style={{ width: `${metrics.pct_3x_long}%` }} className="bg-[#00c853]" title="3x Long" />
-          <div style={{ width: `${metrics.pct_long}%` }} className="bg-[#22c55e]" title="1x Long" />
-          <div style={{ width: `${metrics.pct_cash}%` }} className="bg-[#525252]" title="Cash" />
-          <div style={{ width: `${metrics.pct_short}%` }} className="bg-[#f97316]" title="1x Short" />
-          <div style={{ width: `${metrics.pct_3x_short}%` }} className="bg-[#c41e3a]" title="3x Short" />
+          <div style={{ width: `${metrics.pct_3x_long ?? metrics.pct_3x ?? 0}%` }} className="bg-[#00c853]" title="3x UPRO" />
+          <div style={{ width: `${metrics.pct_1x ?? ((metrics.pct_long ?? 0) - (metrics.pct_3x_long ?? 0))}%` }} className="bg-[#22d3ee]" title="1x SPY" />
+          <div style={{ width: `${metrics.pct_cash ?? 0}%` }} className="bg-[#525252]" title="Cash" />
         </div>
       </div>
 
@@ -640,22 +639,18 @@ export default function DetailPage() {
           <div ref={equityChartRef} className="w-full" />
         </div>
 
-        {/* Position Chart */}
+        {/* Position Chart - LONG-ONLY */}
         <div className="mb-2">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-white">Position Size</span>
+            <span className="text-sm font-medium text-white">Position Size (Long-Only: 0, +1, +3)</span>
             <div className="flex gap-4 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded bg-[#00c853]" />
-                <span className="text-[#a3a3a3]">Long</span>
+                <span className="text-[#a3a3a3]">Long (+1x, +3x)</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded bg-[#525252]" />
-                <span className="text-[#a3a3a3]">Cash</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-[#c41e3a]" />
-                <span className="text-[#a3a3a3]">Short</span>
+                <span className="text-[#a3a3a3]">Cash (0)</span>
               </div>
             </div>
           </div>

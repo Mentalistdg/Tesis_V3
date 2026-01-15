@@ -50,23 +50,29 @@ export interface TradeWithCapital {
 
 // Calculate trades with capital (trade-by-trade with compound interest)
 // This is THE SOURCE OF TRUTH for all calculations
+// NOTE: trade.total_return from backend ALREADY includes transaction costs (net return)
+// So we DON'T apply tx costs again - just use the returns directly
+// IMPORTANT: Include ALL trades (including cash periods) to get correct compounding
 export function calculateTradesWithCapital(
   trades: Trade[],
   initialCapital: number = INITIAL_CAPITAL
 ): TradeWithCapital[] {
-  // Filter out cash positions and sort by date
-  const activeTrades = trades
-    .filter(trade => Math.abs(trade.entry_position) >= 0.5)
-    .sort((a, b) => a.entry_date.localeCompare(b.entry_date));
+  // Include ALL trades (including cash) and sort by date
+  // Cash periods still earn risk-free rate which affects final return
+  const allTrades = [...trades].sort((a, b) => a.entry_date.localeCompare(b.entry_date));
 
-  return activeTrades.reduce((acc, trade, idx) => {
+  return allTrades.reduce((acc, trade, idx) => {
     const prevCapital = idx === 0 ? initialCapital : acc[idx - 1].cumulativeCapital;
     const discretePosition = discretizePosition(trade.entry_position);
-    const txCostPct = getTradeTransactionCost(discretePosition);
-    const txCostDollars = prevCapital * txCostPct;
-    const grossGained = prevCapital * trade.total_return;
-    const capitalGained = grossGained - txCostDollars;
+
+    // trade.total_return is ALREADY NET (includes tx costs from backend)
+    // tx_cost from trade is the actual cost that was applied
+    const txCostDollars = (trade.tx_cost ?? 0) * prevCapital;
+    const capitalGained = prevCapital * trade.total_return;
     const cumulativeCapital = prevCapital + capitalGained;
+
+    // Gross = Net + costs (to show what would have been earned without costs)
+    const grossGained = capitalGained + txCostDollars;
 
     // Calculate market return from strategy return
     const calculatedMarketReturn = discretePosition !== 0
@@ -81,7 +87,7 @@ export function calculateTradesWithCapital(
       duration: trade.duration,
       total_return: trade.total_return,
       market_return: calculatedMarketReturn,
-      txCostPct,
+      txCostPct: trade.tx_cost ?? 0,
       txCostDollars,
       grossGained,
       capitalGained,
@@ -91,35 +97,85 @@ export function calculateTradesWithCapital(
   }, [] as TradeWithCapital[]);
 }
 
+// Cost breakdown interface
+export interface CostBreakdown {
+  expense: number;      // Expense ratio costs in dollars
+  trading: number;      // Trading (bid-ask) costs in dollars
+  volDrag: number;      // Volatility drag costs in dollars
+  total: number;        // Total costs in dollars
+}
+
+// Summary result interface
+export interface TradeSummary {
+  finalCapital: number;
+  totalTxCosts: number;
+  netReturn: number;
+  grossReturn: number;
+  costBreakdown: CostBreakdown;
+}
+
 // Calculate summary from trades (trade-by-trade calculation)
+// NOTE: trade.total_return from backend is ALREADY NET (includes tx costs)
+// Gross Return = Net Return + (Total Costs / Initial Capital) for intuitive display
 export function calculateSummaryFromTrades(
   trades: Trade[],
   initialCapital: number = INITIAL_CAPITAL
-): { finalCapital: number; totalTxCosts: number; netReturn: number; grossReturn: number } {
+): TradeSummary {
+  if (!trades || trades.length === 0) {
+    return {
+      finalCapital: initialCapital,
+      totalTxCosts: 0,
+      netReturn: 0,
+      grossReturn: 0,
+      costBreakdown: { expense: 0, trading: 0, volDrag: 0, total: 0 }
+    };
+  }
+
   const tradesWithCapital = calculateTradesWithCapital(trades, initialCapital);
 
   if (tradesWithCapital.length === 0) {
-    return { finalCapital: initialCapital, totalTxCosts: 0, netReturn: 0, grossReturn: 0 };
+    return {
+      finalCapital: initialCapital,
+      totalTxCosts: 0,
+      netReturn: 0,
+      grossReturn: 0,
+      costBreakdown: { expense: 0, trading: 0, volDrag: 0, total: 0 }
+    };
   }
 
   const finalCapital = tradesWithCapital[tradesWithCapital.length - 1].cumulativeCapital;
   const totalTxCosts = tradesWithCapital.reduce((sum, t) => sum + t.txCostDollars, 0);
   const netReturn = (finalCapital - initialCapital) / initialCapital;
 
-  // Calculate true gross return: what would have been earned WITHOUT transaction costs
-  // This requires simulating trades without tx costs to get the correct compounded result
-  const activeTrades = trades
-    .filter(trade => Math.abs(trade.entry_position) >= 0.5)
-    .sort((a, b) => a.entry_date.localeCompare(b.entry_date));
+  // Calculate cost breakdown in dollars (applying to capital at each trade)
+  const allTrades = [...trades].sort((a, b) => a.entry_date.localeCompare(b.entry_date));
+  let capital = initialCapital;
+  let expenseCosts = 0;
+  let tradingCosts = 0;
+  let volDragCosts = 0;
 
-  let grossCapital = initialCapital;
-  for (const trade of activeTrades) {
-    const grossGained = grossCapital * trade.total_return;
-    grossCapital = grossCapital + grossGained;
+  for (const trade of allTrades) {
+    const costs = (trade as any).costs;
+    if (costs) {
+      expenseCosts += capital * (costs.expense ?? 0);
+      tradingCosts += capital * (costs.trading ?? 0);
+      volDragCosts += capital * (costs.vol_drag ?? 0);
+    }
+    capital = capital * (1 + trade.total_return);
   }
-  const grossReturn = (grossCapital - initialCapital) / initialCapital;
 
-  return { finalCapital, totalTxCosts, netReturn, grossReturn };
+  const costBreakdown: CostBreakdown = {
+    expense: expenseCosts,
+    trading: tradingCosts,
+    volDrag: volDragCosts,
+    total: expenseCosts + tradingCosts + volDragCosts
+  };
+
+  // Gross Return = Net Return + (Total Costs / Initial Capital)
+  // This formula ensures: Gross% - Costs% = Net% (intuitive for users)
+  const grossReturn = netReturn + (costBreakdown.total / initialCapital);
+
+  return { finalCapital, totalTxCosts, netReturn, grossReturn, costBreakdown };
 }
 
 // ============================================================================

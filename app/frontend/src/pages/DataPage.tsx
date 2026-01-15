@@ -1,56 +1,61 @@
-import { useEffect, useState } from 'react';
-import { getModels, getModelTrades } from '../services/api';
-import type { ModelsResponse, Trade } from '../types';
-import { Database, Download, ChevronDown, Info, AlertTriangle, TrendingDown, Activity } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { getModels, getModelDailyLog, DailyLogEntry } from '../services/api';
+import type { ModelsResponse } from '../types';
+import { Database, Download, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const POSITION_LABELS: { [key: number]: string } = {
-  3: 'UPRO (3x Long)',
-  1: 'SPY (1x Long)',
-  0: 'CASH',
-};
-POSITION_LABELS[-1] = 'SH (1x Short)';
-POSITION_LABELS[-3] = 'SPXU (3x Short)';
+const INITIAL_CAPITAL = 10000;
 
 function formatPercent(value: number, decimals: number = 2): string {
   return `${value >= 0 ? '+' : ''}${(value * 100).toFixed(decimals)}%`;
 }
 
 function formatPercentile(value: number): string {
-  return `${value.toFixed(0)}%ile`;
+  return `${value.toFixed(0)}%`;
 }
 
-function downloadTradesCSV(trades: Trade[], modelName: string) {
+function formatPrediction(value: number): string {
+  // Format as percentage return
+  const pct = value * 100;
+  return `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
+}
+
+function downloadDailyLogCSV(dailyLog: DailyLogEntry[], modelName: string) {
   const headers = [
-    'Trade_Number',
-    'Entry_Date',
-    'Exit_Date',
-    'Duration_Days',
-    'Base_Position',
-    'Final_Position',
-    'Risk_Mgmt_Applied',
-    'Entry_Percentile',
-    'Entry_Prediction',
+    'Day',
+    'Date',
+    'Prediction_BP',
+    'Percentile',
+    'Position_Base',
+    'Position_Final',
     'Market_Return',
-    'Strategy_Return'
+    'Strategy_Return',
+    'Equity',
+    'HWM',
+    'Drawdown',
+    'Trading_Cost',
+    'Regime',
+    'Position_Changed',
+    'Direction_Correct'
   ];
 
-  const rows = trades.map((trade, i) => {
-    const base = trade.base_position ?? trade.entry_position;
-    const final = trade.entry_position;
-    const riskApplied = base !== final ? 'YES' : 'NO';
+  const rows = dailyLog.map((day) => {
     return [
-      i + 1,
-      trade.entry_date,
-      trade.exit_date,
-      trade.duration,
-      base,
-      final,
-      riskApplied,
-      (trade.entry_percentile ?? 50).toFixed(1),
-      (trade.entry_prediction ?? 0).toFixed(6),
-      trade.market_return.toFixed(6),
-      trade.total_return.toFixed(6),
+      day.day_num,
+      day.date,
+      (day.prediction * 10000).toFixed(2),
+      day.percentile.toFixed(1),
+      day.position_base,
+      day.position_final,
+      (day.market_return * 100).toFixed(4),
+      (day.strategy_return * 100).toFixed(4),
+      (day.equity * INITIAL_CAPITAL).toFixed(2),
+      (day.high_water_mark * INITIAL_CAPITAL).toFixed(2),
+      (day.drawdown * 100).toFixed(2),
+      (day.trading_cost * 100).toFixed(4),
+      day.regime,
+      day.position_changed ? 'YES' : 'NO',
+      day.direction_correct ? 'YES' : 'NO'
     ];
   });
 
@@ -63,7 +68,7 @@ function downloadTradesCSV(trades: Trade[], modelName: string) {
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   link.setAttribute('href', url);
-  link.setAttribute('download', `${modelName}_trades_complete.csv`);
+  link.setAttribute('download', `${modelName}_daily_log.csv`);
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
@@ -79,10 +84,21 @@ function getPercentileColor(percentile: number): string {
   return 'text-[#737373]';
 }
 
+// Get prediction color based on value (percentage)
+function getPredictionColor(prediction: number): string {
+  const pct = prediction * 100;
+  if (pct >= 0.5) return 'text-[#00c853]';
+  if (pct >= 0.2) return 'text-[#4caf50]';
+  if (pct <= -0.5) return 'text-[#c41e3a]';
+  if (pct <= -0.2) return 'text-[#ef5350]';
+  return 'text-[#a3a3a3]';
+}
+
 export default function DataPage() {
   const [modelsData, setModelsData] = useState<ModelsResponse | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>('');
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
+  const [warmupUsed, setWarmupUsed] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -114,14 +130,53 @@ export default function DataPage() {
   async function loadModelData(modelName: string) {
     try {
       setLoadingDetail(true);
-      const tradesResponse = await getModelTrades(modelName);
-      setTrades(tradesResponse.trades || []);
+      const response = await getModelDailyLog(modelName);
+      setDailyLog(response.daily_log || []);
+      setWarmupUsed(response.warmup_used);
     } catch (err) {
       console.error(err);
     } finally {
       setLoadingDetail(false);
     }
   }
+
+  // Statistics
+  const stats = useMemo(() => {
+    if (dailyLog.length === 0) return null;
+
+    const totalDays = dailyLog.length;
+    const positionChanges = dailyLog.filter(d => d.position_changed).length;
+    // Direction accuracy: basado en posición vs movimiento del mercado
+    // Acierto: (tengo posición Y mercado sube) O (no tengo posición Y mercado baja)
+    const correctDirections = dailyLog.filter(d => {
+      const hasPosition = d.position_final > 0;
+      const marketUp = d.market_return > 0;
+      return (hasPosition && marketUp) || (!hasPosition && !marketUp);
+    }).length;
+    // LONG-ONLY: separate 3x UPRO and 1x SPY days
+    const days3x = dailyLog.filter(d => d.position_final === 3).length;
+    const days1x = dailyLog.filter(d => d.position_final === 1).length;
+    const cashDays = dailyLog.filter(d => d.position_final === 0).length;
+    const winningDays = dailyLog.filter(d => d.strategy_return > 0).length;
+    const finalEquity = dailyLog[dailyLog.length - 1].equity * INITIAL_CAPITAL;
+    const totalReturn = (dailyLog[dailyLog.length - 1].equity - 1) * 100;
+    const maxDrawdown = Math.min(...dailyLog.map(d => d.drawdown)) * 100;
+
+    return {
+      totalDays,
+      positionChanges,
+      correctDirections,
+      dirAccuracy: totalDays > 0 ? (correctDirections / totalDays) * 100 : 0,
+      days3x,
+      days1x,
+      cashDays,
+      winningDays,
+      winRate: (winningDays / totalDays) * 100,
+      finalEquity,
+      totalReturn,
+      maxDrawdown
+    };
+  }, [dailyLog]);
 
   if (loading) {
     return <div className="text-center py-8 text-[#737373]">Loading...</div>;
@@ -131,26 +186,17 @@ export default function DataPage() {
     return <div className="text-center py-8 text-[#c41e3a]">Failed to load data</div>;
   }
 
-  // Statistics
-  const activeTrades = trades.filter(t => Math.abs(t.entry_position) >= 0.5);
-  const winningTrades = activeTrades.filter(t => t.total_return > 0);
-  const losingTrades = activeTrades.filter(t => t.total_return < 0);
-  const riskManagedTrades = trades.filter(t => {
-    const base = t.base_position ?? t.entry_position;
-    return base !== t.entry_position;
-  });
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Database className="w-5 h-5 text-[#737373]" />
-          <h2 className="text-xl font-semibold">Trade Data & Decision Analysis</h2>
+          <h2 className="text-xl font-semibold">Daily Trading Log - Hedge Fund View</h2>
         </div>
-        {trades.length > 0 && (
+        {dailyLog.length > 0 && (
           <button
-            onClick={() => downloadTradesCSV(trades, selectedModel)}
+            onClick={() => downloadDailyLogCSV(dailyLog, selectedModel)}
             className="flex items-center gap-2 px-4 py-2 bg-[#00c853] text-black rounded font-medium hover:bg-[#00c853]/90 transition-colors"
           >
             <Download className="w-4 h-4" />
@@ -161,7 +207,7 @@ export default function DataPage() {
 
       {/* Model Selector */}
       <div className="card">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <span className="text-sm text-[#737373]">Select Model:</span>
           <div className="relative">
             <button
@@ -191,148 +237,311 @@ export default function DataPage() {
               </div>
             )}
           </div>
-          {trades.length > 0 && (
-            <span className="text-sm text-[#737373]">
-              {activeTrades.length} active trades | {modelsData.test_period.start} to {modelsData.test_period.end}
-            </span>
+          {dailyLog.length > 0 && (
+            <div className="flex items-center gap-4 text-sm text-[#737373]">
+              <span>{dailyLog.length} trading days</span>
+              {warmupUsed && (
+                <span className="px-2 py-0.5 bg-[#6366f1]/20 text-[#6366f1] rounded text-xs">
+                  Warmup: 63d training data
+                </span>
+              )}
+            </div>
           )}
         </div>
       </div>
 
       {/* Statistics */}
-      {activeTrades.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
           <div className="metric-card">
-            <div className="metric-label">Total Trades</div>
-            <div className="metric-value text-white">{activeTrades.length}</div>
+            <div className="metric-label">Trading Days</div>
+            <div className="metric-value text-white">{stats.totalDays}</div>
           </div>
           <div className="metric-card">
-            <div className="metric-label">Winning</div>
-            <div className="metric-value text-[#00c853]">
-              {winningTrades.length}
-              <span className="text-sm text-[#525252] ml-1">
-                ({((winningTrades.length / activeTrades.length) * 100).toFixed(0)}%)
-              </span>
+            <div className="metric-label">Final Equity</div>
+            <div className={clsx("metric-value", stats.totalReturn >= 0 ? "text-[#00c853]" : "text-[#c41e3a]")}>
+              ${stats.finalEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
           </div>
           <div className="metric-card">
-            <div className="metric-label">Losing</div>
+            <div className="metric-label">Total Return</div>
+            <div className={clsx("metric-value", stats.totalReturn >= 0 ? "text-[#00c853]" : "text-[#c41e3a]")}>
+              {stats.totalReturn >= 0 ? '+' : ''}{stats.totalReturn.toFixed(1)}%
+            </div>
+          </div>
+          <div className="metric-card">
+            <div className="metric-label">Dir. Accuracy</div>
+            <div className={clsx("metric-value", stats.dirAccuracy >= 50 ? "text-[#00c853]" : "text-[#c41e3a]")}>
+              {stats.dirAccuracy.toFixed(1)}%
+            </div>
+          </div>
+          <div className="metric-card">
+            <div className="metric-label">Win Rate</div>
+            <div className={clsx("metric-value", stats.winRate >= 50 ? "text-[#00c853]" : "text-[#c41e3a]")}>
+              {stats.winRate.toFixed(1)}%
+            </div>
+          </div>
+          <div className="metric-card">
+            <div className="metric-label">Max Drawdown</div>
             <div className="metric-value text-[#c41e3a]">
-              {losingTrades.length}
+              {stats.maxDrawdown.toFixed(1)}%
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Position Distribution - LONG-ONLY */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="metric-card border-[#00c853]/30">
+            <div className="metric-label text-[#00c853]">3x UPRO Days</div>
+            <div className="metric-value text-[#00c853]">
+              {stats.days3x}
               <span className="text-sm text-[#525252] ml-1">
-                ({((losingTrades.length / activeTrades.length) * 100).toFixed(0)}%)
+                ({((stats.days3x / stats.totalDays) * 100).toFixed(0)}%)
+              </span>
+            </div>
+          </div>
+          <div className="metric-card border-[#22d3ee]/30">
+            <div className="metric-label text-[#22d3ee]">1x SPY Days</div>
+            <div className="metric-value text-[#22d3ee]">
+              {stats.days1x}
+              <span className="text-sm text-[#525252] ml-1">
+                ({((stats.days1x / stats.totalDays) * 100).toFixed(0)}%)
               </span>
             </div>
           </div>
           <div className="metric-card">
-            <div className="metric-label">Avg Duration</div>
-            <div className="metric-value text-[#a3a3a3]">
-              {(activeTrades.reduce((sum, t) => sum + t.duration, 0) / activeTrades.length).toFixed(1)}d
+            <div className="metric-label">Cash Days</div>
+            <div className="metric-value text-[#737373]">
+              {stats.cashDays}
+              <span className="text-sm text-[#525252] ml-1">
+                ({((stats.cashDays / stats.totalDays) * 100).toFixed(0)}%)
+              </span>
             </div>
           </div>
-          <div className="metric-card border-[#f59e0b]/30">
-            <div className="metric-label text-[#f59e0b]">Risk Managed</div>
-            <div className="metric-value text-[#f59e0b]">
-              {riskManagedTrades.length}
+          <div className="metric-card border-[#6366f1]/30">
+            <div className="metric-label text-[#6366f1]">Position Changes</div>
+            <div className="metric-value text-[#6366f1]">
+              {stats.positionChanges}
               <span className="text-sm text-[#525252] ml-1">
-                ({((riskManagedTrades.length / trades.length) * 100).toFixed(0)}%)
+                ({((stats.positionChanges / stats.totalDays) * 100).toFixed(0)}%)
               </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Key Insight Box */}
-      <div className="card bg-[#1a1a2e] border-[#2a2a4e]">
-        <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-[#6366f1] mt-0.5 flex-shrink-0" />
-          <div className="text-sm">
-            <p className="text-white font-medium mb-1">Understanding Base vs Final Position</p>
-            <p className="text-[#a3a3a3]">
-              <strong className="text-white">Base Position</strong>: Determined purely by the model's prediction percentile (quantile strategy).
-              <strong className="text-white ml-2">Final Position</strong>: After applying risk management rules (volatility targeting, drawdown control).
-              When Base ≠ Final, risk management reduced leverage to protect capital.
-            </p>
-          </div>
+      {/* Column Definitions - Above the table */}
+      <div className="card">
+        <h3 className="text-lg font-medium mb-3">Definición de Columnas</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-[#333333]">
+                <th className="text-left py-2 px-2 w-20">Columna</th>
+                <th className="text-left py-2 px-2">Descripción</th>
+              </tr>
+            </thead>
+            <tbody className="text-[#a3a3a3]">
+              <tr className="border-b border-[#222222]">
+                <td className="py-1 px-2 font-mono text-white">#</td>
+                <td className="py-1 px-2">Número de día de trading (1 = primer día del período out-of-sample)</td>
+              </tr>
+              <tr className="border-b border-[#222222]">
+                <td className="py-1 px-2 font-mono text-white">Fecha</td>
+                <td className="py-1 px-2">Fecha del día de trading (YYYY-MM-DD)</td>
+              </tr>
+              <tr className="border-b border-[#222222] bg-[#6366f1]/5">
+                <td className="py-1 px-2 font-mono text-[#6366f1]">Pred.</td>
+                <td className="py-1 px-2">
+                  <strong className="text-white">Predicción del modelo</strong>: Retorno esperado para el día siguiente (%).
+                </td>
+              </tr>
+              <tr className="border-b border-[#222222] bg-[#6366f1]/5">
+                <td className="py-1 px-2 font-mono text-[#6366f1]">%ile</td>
+                <td className="py-1 px-2">
+                  <strong className="text-white">Percentil (63 días)</strong>: Ranking vs últimas 63 predicciones. 92% = más optimista que 92% de predicciones recientes.
+                </td>
+              </tr>
+              <tr className="border-b border-[#222222]">
+                <td className="py-1 px-2 font-mono text-white">Pos</td>
+                <td className="py-1 px-2">
+                  <strong className="text-white">Posición</strong>:
+                  <span className="text-[#00c853]"> 3x</span>=UPRO,
+                  <span className="text-[#22d3ee]"> 1x</span>=SPY,
+                  <span className="text-[#737373]"> 0x</span>=Cash
+                </td>
+              </tr>
+              <tr className="border-b border-[#222222]">
+                <td className="py-1 px-2 font-mono text-white">Mkt</td>
+                <td className="py-1 px-2"><strong className="text-white">Retorno del mercado</strong>: Retorno real del S&P 500 ese día.</td>
+              </tr>
+              <tr className="border-b border-[#222222]">
+                <td className="py-1 px-2 font-mono text-white">Strat</td>
+                <td className="py-1 px-2">
+                  <strong className="text-white">Retorno estrategia</strong>: <code className="bg-[#0a0a0a] px-1 rounded text-[10px]">r_f + pos × (r_mkt - r_f) - costos</code>
+                </td>
+              </tr>
+              <tr className="border-b border-[#222222] bg-[#00c853]/5">
+                <td className="py-1 px-2 font-mono text-[#00c853]">Capital</td>
+                <td className="py-1 px-2"><strong className="text-white">Capital acumulado</strong>: Valor del portafolio en USD (inicio: $10,000).</td>
+              </tr>
+              <tr className="border-b border-[#222222] bg-[#00c853]/5">
+                <td className="py-1 px-2 font-mono text-[#00c853]">Acum.</td>
+                <td className="py-1 px-2"><strong className="text-white">Retorno acumulado</strong>: Ganancia/pérdida total desde el inicio (%).</td>
+              </tr>
+              <tr className="border-b border-[#222222] bg-[#c41e3a]/5">
+                <td className="py-1 px-2 font-mono text-[#c41e3a]">DD</td>
+                <td className="py-1 px-2"><strong className="text-white">Drawdown</strong>: Caída desde el máximo histórico (High Water Mark).</td>
+              </tr>
+              <tr className="border-b border-[#222222]">
+                <td className="py-1 px-2 font-mono text-white">✓/✗</td>
+                <td className="py-1 px-2">
+                  <strong className="text-white">Acierto</strong>:
+                  <span className="text-[#00c853]"> ✓</span> (pos+sube ó cash+baja),
+                  <span className="text-[#c41e3a]"> ✗</span> (pos+baja ó cash+sube)
+                </td>
+              </tr>
+              <tr>
+                <td className="py-1 px-2 font-mono text-white">Rég.</td>
+                <td className="py-1 px-2">
+                  <strong className="text-white">Régimen</strong>:
+                  <span className="text-[#00c853]"> bull</span>,
+                  <span className="text-[#c41e3a]"> bear</span>,
+                  <span className="text-[#f59e0b]"> high_vol</span>,
+                  <span className="text-[#737373]"> sideways</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Trades Table */}
+      {/* Daily Log Table */}
       <div className="card">
-        <h3 className="text-lg font-medium mb-4">Trade Log - {selectedModel}</h3>
+        <h3 className="text-lg font-medium mb-4">Daily Log - {selectedModel}</h3>
 
         {loadingDetail ? (
-          <div className="text-center py-8 text-[#737373]">Loading trade data...</div>
-        ) : trades.length > 0 ? (
+          <div className="text-center py-8 text-[#737373]">Loading daily data...</div>
+        ) : dailyLog.length > 0 ? (
           <>
             <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
               <table className="table-dark">
                 <thead className="sticky top-0 bg-[#111111] z-10">
                   <tr>
-                    <th className="w-8">#</th>
-                    <th className="w-24">Entry</th>
-                    <th className="w-24">Exit</th>
-                    <th className="w-12 text-center">Days</th>
-                    <th className="w-20 text-right">Percentile</th>
-                    <th className="w-16 text-center">Base</th>
-                    <th className="w-16 text-center">Final</th>
-                    <th className="w-24 text-right">Prediction</th>
-                    <th className="w-24 text-right">Market Ret</th>
-                    <th className="w-24 text-right">Strategy Ret</th>
+                    <th className="text-center px-2">#</th>
+                    <th className="text-center px-2">Fecha</th>
+                    <th className="text-center px-2 bg-[#6366f1]/10">Pred.</th>
+                    <th className="text-center px-2 bg-[#6366f1]/10">%ile</th>
+                    <th className="text-center px-2">Pos</th>
+                    <th className="text-center px-2">Mkt</th>
+                    <th className="text-center px-2">Strat</th>
+                    <th className="text-center px-2 bg-[#00c853]/5">Capital</th>
+                    <th className="text-center px-2 bg-[#00c853]/5">Acum.</th>
+                    <th className="text-center px-2 bg-[#c41e3a]/5">DD</th>
+                    <th className="text-center px-1">✓/✗</th>
+                    <th className="text-center px-2">Rég.</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {trades.map((trade, idx) => {
-                    const finalPos = trade.entry_position;
-                    const basePos = trade.base_position ?? finalPos;
-                    const isActive = Math.abs(finalPos) >= 0.5;
-                    const percentile = trade.entry_percentile ?? 50;
-                    const prediction = trade.entry_prediction ?? 0;
-                    const wasReduced = basePos !== finalPos;
+                  {dailyLog.map((day, idx) => {
+                    const equity = day.equity * INITIAL_CAPITAL;
+                    const cumReturn = (day.equity - 1) * 100;
+                    const position = day.position_final;
 
                     return (
-                      <tr key={idx} className={clsx(!isActive && "opacity-50", wasReduced && "bg-[#f59e0b]/5")}>
-                        <td className="text-[#737373]">{idx + 1}</td>
-                        <td className="font-mono">{trade.entry_date}</td>
-                        <td className="font-mono">{trade.exit_date}</td>
-                        <td className="text-center font-mono text-[#a3a3a3]">{trade.duration}</td>
+                      <tr
+                        key={idx}
+                        className={clsx(day.position_changed && "bg-[#6366f1]/5")}
+                      >
+                        <td className="text-center text-[#737373] font-mono text-xs px-2">{day.day_num}</td>
+                        <td className="text-center font-mono text-xs px-2">{day.date}</td>
+                        {/* Predicción */}
                         <td className={clsx(
-                          "text-right font-mono font-semibold",
-                          getPercentileColor(percentile)
+                          "text-center font-mono text-xs px-2 bg-[#6366f1]/5",
+                          getPredictionColor(day.prediction)
                         )}>
-                          {formatPercentile(percentile)}
+                          {formatPrediction(day.prediction)}
                         </td>
+                        {/* Percentil */}
                         <td className={clsx(
-                          "text-center font-mono",
-                          basePos > 0 ? "text-[#00c853]" :
-                          basePos < 0 ? "text-[#c41e3a]" : "text-[#737373]"
+                          "text-center font-mono text-xs font-semibold px-2 bg-[#6366f1]/5",
+                          getPercentileColor(day.percentile)
                         )}>
-                          {basePos > 0 ? `+${basePos}` : basePos}x
+                          {formatPercentile(day.percentile)}
                         </td>
+                        {/* Posición */}
                         <td className={clsx(
-                          "text-center font-mono font-bold",
-                          wasReduced && "text-[#f59e0b]",
-                          !wasReduced && finalPos > 0 && "text-[#00c853]",
-                          !wasReduced && finalPos < 0 && "text-[#c41e3a]",
-                          !wasReduced && finalPos === 0 && "text-[#737373]"
+                          "text-center font-mono text-xs font-bold px-2",
+                          position === 3 && "text-[#00c853]",
+                          position === 1 && "text-[#22d3ee]",
+                          position === 0 && "text-[#737373]"
                         )}>
-                          {wasReduced && "→ "}
-                          {finalPos > 0 ? `+${finalPos}` : finalPos}x
+                          {position === 3 ? '3x' : position === 1 ? '1x' : '0x'}
                         </td>
-                        <td className="text-right font-mono text-[#a3a3a3]">
-                          {formatPercent(prediction, 4)}
-                        </td>
+                        {/* Ret. Mercado */}
                         <td className={clsx(
-                          "text-right font-mono",
-                          trade.market_return >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
+                          "text-center font-mono text-xs px-2",
+                          day.market_return >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
                         )}>
-                          {formatPercent(trade.market_return, 2)}
+                          {formatPercent(day.market_return, 2)}
                         </td>
+                        {/* Ret. Estrategia */}
                         <td className={clsx(
-                          "text-right font-mono font-semibold",
-                          trade.total_return >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
+                          "text-center font-mono text-xs font-semibold px-2",
+                          day.strategy_return >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
                         )}>
-                          {formatPercent(trade.total_return, 2)}
+                          {formatPercent(day.strategy_return, 2)}
+                        </td>
+                        {/* Capital */}
+                        <td className={clsx(
+                          "text-center font-mono text-xs px-2 bg-[#00c853]/5",
+                          equity >= INITIAL_CAPITAL ? "text-[#00c853]" : "text-[#c41e3a]"
+                        )}>
+                          ${equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </td>
+                        {/* Retorno Acumulado */}
+                        <td className={clsx(
+                          "text-center font-mono text-xs px-2 bg-[#00c853]/5 font-semibold",
+                          cumReturn >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
+                        )}>
+                          {cumReturn >= 0 ? '+' : ''}{cumReturn.toFixed(1)}%
+                        </td>
+                        {/* Drawdown */}
+                        <td className={clsx(
+                          "text-center font-mono text-xs px-2 bg-[#c41e3a]/5",
+                          day.drawdown < -0.10 ? "text-[#c41e3a] font-semibold" :
+                          day.drawdown < -0.05 ? "text-[#f59e0b]" : "text-[#737373]"
+                        )}>
+                          {day.drawdown !== 0 ? `${(day.drawdown * 100).toFixed(1)}%` : '-'}
+                        </td>
+                        {/* Acierto: basado en posición vs movimiento del mercado */}
+                        {(() => {
+                          const hasPosition = position > 0;
+                          const marketUp = day.market_return > 0;
+                          // Acierto: (tengo posición Y mercado sube) O (no tengo posición Y mercado baja)
+                          const isCorrect = (hasPosition && marketUp) || (!hasPosition && !marketUp);
+                          return (
+                            <td className="text-center px-1">
+                              {isCorrect ? (
+                                <CheckCircle className="w-3 h-3 text-[#00c853] inline" />
+                              ) : (
+                                <XCircle className="w-3 h-3 text-[#c41e3a] inline" />
+                              )}
+                            </td>
+                          );
+                        })()}
+                        {/* Régimen */}
+                        <td className={clsx(
+                          "text-center font-mono text-xs px-2",
+                          day.regime === 'bull' && "text-[#00c853]",
+                          day.regime === 'bear' && "text-[#c41e3a]",
+                          day.regime === 'high_vol' && "text-[#f59e0b]",
+                          day.regime === 'sideways' && "text-[#737373]",
+                          day.regime === 'unknown' && "text-[#525252]"
+                        )}>
+                          {day.regime === 'unknown' ? '-' : day.regime}
                         </td>
                       </tr>
                     );
@@ -344,251 +553,370 @@ export default function DataPage() {
             {/* Summary */}
             <div className="mt-4 pt-4 border-t border-[#222222]">
               <div className="text-sm text-[#737373]">
-                Showing {trades.length} trades ({activeTrades.length} with market exposure, {trades.length - activeTrades.length} in cash).
+                Showing {dailyLog.length} trading days.
+                <span className="text-[#6366f1] ml-2">
+                  {dailyLog.filter(d => d.position_changed).length} position changes.
+                </span>
                 <span className="text-[#f59e0b] ml-2">
-                  {riskManagedTrades.length} trades had position reduced by risk management (highlighted in orange).
+                  {dailyLog.filter(d => d.position_base !== d.position_final).length} days with risk management reduction (marked with !).
                 </span>
               </div>
             </div>
           </>
         ) : (
-          <div className="text-center py-8 text-[#737373]">Select a model to view trade data</div>
+          <div className="text-center py-8 text-[#737373]">Select a model to view daily data</div>
         )}
       </div>
 
       {/* ============================================================ */}
-      {/* DETAILED EXPLANATION SECTION */}
+      {/* PERCENTILE SYSTEM EXPLANATION */}
       {/* ============================================================ */}
-
-      {/* Position Decision Process */}
-      <div className="card">
-        <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-[#6366f1]" />
-          Proceso de Toma de Posiciones (Position Decision Process)
+      <div className="card border-[#6366f1]/30">
+        <h3 className="text-lg font-medium mb-4">
+          Sistema de Percentiles: Conversión de Predicciones a Posiciones
         </h3>
 
-        {/* Step 1: Model Prediction */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-[#6366f1] flex items-center justify-center text-white font-bold">1</div>
-            <h4 className="font-medium text-white">Predicción del Modelo (Model Prediction)</h4>
-          </div>
-          <div className="ml-10 text-sm text-[#a3a3a3] space-y-2">
-            <p>
-              El modelo ML genera una <strong className="text-white">predicción de retorno</strong> para el día siguiente.
-              Esta predicción es un número que representa el retorno esperado del S&P 500.
-            </p>
-            <div className="bg-[#1a1a1a] p-3 rounded font-mono text-xs">
-              prediction = model.predict(features_t) → e.g., +0.0170%
-            </div>
-          </div>
-        </div>
-
-        {/* Step 2: Percentile Calculation */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-[#6366f1] flex items-center justify-center text-white font-bold">2</div>
-            <h4 className="font-medium text-white">Cálculo del Percentil (Percentile Calculation)</h4>
-          </div>
-          <div className="ml-10 text-sm text-[#a3a3a3] space-y-2">
-            <p>
-              La predicción se compara con las <strong className="text-white">últimas 63 predicciones</strong> (ventana rolling de ~3 meses).
-              El percentil indica qué tan alta o baja es la predicción actual comparada con el histórico reciente.
-            </p>
-            <div className="bg-[#1a1a1a] p-3 rounded font-mono text-xs">
-              percentile = rank(prediction, window_63) × 100 → e.g., 95%ile
-            </div>
-            <p className="text-[#737373]">
-              <em>¿Por qué percentil y no valor absoluto?</em> Porque normaliza las predicciones entre modelos y
-              adapta las decisiones al régimen actual del mercado.
-            </p>
-          </div>
-        </div>
-
-        {/* Step 3: Base Position (Quantile Strategy) */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-[#6366f1] flex items-center justify-center text-white font-bold">3</div>
-            <h4 className="font-medium text-white">Posición Base - Estrategia Quantile (Base Position)</h4>
-          </div>
-          <div className="ml-10 text-sm space-y-3">
-            <p className="text-[#a3a3a3]">
-              El percentil se mapea a una <strong className="text-white">posición discreta</strong> usando umbrales asimétricos:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#00c853]/20 rounded">
-                <span className="font-mono font-bold text-[#00c853]">≥90%ile</span>
-                <span className="text-[#00c853]">→ +3x UPRO</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#4caf50]/15 rounded">
-                <span className="font-mono font-bold text-[#4caf50]">70-89%ile</span>
-                <span className="text-[#4caf50]">→ +1x SPY</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#737373]/20 rounded">
-                <span className="font-mono font-bold text-[#737373]">30-70%ile</span>
-                <span className="text-[#737373]">→ CASH</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#ef5350]/15 rounded">
-                <span className="font-mono font-bold text-[#ef5350]">10-29%ile</span>
-                <span className="text-[#ef5350]">→ -1x SH</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#c41e3a]/20 rounded">
-                <span className="font-mono font-bold text-[#c41e3a]">≤10%ile</span>
-                <span className="text-[#c41e3a]">→ -3x SPXU</span>
+        <div className="text-sm text-[#a3a3a3] space-y-6">
+          {/* Why Percentiles */}
+          <div className="p-4 bg-[#1a1a1a] rounded-lg">
+            <h4 className="font-medium text-white mb-3">¿Por qué usar Percentiles en lugar de Predicciones Brutas?</h4>
+            <div className="space-y-3">
+              <p>
+                Los modelos de machine learning generan predicciones de retorno (ej: +0.15%, -0.08%) que varían
+                significativamente en magnitud según las condiciones del mercado. Utilizar umbrales fijos
+                (ej: "si predicción &gt; 0.1%, ir long") presenta problemas fundamentales:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="p-3 bg-[#0a0a0a] rounded border-l-4 border-[#c41e3a]">
+                  <div className="text-[#c41e3a] font-medium mb-2">Problema con Umbrales Fijos</div>
+                  <ul className="text-xs space-y-1">
+                    <li>• En mercados volátiles, predicciones de ±0.5% son comunes</li>
+                    <li>• En mercados tranquilos, predicciones de ±0.05% son significativas</li>
+                    <li>• Un umbral fijo de 0.1% estaría siempre long en volatilidad, siempre cash en calma</li>
+                  </ul>
+                </div>
+                <div className="p-3 bg-[#0a0a0a] rounded border-l-4 border-[#00c853]">
+                  <div className="text-[#00c853] font-medium mb-2">Solución: Percentiles Adaptativos</div>
+                  <ul className="text-xs space-y-1">
+                    <li>• Compara cada predicción con las últimas 63 predicciones</li>
+                    <li>• Pregunta: "¿Esta predicción es alta o baja <em>para el contexto actual</em>?"</li>
+                    <li>• Se adapta automáticamente a diferentes regímenes de mercado</li>
+                  </ul>
+                </div>
               </div>
             </div>
-            <div className="bg-[#1a1a1a] p-3 rounded font-mono text-xs">
-              if percentile ≥ 90: base_position = +3 (UPRO)<br/>
-              elif percentile ≥ 70: base_position = +1 (SPY)<br/>
-              elif percentile ≤ 10: base_position = -3 (SPXU)<br/>
-              elif percentile ≤ 30: base_position = -1 (SH)<br/>
-              else: base_position = 0 (CASH)
-            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Risk Management Section */}
-      <div className="card border-[#f59e0b]/30">
-        <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-[#f59e0b]" />
-          Sistema de Risk Management (Risk Management System)
-        </h3>
-
-        <p className="text-sm text-[#a3a3a3] mb-6">
-          Después de calcular la posición base, el sistema aplica <strong className="text-white">tres filtros de risk management</strong>
-          que pueden <strong className="text-[#f59e0b]">reducir</strong> la posición para proteger el capital.
-          La posición <strong>nunca se incrementa</strong>, solo se reduce.
-        </p>
-
-        {/* RM 1: Volatility Targeting */}
-        <div className="mb-6 p-4 bg-[#1a1a1a] rounded-lg border border-[#333333]">
-          <div className="flex items-center gap-2 mb-3">
-            <Activity className="w-5 h-5 text-[#22d3ee]" />
-            <h4 className="font-medium text-white">1. Volatility Targeting (Target: 15% anual)</h4>
-          </div>
-          <div className="text-sm text-[#a3a3a3] space-y-2">
-            <p>
-              Escala la posición para mantener una <strong className="text-white">volatilidad objetivo del 15% anual</strong>.
-              Si la volatilidad reciente del mercado es alta, reduce la posición.
-            </p>
-            <div className="bg-[#0a0a0a] p-3 rounded font-mono text-xs">
-              recent_vol = std(returns_21d) × √252<br/>
-              vol_scalar = target_vol / recent_vol<br/>
-              vol_scalar = clip(vol_scalar, 0.5, 2.0)<br/>
-              adjusted_position = base_position × vol_scalar → round to nearest valid position
-            </div>
-            <p className="text-[#22d3ee]">
-              <strong>Ejemplo:</strong> Si volatilidad reciente = 30% y target = 15%, entonces vol_scalar = 0.5,
-              reduciendo +3x → +1x
-            </p>
-          </div>
-        </div>
-
-        {/* RM 2: Position Filter */}
-        <div className="mb-6 p-4 bg-[#1a1a1a] rounded-lg border border-[#333333]">
-          <div className="flex items-center gap-2 mb-3">
-            <Activity className="w-5 h-5 text-[#a78bfa]" />
-            <h4 className="font-medium text-white">2. Position Filter (Anti-Churning)</h4>
-          </div>
-          <div className="text-sm text-[#a3a3a3] space-y-2">
-            <p>
-              Evita cambios de posición excesivos (churning) que generarían altos costos de transacción.
-              Solo permite cambios si el <strong className="text-white">cambio mínimo es ≥ 1 nivel</strong>.
-            </p>
-            <div className="bg-[#0a0a0a] p-3 rounded font-mono text-xs">
-              if abs(new_position - current_position) &lt; min_change:<br/>
-              &nbsp;&nbsp;keep current_position  # No trade
-            </div>
-            <p className="text-[#a78bfa]">
-              <strong>Ejemplo:</strong> Si la posición actual es +1x y la nueva sería +1x (sin cambio), no se opera.
-            </p>
-          </div>
-        </div>
-
-        {/* RM 3: Drawdown Control */}
-        <div className="mb-6 p-4 bg-[#1a1a1a] rounded-lg border border-[#f59e0b]/50">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingDown className="w-5 h-5 text-[#f59e0b]" />
-            <h4 className="font-medium text-white">3. Drawdown Control (Protección de Capital)</h4>
-          </div>
-          <div className="text-sm text-[#a3a3a3] space-y-2">
-            <p>
-              <strong className="text-[#f59e0b]">El más importante.</strong> Cuando el equity cae significativamente desde su máximo (drawdown),
-              reduce el leverage para evitar pérdidas catastróficas.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 my-3">
-              <div className="p-3 bg-[#0a0a0a] rounded border border-[#f59e0b]/30">
-                <div className="font-mono text-[#f59e0b] font-bold">Drawdown 10-15%</div>
-                <div className="text-xs mt-1">Reduce +3x → +1x</div>
-                <div className="text-xs text-[#737373]">Max leverage: 1x</div>
+          {/* Rolling Window Explanation */}
+          <div className="p-4 bg-[#1a1a1a] rounded-lg">
+            <h4 className="font-medium text-white mb-3">Ventana Móvil de 63 Días</h4>
+            <div className="space-y-3">
+              <p>
+                El sistema utiliza una <strong className="text-white">ventana móvil de 63 días de trading</strong> (aproximadamente
+                3 meses calendario) para calcular el percentil de cada predicción:
+              </p>
+              <div className="bg-[#0a0a0a] p-4 rounded font-mono text-xs">
+                <div className="text-[#737373] mb-2">Ejemplo de cálculo para el día t:</div>
+                <div className="space-y-1">
+                  <div>Predicción actual (día t): <span className="text-[#00c853]">+0.12%</span></div>
+                  <div>Predicciones en ventana [t-63, t-1]:</div>
+                  <div className="pl-4 text-[#737373]">
+                    -0.25%, -0.18%, -0.15%, ..., +0.08%, +0.10%, +0.15%, +0.22%, +0.31%
+                  </div>
+                  <div className="mt-2">De las 63 predicciones anteriores:</div>
+                  <div className="pl-4">• 58 son menores que +0.12%</div>
+                  <div className="pl-4">• 5 son mayores que +0.12%</div>
+                  <div className="mt-2">
+                    Percentil = (58 / 63) × 100 = <span className="text-[#00c853] font-bold">92%</span>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-[#0a0a0a] rounded border border-[#ef4444]/50">
-                <div className="font-mono text-[#ef4444] font-bold">Drawdown 15-20%</div>
-                <div className="text-xs mt-1">Reduce todo a máx ±1x</div>
-                <div className="text-xs text-[#737373]">Max leverage: 1x</div>
+              <p className="text-[#6366f1]">
+                <strong>Interpretación:</strong> Una predicción en el percentil 92 significa que es más optimista
+                que el 92% de las predicciones recientes. Esto indica una señal alcista relativamente fuerte
+                para el contexto actual del mercado.
+              </p>
+            </div>
+          </div>
+
+          {/* Percentile to Position Mapping */}
+          <div className="p-4 bg-[#1a1a1a] rounded-lg">
+            <h4 className="font-medium text-white mb-3">Mapeo de Percentiles a Posiciones (LONG-ONLY)</h4>
+            <div className="space-y-3">
+              <p>
+                Una vez calculado el percentil, se aplica la siguiente tabla de conversión para determinar
+                la <strong className="text-white">posición</strong>:
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs font-mono">
+                  <thead>
+                    <tr className="border-b border-[#333333]">
+                      <th className="text-left py-2 px-3">Rango de Percentil</th>
+                      <th className="text-center py-2 px-3">Posición</th>
+                      <th className="text-center py-2 px-3">Instrumento</th>
+                      <th className="text-left py-2 px-3">Interpretación</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-[#222222] bg-[#00c853]/10">
+                      <td className="py-2 px-3"><span className="text-[#00c853] font-bold">≥ 90%</span></td>
+                      <td className="py-2 px-3 text-center text-[#00c853] font-bold">+3x</td>
+                      <td className="py-2 px-3 text-center">UPRO</td>
+                      <td className="py-2 px-3">Señal alcista extrema - máxima convicción long</td>
+                    </tr>
+                    <tr className="border-b border-[#222222] bg-[#22d3ee]/5">
+                      <td className="py-2 px-3"><span className="text-[#22d3ee]">70% - 89%</span></td>
+                      <td className="py-2 px-3 text-center text-[#22d3ee] font-bold">+1x</td>
+                      <td className="py-2 px-3 text-center">SPY</td>
+                      <td className="py-2 px-3">Señal alcista moderada - posición long estándar</td>
+                    </tr>
+                    <tr className="bg-[#525252]/10">
+                      <td className="py-2 px-3"><span className="text-[#737373]">&lt; 70%</span></td>
+                      <td className="py-2 px-3 text-center text-[#737373] font-bold">0x</td>
+                      <td className="py-2 px-3 text-center">CASH</td>
+                      <td className="py-2 px-3">Señal no alcista - sin exposición al mercado</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div className="p-3 bg-[#0a0a0a] rounded border border-[#c41e3a]/50">
-                <div className="font-mono text-[#c41e3a] font-bold">Drawdown &gt;20%</div>
-                <div className="text-xs mt-1">Fuerza CASH (0x)</div>
-                <div className="text-xs text-[#737373]">Stop-loss total</div>
+              <div className="bg-[#0a0a0a] p-3 rounded mt-4">
+                <div className="text-white font-medium mb-2">Estrategia LONG-ONLY</div>
+                <p className="text-xs">
+                  Esta estrategia solo toma posiciones largas (+3x UPRO, +1x SPY) o se queda en efectivo.
+                  <strong className="text-[#00c853]"> Percentil ≥ 90</strong> → UPRO (3x),
+                  <strong className="text-[#22d3ee]"> Percentil 70-89</strong> → SPY (1x),
+                  <strong className="text-[#737373]"> Percentil &lt; 70</strong> → Cash.
+                  No hay posiciones cortas (shorts).
+                </p>
               </div>
             </div>
-            <div className="bg-[#0a0a0a] p-3 rounded font-mono text-xs">
-              drawdown = (current_equity - max_equity) / max_equity<br/>
-              <br/>
-              if drawdown &gt; 20%: final_position = 0  # CASH<br/>
-              elif drawdown &gt; 15%: final_position = sign(pos) × min(abs(pos), 1)<br/>
-              elif drawdown &gt; 10%: if abs(pos) == 3: final_position = sign(pos) × 1
-            </div>
-            <p className="text-[#f59e0b]">
-              <strong>Ejemplo:</strong> Si equity cayó 12% desde el máximo y la posición base era +3x (UPRO),
-              el drawdown control la reduce a +1x (SPY) para proteger capital.
-            </p>
           </div>
-        </div>
 
-        {/* Final Position */}
-        <div className="p-4 bg-[#0f1729] rounded-lg border border-[#1e3a5f]">
-          <h4 className="font-medium text-white mb-2">Posición Final (Final Position)</h4>
-          <div className="text-sm text-[#a3a3a3]">
-            <p>
-              La posición final es el resultado de aplicar los tres filtros en secuencia:
-            </p>
-            <div className="bg-[#0a0a0a] p-3 rounded font-mono text-xs mt-2">
-              base_position = quantile_strategy(percentile)<br/>
-              → volatility_targeting(base_position, market_vol)<br/>
-              → position_filter(previous_position)<br/>
-              → drawdown_control(equity_drawdown)<br/>
-              = <strong className="text-[#00c853]">final_position</strong>
+          {/* ============================================================ */}
+          {/* METRICS EXPLANATION */}
+          {/* ============================================================ */}
+          <div className="p-4 bg-[#1a1a1a] rounded-lg">
+            <h4 className="font-medium text-white mb-3">Métricas de Evaluación</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-3 bg-[#0a0a0a] rounded border-l-4 border-[#6366f1]">
+                <div className="text-[#6366f1] font-medium mb-2">Dir. Accuracy (Precisión Direccional)</div>
+                <p className="text-xs text-[#a3a3a3] mb-2">
+                  Porcentaje de días donde la <strong className="text-white">decisión de posición fue correcta</strong>:
+                </p>
+                <ul className="text-xs space-y-1 text-[#a3a3a3]">
+                  <li><span className="text-[#00c853]">✓ Acierto:</span> Posición (1x/3x) + mercado sube</li>
+                  <li><span className="text-[#00c853]">✓ Acierto:</span> Cash (0x) + mercado baja</li>
+                  <li><span className="text-[#c41e3a]">✗ Error:</span> Posición (1x/3x) + mercado baja</li>
+                  <li><span className="text-[#c41e3a]">✗ Error:</span> Cash (0x) + mercado sube</li>
+                </ul>
+                <p className="text-xs text-[#6366f1] mt-2">
+                  Fórmula: (días correctos / total días) × 100
+                </p>
+              </div>
+              <div className="p-3 bg-[#0a0a0a] rounded border-l-4 border-[#00c853]">
+                <div className="text-[#00c853] font-medium mb-2">Win Rate (Tasa de Ganancia)</div>
+                <p className="text-xs text-[#a3a3a3] mb-2">
+                  Porcentaje de días donde el <strong className="text-white">retorno de la estrategia fue positivo</strong>.
+                </p>
+                <p className="text-xs text-[#a3a3a3]">
+                  Incluye días en cash donde se gana el risk-free rate (~0.02% diario).
+                </p>
+                <p className="text-xs text-[#00c853] mt-2">
+                  Fórmula: (días con Strat &gt; 0 / total días) × 100
+                </p>
+              </div>
+              <div className="p-3 bg-[#0a0a0a] rounded border-l-4 border-[#c41e3a]">
+                <div className="text-[#c41e3a] font-medium mb-2">Max Drawdown (Máxima Caída)</div>
+                <p className="text-xs text-[#a3a3a3] mb-2">
+                  <strong className="text-white">Mayor pérdida desde un máximo</strong> durante todo el período.
+                </p>
+                <p className="text-xs text-[#a3a3a3]">
+                  Mide el peor escenario para un inversor que entró en el punto más alto.
+                </p>
+                <p className="text-xs text-[#a3a3a3] mt-2">
+                  <strong className="text-white">HWM</strong> = High Water Mark (máximo histórico del capital)
+                </p>
+                <p className="text-xs text-[#c41e3a] mt-1">
+                  Fórmula: min((Capital - HWM) / HWM) × 100
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Return Calculation */}
-      <div className="card">
-        <h3 className="text-lg font-medium mb-4">Cálculo del Retorno (Return Calculation)</h3>
-        <div className="text-sm text-[#a3a3a3] space-y-3">
-          <p>El retorno de la estrategia se calcula como:</p>
-          <div className="bg-[#1a1a1a] p-4 rounded font-mono text-sm">
-            <span className="text-[#00c853]">strategy_return</span> = risk_free_rate + position × (market_return - risk_free_rate) - costs
+          {/* ============================================================ */}
+          {/* WHY POSITIVE PREDICTION CAN RESULT IN CASH */}
+          {/* ============================================================ */}
+          <div className="p-4 bg-[#1a1a1a] rounded-lg">
+            <h4 className="font-medium text-white mb-3">¿Por qué una predicción positiva puede resultar en Cash?</h4>
+            <div className="space-y-3">
+              <p className="text-[#a3a3a3]">
+                Este es un punto clave del sistema de percentiles. <strong className="text-white">Una predicción positiva
+                no garantiza una posición larga</strong>. Lo que importa es cómo se compara con las predicciones recientes:
+              </p>
+              <div className="bg-[#0a0a0a] p-4 rounded font-mono text-xs">
+                <div className="text-[#f59e0b] font-bold mb-2">Ejemplo concreto:</div>
+                <div className="space-y-2">
+                  <div>Predicción de hoy: <span className="text-[#00c853]">+0.10%</span> (positiva)</div>
+                  <div>Últimas 63 predicciones: rango de <span className="text-[#00c853]">+0.05%</span> a <span className="text-[#00c853]">+0.50%</span></div>
+                  <div className="mt-2 pt-2 border-t border-[#333]">
+                    Percentil de +0.10% = <span className="text-[#f59e0b] font-bold">15%</span> (está en el extremo bajo del rango)
+                  </div>
+                  <div className="mt-2">
+                    Posición resultante: <span className="text-[#737373] font-bold">0x (CASH)</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[#6366f1]">
+                <strong>Interpretación:</strong> Aunque +0.10% es positivo, el modelo ha estado prediciendo retornos
+                más altos recientemente (+0.20% a +0.50%). Una predicción de +0.10% indica <em>menor convicción</em>
+                que lo habitual, por lo que la estrategia opta por no tomar riesgo.
+              </p>
+              <div className="bg-[#0a0a0a] p-3 rounded mt-2 border border-[#333]">
+                <div className="text-white font-medium mb-2">Lógica inversa también aplica:</div>
+                <p className="text-xs text-[#a3a3a3]">
+                  Una predicción de <span className="text-[#c41e3a]">-0.05%</span> (negativa) podría resultar en
+                  <span className="text-[#00c853]"> 3x UPRO</span> si las últimas 63 predicciones fueron muy negativas
+                  (ej: -0.50% a -0.10%). En ese contexto, -0.05% sería una señal alcista relativa.
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div className="p-3 bg-[#1a1a1a] rounded">
-              <div className="font-medium text-white mb-1">Costos incluidos:</div>
-              <ul className="text-xs space-y-1">
-                <li>• <strong>Expense ratio:</strong> UPRO 0.91%, SPY 0.09%, SPXU 0.89%</li>
-                <li>• <strong>Bid-ask spread:</strong> 5-6 bps por operación</li>
-                <li>• <strong>Volatility drag:</strong> Para instrumentos 3x leverage</li>
+
+          {/* ============================================================ */}
+          {/* TRANSACTION COSTS */}
+          {/* ============================================================ */}
+          <div className="p-4 bg-[#1a1a1a] rounded-lg">
+            <h4 className="font-medium text-white mb-3">Costos de Transacción (Por qué el capital baja en Cash)</h4>
+            <div className="space-y-3">
+              <p className="text-[#a3a3a3]">
+                El modelo incorpora <strong className="text-white">costos realistas de trading</strong>, lo que explica
+                por qué el capital puede disminuir ligeramente incluso cuando la posición es 0x (Cash):
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-3 bg-[#0a0a0a] rounded">
+                  <div className="text-[#f59e0b] font-medium mb-2">Costos por Cambio de Posición</div>
+                  <ul className="text-xs space-y-1 text-[#a3a3a3]">
+                    <li>• <strong className="text-white">Bid-Ask Spread UPRO:</strong> 0.05%</li>
+                    <li>• <strong className="text-white">Bid-Ask Spread SPY:</strong> 0.02%</li>
+                    <li>• <strong className="text-white">Comisión fija:</strong> 15 bps (0.15%)</li>
+                  </ul>
+                  <p className="text-xs text-[#f59e0b] mt-2">
+                    Estos costos se aplican cada vez que hay un cambio de posición.
+                  </p>
+                </div>
+                <div className="p-3 bg-[#0a0a0a] rounded">
+                  <div className="text-[#22d3ee] font-medium mb-2">Expense Ratios (Diarios)</div>
+                  <ul className="text-xs space-y-1 text-[#a3a3a3]">
+                    <li>• <strong className="text-white">UPRO:</strong> 0.89% anual ≈ 0.0035% diario</li>
+                    <li>• <strong className="text-white">SPY:</strong> 0.09% anual ≈ 0.0004% diario</li>
+                    <li>• <strong className="text-white">Cash:</strong> Gana risk-free rate (~0.02% diario)</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="bg-[#0a0a0a] p-4 rounded font-mono text-xs mt-2">
+                <div className="text-white font-bold mb-2">Ejemplo de impacto:</div>
+                <div className="space-y-1">
+                  <div>Día 3: Posición 3x (UPRO), Capital = $10,835</div>
+                  <div>Día 4: Cambia a 0x (Cash)</div>
+                  <div className="pl-4 text-[#f59e0b]">→ Paga costo de salida de UPRO: ~0.05%</div>
+                  <div className="pl-4">→ Capital = $10,835 × (1 - 0.0005) = <span className="text-white">$10,830</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ============================================================ */}
+          {/* MARKET REGIME DEFINITION */}
+          {/* ============================================================ */}
+          <div className="p-4 bg-[#1a1a1a] rounded-lg">
+            <h4 className="font-medium text-white mb-3">Definición del Régimen de Mercado</h4>
+            <div className="space-y-3">
+              <p className="text-[#a3a3a3] text-xs">
+                El régimen se calcula usando una <strong className="text-white">ventana móvil de 60 días</strong> de retornos del S&P 500.
+                Se evalúan dos métricas: el retorno acumulado y la volatilidad anualizada.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-[#333333]">
+                      <th className="text-left py-2 px-2">Régimen</th>
+                      <th className="text-left py-2 px-2">Condición</th>
+                      <th className="text-left py-2 px-2">Interpretación</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[#a3a3a3]">
+                    <tr className="border-b border-[#222222]">
+                      <td className="py-2 px-2 font-mono text-[#00c853] font-bold">bull</td>
+                      <td className="py-2 px-2">Retorno 60d &gt; +10% <strong className="text-white">Y</strong> Volatilidad &lt; 20%</td>
+                      <td className="py-2 px-2">Mercado alcista con baja volatilidad</td>
+                    </tr>
+                    <tr className="border-b border-[#222222]">
+                      <td className="py-2 px-2 font-mono text-[#c41e3a] font-bold">bear</td>
+                      <td className="py-2 px-2">Retorno 60d &lt; -10%</td>
+                      <td className="py-2 px-2">Mercado bajista (corrección o crash)</td>
+                    </tr>
+                    <tr className="border-b border-[#222222]">
+                      <td className="py-2 px-2 font-mono text-[#f59e0b] font-bold">high_vol</td>
+                      <td className="py-2 px-2">Volatilidad &gt; 25%</td>
+                      <td className="py-2 px-2">Alta incertidumbre (sin importar dirección)</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-2 font-mono text-[#737373] font-bold">sideways</td>
+                      <td className="py-2 px-2">Ninguna de las anteriores</td>
+                      <td className="py-2 px-2">Mercado lateral o transición</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="bg-[#0a0a0a] p-3 rounded mt-2 text-xs">
+                <p className="text-[#a3a3a3]">
+                  <strong className="text-white">Volatilidad anualizada:</strong> σ<sub>anual</sub> = σ<sub>diaria</sub> × √252
+                </p>
+                <p className="text-[#a3a3a3] mt-1">
+                  <strong className="text-white">Retorno acumulado 60d:</strong> ∏(1 + r<sub>t</sub>) - 1, donde t ∈ [día-60, día-1]
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ============================================================ */}
+          {/* STRATEGY FORMULA */}
+          {/* ============================================================ */}
+          <div className="p-4 bg-gradient-to-r from-[#1a1a2e] to-[#0f1729] rounded-lg border border-[#333333]">
+            <h4 className="font-medium text-white mb-3">Fórmula de Retorno de la Estrategia</h4>
+            <div className="bg-[#0a0a0a] p-4 rounded font-mono text-sm text-center">
+              <span className="text-white">r</span>
+              <sub className="text-[#6366f1]">estrategia</sub>
+              <span className="text-white"> = r</span>
+              <sub className="text-[#737373]">f</sub>
+              <span className="text-white"> + posición × (r</span>
+              <sub className="text-[#00c853]">mercado</sub>
+              <span className="text-white"> - r</span>
+              <sub className="text-[#737373]">f</sub>
+              <span className="text-white">) - costos</span>
+            </div>
+            <div className="mt-4 text-xs text-[#a3a3a3] space-y-2">
+              <p>Donde:</p>
+              <ul className="pl-4 space-y-1">
+                <li>• <strong className="text-white">r<sub>f</sub></strong> = Tasa libre de riesgo diaria (≈ 0.02%)</li>
+                <li>• <strong className="text-white">posición</strong> = 0, 1, o 3 según el percentil</li>
+                <li>• <strong className="text-white">r<sub>mercado</sub></strong> = Retorno del S&P 500</li>
+                <li>• <strong className="text-white">costos</strong> = Bid-ask spread + comisiones (si hubo cambio de posición)</li>
               </ul>
-            </div>
-            <div className="p-3 bg-[#1a1a1a] rounded">
-              <div className="font-medium text-white mb-1">Ejemplo (+3x UPRO):</div>
-              <div className="text-xs font-mono">
-                market_return = +1%<br/>
-                strategy_return ≈ 0% + 3 × 1% - costs<br/>
-                strategy_return ≈ +2.9% (después de costos)
+              <div className="mt-4 p-3 bg-[#1a1a1a] rounded">
+                <div className="text-white font-medium mb-2">Ejemplos (sin cambio de posición):</div>
+                <div className="space-y-1 font-mono text-xs">
+                  <div><span className="text-[#00c853]">3x + mercado +1%:</span> 0.02% + 3 × (1% - 0.02%) - 0% = <span className="text-[#00c853]">+2.96%</span></div>
+                  <div><span className="text-[#c41e3a]">3x + mercado -1%:</span> 0.02% + 3 × (-1% - 0.02%) - 0% = <span className="text-[#c41e3a]">-3.04%</span></div>
+                  <div><span className="text-[#737373]">0x + mercado ±X%:</span> 0.02% + 0 × (X% - 0.02%) - 0% = <span className="text-[#737373]">+0.02%</span></div>
+                </div>
+                <div className="text-white font-medium mb-2 mt-3">Ejemplos (con cambio de posición):</div>
+                <div className="space-y-1 font-mono text-xs">
+                  <div><span className="text-[#f59e0b]">0x→3x + mercado +1%:</span> 0.02% + 3 × (1% - 0.02%) - 0.05% = <span className="text-[#00c853]">+2.91%</span></div>
+                  <div><span className="text-[#f59e0b]">3x→0x + mercado -0.5%:</span> 0.02% + 0 × (-0.5% - 0.02%) - 0.05% = <span className="text-[#c41e3a]">-0.03%</span></div>
+                  <div><span className="text-[#f59e0b]">0x→1x + mercado +0.5%:</span> 0.02% + 1 × (0.5% - 0.02%) - 0.02% = <span className="text-[#00c853]">+0.48%</span></div>
+                </div>
+                <p className="text-[#737373] text-[10px] mt-2">* Costos: UPRO bid-ask 0.05%, SPY bid-ask 0.02%</p>
               </div>
             </div>
           </div>

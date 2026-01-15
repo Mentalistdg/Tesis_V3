@@ -206,6 +206,24 @@ async def get_model_trades(model_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/models/{model_name}/daily-log")
+async def get_model_daily_log(model_name: str):
+    """Get daily log for a specific model (one row per trading day)."""
+    try:
+        daily_data = load_json("daily_data.json")
+        if model_name not in daily_data:
+            raise HTTPException(status_code=404, detail=f"Model not found: {model_name}")
+        return {
+            "model": model_name,
+            "daily_log": daily_data[model_name].get('daily_log', []),
+            "warmup_used": daily_data[model_name].get('warmup_used', False)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/market")
 async def get_market_data():
     """Get market data (SPY)."""
@@ -218,9 +236,10 @@ async def get_market_data():
 
 @app.get("/api/signals")
 async def get_signals():
-    """Get current signals from all models."""
+    """Get current signals from all models (LONG-ONLY strategy)."""
     try:
         daily_data = load_json("daily_data.json")
+        summary = load_json("models_summary.json")
 
         signals = []
         for model_name, data in daily_data.items():
@@ -229,47 +248,57 @@ async def get_signals():
                 prev_position = data['positions'][-2] if len(data['positions']) > 1 else current_position
                 change = current_position - prev_position
 
-                # Handle positions from -3 to +3
-                if current_position >= 2.0:
-                    signal = 'STRONG_LONG'
-                elif current_position >= 1.0:
-                    signal = 'LONG'
-                elif current_position > 0:
-                    signal = 'WEAK_LONG'
-                elif current_position == 0:
-                    signal = 'CASH'
-                elif current_position > -2.0:
-                    signal = 'SHORT'
+                # LONG-ONLY signals: 0 (CASH), 1 (SPY), 3 (UPRO)
+                if current_position == 3:
+                    signal = 'UPRO_3X'
+                    instrument = 'UPRO'
+                elif current_position == 1:
+                    signal = 'SPY_1X'
+                    instrument = 'SPY'
                 else:
-                    signal = 'STRONG_SHORT'
+                    signal = 'CASH'
+                    instrument = 'CASH'
+
+                # Get last prediction and percentile from daily_log if available
+                last_prediction = None
+                last_percentile = None
+                if 'daily_log' in data and len(data['daily_log']) > 0:
+                    last_day = data['daily_log'][-1]
+                    last_prediction = last_day.get('prediction')
+                    last_percentile = last_day.get('percentile')
 
                 signals.append({
                     'model': model_name,
                     'category': data['category'],
                     'position': current_position,
                     'signal': signal,
+                    'instrument': instrument,
                     'change': change,
-                    'date': data['dates'][-1]
+                    'date': data['dates'][-1],
+                    'prediction': last_prediction,
+                    'percentile': last_percentile,
                 })
 
         # Sort by position descending
         signals = sorted(signals, key=lambda x: x['position'], reverse=True)
 
-        # Calculate consensus
+        # Calculate consensus for LONG-ONLY
         positions = [s['position'] for s in signals]
         consensus_position = np.mean(positions)
-        bullish_count = sum(1 for p in positions if p >= 1.0)
-        neutral_count = sum(1 for p in positions if -1.0 < p < 1.0)
-        bearish_count = sum(1 for p in positions if p <= -1.0)
+        upro_count = sum(1 for p in positions if p == 3)
+        spy_count = sum(1 for p in positions if p == 1)
+        cash_count = sum(1 for p in positions if p == 0)
 
         return {
             'date': signals[0]['date'] if signals else None,
+            'strategy': summary.get('strategy', 'LONG-ONLY'),
             'consensus': {
                 'position': float(consensus_position),
-                'bullish_count': bullish_count,
-                'neutral_count': neutral_count,
-                'bearish_count': bearish_count,
-                'total_models': len(signals)
+                'upro_count': upro_count,
+                'spy_count': spy_count,
+                'cash_count': cash_count,
+                'total_models': len(signals),
+                'recommended': 'UPRO' if upro_count > len(signals)/2 else ('SPY' if spy_count > cash_count else 'CASH')
             },
             'signals': signals
         }
@@ -281,8 +310,63 @@ async def get_signals():
 async def get_regimes():
     """Get regime analysis data."""
     try:
-        regime_data = load_json("regime_data.json")
-        return regime_data
+        # Try to load regime data, or generate basic info from market data
+        try:
+            regime_data = load_json("regime_data.json")
+            return regime_data
+        except:
+            # Generate basic regime info from market data
+            market_data = load_json("market_data.json")
+            returns = np.array(market_data['returns'])
+
+            # Simple regime detection
+            window = 60
+            regimes = []
+            for i in range(len(returns)):
+                if i < window:
+                    regimes.append('unknown')
+                    continue
+                window_returns = returns[i-window:i]
+                cum_return = np.prod(1 + window_returns) - 1
+                vol = np.std(window_returns) * np.sqrt(252)
+
+                if cum_return > 0.10 and vol < 0.20:
+                    regime = 'bull'
+                elif cum_return < -0.10:
+                    regime = 'bear'
+                elif vol > 0.25:
+                    regime = 'high_vol'
+                else:
+                    regime = 'sideways'
+                regimes.append(regime)
+
+            regime_counts = {}
+            for r in regimes:
+                regime_counts[r] = regime_counts.get(r, 0) + 1
+
+            return {
+                'current_regime': regimes[-1] if regimes else 'unknown',
+                'regime_counts': regime_counts,
+                'dates': market_data['dates'],
+                'regimes': regimes
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/strategy")
+async def get_strategy():
+    """Get current strategy configuration."""
+    try:
+        summary = load_json("models_summary.json")
+        return {
+            'strategy': summary.get('strategy', 'LONG-ONLY'),
+            'config': summary.get('config', {}),
+            'test_period': summary.get('test_period', {}),
+            'benchmark': summary.get('benchmark', {}),
+            'models_beating_spy': summary.get('models_beating_spy', 0),
+            'total_models': summary.get('total_models', 0),
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

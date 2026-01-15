@@ -649,38 +649,33 @@ export default function TradesPage() {
               </div>
             </div>
 
-            {/* Transaction cost breakdown */}
+            {/* Transaction cost breakdown - LONG-ONLY strategy */}
             <div className="mt-4 p-3 bg-[#1a1a1a] rounded-lg border border-[#333]">
-              <h4 className="text-sm font-medium text-[#737373] mb-2">Transaction Costs (bid-ask spreads per trade)</h4>
-              <div className="grid grid-cols-5 gap-2 text-xs text-center">
-                <div className="p-2 bg-[#0a0a0a] rounded">
-                  <div className="text-[#00c853] font-mono">+3x</div>
+              <h4 className="text-sm font-medium text-[#737373] mb-2">
+                LONG-ONLY Strategy - Transaction Costs (bid-ask spreads per trade)
+              </h4>
+              <div className="grid grid-cols-3 gap-2 text-xs text-center">
+                <div className="p-2 bg-[#0a0a0a] rounded border border-[#00c853]/30">
+                  <div className="text-[#00c853] font-mono font-bold">+3x</div>
                   <div className="text-[#525252]">UPRO</div>
                   <div className="text-[#f59e0b]">0.10%</div>
+                  <div className="text-[#525252] text-[10px] mt-1">Top 10% predictions</div>
                 </div>
-                <div className="p-2 bg-[#0a0a0a] rounded">
-                  <div className="text-[#00c853] font-mono">+1x</div>
+                <div className="p-2 bg-[#0a0a0a] rounded border border-[#00c853]/20">
+                  <div className="text-[#00c853] font-mono font-bold">+1x</div>
                   <div className="text-[#525252]">SPY</div>
                   <div className="text-[#f59e0b]">0.04%</div>
+                  <div className="text-[#525252] text-[10px] mt-1">Top 30% predictions</div>
                 </div>
-                <div className="p-2 bg-[#0a0a0a] rounded">
-                  <div className="text-[#737373] font-mono">0</div>
+                <div className="p-2 bg-[#0a0a0a] rounded border border-[#525252]/30">
+                  <div className="text-[#737373] font-mono font-bold">0</div>
                   <div className="text-[#525252]">Cash</div>
                   <div className="text-[#525252]">0%</div>
-                </div>
-                <div className="p-2 bg-[#0a0a0a] rounded">
-                  <div className="text-[#c41e3a] font-mono">-1x</div>
-                  <div className="text-[#525252]">SH</div>
-                  <div className="text-[#f59e0b]">0.08%</div>
-                </div>
-                <div className="p-2 bg-[#0a0a0a] rounded">
-                  <div className="text-[#c41e3a] font-mono">-3x</div>
-                  <div className="text-[#525252]">SPXU</div>
-                  <div className="text-[#f59e0b]">0.12%</div>
+                  <div className="text-[#525252] text-[10px] mt-1">Not confident</div>
                 </div>
               </div>
               <p className="text-xs text-[#525252] mt-2 text-center">
-                Cumulative = Previous Capital + (Strategy Return × Capital) - Transaction Cost
+                Cumulative = Previous Capital + (Strategy Return x Capital) - Transaction Cost
               </p>
             </div>
           </>

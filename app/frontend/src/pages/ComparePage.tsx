@@ -276,7 +276,7 @@ export default function ComparePage() {
                         <div className="flex justify-between">
                           <span className="text-[#737373]">Max DD</span>
                           <span className="font-mono text-[#c41e3a]">
-                            {(m.max_drawdown * 100).toFixed(1)}%
+                            {((m.max_drawdown ?? 0) * 100).toFixed(1)}%
                           </span>
                         </div>
 

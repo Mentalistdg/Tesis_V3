@@ -78,9 +78,11 @@ export default function CostsPage() {
     const slippageCost = nTrades * (slippageBps / 10000);
     const spreadCost = nTrades * (spreadBps / 10000);
     const commissionCost = (nTrades * commission) / initialCapital;
-    const avgAbsLeverage = Math.abs(model.mean_position) || 1;
-    const leveragedPortion = Math.max(0, avgAbsLeverage - 1);
-    const marginCost = leveragedPortion * (marginInterest / 100) * (days / 252);
+
+    // Margin cost: based on time in leveraged positions (3x UPRO = 2x borrowed portion)
+    // When using 3x leverage, you're borrowing 2x (3x - 1x = 2x borrowed)
+    const pct3x = (model.pct_3x_long ?? model.pct_3x ?? 0) / 100;
+    const marginCost = pct3x * 2 * (marginInterest / 100) * (days / 252);
 
     const additionalCosts = slippageCost + spreadCost + commissionCost + marginCost;
     const totalCostPct = etfCostPct + additionalCosts;
@@ -128,17 +130,19 @@ export default function CostsPage() {
         <h2 className="text-xl font-semibold">Transaction Cost Analysis</h2>
       </div>
 
-      {/* ETF Bid-Ask Spreads - Base Costs (matches other pages) */}
+      {/* ETF Bid-Ask Spreads - Base Costs (LONG-ONLY) */}
       <div className="card border-l-4 border-[#f59e0b]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Info className="w-5 h-5 text-[#f59e0b]" />
-            <h3 className="text-lg font-medium">Base Transaction Costs (ETF Bid-Ask Spreads)</h3>
+            <h3 className="text-lg font-medium">Base Transaction Costs (Long-Only ETF Bid-Ask Spreads)</h3>
           </div>
-          <span className="text-xs bg-[#f59e0b]/20 text-[#f59e0b] px-2 py-1 rounded">Matches Overview & Trades pages</span>
+          <span className="text-xs bg-[#f59e0b]/20 text-[#f59e0b] px-2 py-1 rounded">Long-Only Strategy</span>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {Object.entries(TRANSACTION_COST_BREAKDOWN).map(([position, data]) => (
+        <div className="grid grid-cols-3 gap-3">
+          {Object.entries(TRANSACTION_COST_BREAKDOWN)
+            .filter(([pos]) => ['+3x (UPRO)', '+1x (SPY)', '0 (Cash)'].includes(pos))
+            .map(([position, data]) => (
             <div key={position} className="bg-[#1a1a1a] rounded p-3 text-center">
               <div className="text-xs text-[#737373] uppercase mb-1">{position}</div>
               <div className="text-lg font-semibold text-[#f59e0b]">{data.label}</div>
@@ -147,7 +151,7 @@ export default function CostsPage() {
           ))}
         </div>
         <div className="mt-3 text-xs text-[#525252]">
-          Each trade incurs entry (buy) + exit (sell) costs = 2× bid-ask spread. These costs are already included in the Net Return shown across all pages.
+          Long-Only strategy uses only UPRO (3x), SPY (1x), and Cash. Each trade incurs entry (buy) + exit (sell) costs = 2× bid-ask spread.
         </div>
       </div>
 

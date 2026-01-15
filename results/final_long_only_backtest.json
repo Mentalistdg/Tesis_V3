@@ -1,0 +1,276 @@
+{
+  "timestamp": "2026-01-14T18:55:45.286283",
+  "strategy": "LONG-ONLY (0, +1, +3)",
+  "benchmark": {
+    "total_return": 1.0224498180538282,
+    "sharpe": 0.8815104414904456,
+    "max_drawdown": 0.25360574407066466
+  },
+  "models": {
+    "Ridge": {
+      "total_return": 3.187628101350543,
+      "annual_return": 0.3196946411746384,
+      "sharpe": 1.0370356812098245,
+      "max_drawdown": 0.38630954860961186,
+      "directional_accuracy": 0.5272867025365103,
+      "pct_3x": 29.515757109915448,
+      "pct_1x": 8.455034588777863,
+      "pct_cash": 62.02920830130668,
+      "n_trades": 273
+    },
+    "Lasso": {
+      "total_return": 0.0333530796765944,
+      "annual_return": 0.006375232657663599,
+      "sharpe": 0.024400790399913674,
+      "max_drawdown": 0.5846190130522081,
+      "directional_accuracy": 0.5057647963105304,
+      "pct_3x": 16.218293620292084,
+      "pct_1x": 4.765564950038432,
+      "pct_cash": 79.01614142966949,
+      "n_trades": 348
+    },
+    "ElasticNet": {
+      "total_return": 0.09030639821972697,
+      "annual_return": 0.01688782914365561,
+      "sharpe": 0.06476989424733681,
+      "max_drawdown": 0.579017349680011,
+      "directional_accuracy": 0.5034588777863183,
+      "pct_3x": 16.14142966948501,
+      "pct_1x": 4.842428900845504,
+      "pct_cash": 79.01614142966949,
+      "n_trades": 350
+    },
+    "RandomForest": {
+      "total_return": 0.979127570962331,
+      "annual_return": 0.1413691497502656,
+      "sharpe": 0.5005672554910234,
+      "max_drawdown": 0.3218386439728843,
+      "directional_accuracy": 0.45964642582628745,
+      "pct_3x": 20.906994619523445,
+      "pct_1x": 26.210607225211373,
+      "pct_cash": 52.88239815526518,
+      "n_trades": 366
+    },
+    "GradientBoosting": {
+      "total_return": 2.674817714370018,
+      "annual_return": 0.28672152808815077,
+      "sharpe": 0.6648199646313703,
+      "max_drawdown": 0.49288085932417247,
+      "directional_accuracy": 0.45964642582628745,
+      "pct_3x": 84.6272098385857,
+      "pct_1x": 1.4604150653343582,
+      "pct_cash": 13.912375096079938,
+      "n_trades": 170
+    },
+    "XGBoost": {
+      "total_return": 0.7126188230695538,
+      "annual_return": 0.10983755262297779,
+      "sharpe": 0.2288331172898422,
+      "max_drawdown": 0.6609974667701162,
+      "directional_accuracy": 0.5426594926979247,
+      "pct_3x": 97.23289777094543,
+      "pct_1x": 0.0,
+      "pct_cash": 2.7671022290545735,
+      "n_trades": 20
+    },
+    "LightGBM": {
+      "total_return": 0.8522969794741442,
+      "annual_return": 0.126820619450545,
+      "sharpe": 0.5128072607450106,
+      "max_drawdown": 0.3828567467095488,
+      "directional_accuracy": 0.45964642582628745,
+      "pct_3x": 12.836279784780938,
+      "pct_1x": 34.973097617217526,
+      "pct_cash": 52.19062259800153,
+      "n_trades": 475
+    },
+    "CatBoost": {
+      "total_return": 0.7152453604264613,
+      "annual_return": 0.1101670387811935,
+      "sharpe": 0.6629502329196393,
+      "max_drawdown": 0.23620494140522397,
+      "directional_accuracy": 0.46041506533435816,
+      "pct_3x": 7.532667179093005,
+      "pct_1x": 20.522674865488085,
+      "pct_cash": 71.9446579554189,
+      "n_trades": 455
+    },
+    "AutoARIMA": {
+      "total_return": 0.20121223142333733,
+      "annual_return": 0.036148776047976616,
+      "sharpe": 5.1151620318868485,
+      "max_drawdown": 0.00019007936507938193,
+      "directional_accuracy": 0.4973097617217525,
+      "pct_3x": 0.0,
+      "pct_1x": 0.07686395080707148,
+      "pct_cash": 99.92313604919293,
+      "n_trades": 2
+    },
+    "ExponentialSmoothing": {
+      "total_return": -0.046405522156621526,
+      "annual_return": -0.009161637989738236,
+      "sharpe": -0.039737754621212706,
+      "max_drawdown": 0.48228687082278227,
+      "directional_accuracy": 0.5388162951575711,
+      "pct_3x": 19.1391237509608,
+      "pct_1x": 40.12298232129131,
+      "pct_cash": 40.73789392774788,
+      "n_trades": 1014
+    },
+    "Theta": {
+      "total_return": -0.19213190718671058,
+      "annual_return": -0.04048424572619025,
+      "sharpe": -0.15069031537477176,
+      "max_drawdown": 0.5992191094273333,
+      "directional_accuracy": 0.5457340507302075,
+      "pct_3x": 32.28285933897002,
+      "pct_1x": 1.8447348193697155,
+      "pct_cash": 65.87240584166027,
+      "n_trades": 860
+    },
+    "Prophet": {
+      "total_return": 0.16558434439091463,
+      "annual_return": 0.03012357533390997,
+      "sharpe": 0.11226026542168882,
+      "max_drawdown": 0.5143377842882226,
+      "directional_accuracy": 0.5295926210607225,
+      "pct_3x": 28.209069946195235,
+      "pct_1x": 20.906994619523445,
+      "pct_cash": 50.88393543428133,
+      "n_trades": 449
+    },
+    "SeasonalNaive": {
+      "total_return": 0.5784680740103236,
+      "annual_return": 0.09244029570579304,
+      "sharpe": 0.3388258961738268,
+      "max_drawdown": 0.32907221180536855,
+      "directional_accuracy": 0.5234435049961568,
+      "pct_3x": 20.061491160645655,
+      "pct_1x": 39.96925441967717,
+      "pct_cash": 39.96925441967717,
+      "n_trades": 1041
+    },
+    "GARCH": {
+      "total_return": -0.062108256189925326,
+      "annual_return": -0.01234319663897443,
+      "sharpe": -0.05523351761455869,
+      "max_drawdown": 0.5043248099366104,
+      "directional_accuracy": 0.5434281322059954,
+      "pct_3x": 24.90392006149116,
+      "pct_1x": 4.534973097617217,
+      "pct_cash": 70.56110684089163,
+      "n_trades": 458
+    },
+    "DLinear": {
+      "total_return": 0.4137030248442357,
+      "annual_return": 0.06936004484192382,
+      "sharpe": 0.4986438291421104,
+      "max_drawdown": 0.23067114978669123,
+      "directional_accuracy": 0.5434281322059954,
+      "pct_3x": 10.222905457340508,
+      "pct_1x": 10.146041506533436,
+      "pct_cash": 79.63105303612605,
+      "n_trades": 397
+    },
+    "NBEATS": {
+      "total_return": 0.9352441442889037,
+      "annual_return": 0.13642270388699362,
+      "sharpe": 0.6708311580135696,
+      "max_drawdown": 0.26372692469326997,
+      "directional_accuracy": 0.44734819369715606,
+      "pct_3x": 13.912375096079938,
+      "pct_1x": 9.83858570330515,
+      "pct_cash": 76.24903920061492,
+      "n_trades": 378
+    },
+    "NHiTS": {
+      "total_return": 0.38590099316342696,
+      "annual_return": 0.06525388123179288,
+      "sharpe": 0.3332783723868695,
+      "max_drawdown": 0.30752148560006043,
+      "directional_accuracy": 0.4458109146810146,
+      "pct_3x": 14.45042275172944,
+      "pct_1x": 4.919292851652575,
+      "pct_cash": 80.630284396618,
+      "n_trades": 393
+    },
+    "TCN": {
+      "total_return": 0.1906656774396136,
+      "annual_return": 0.03438038268460919,
+      "sharpe": 0.15176864342013477,
+      "max_drawdown": 0.4782330518387259,
+      "directional_accuracy": 0.45887778631821674,
+      "pct_3x": 15.219062259800154,
+      "pct_1x": 33.128362797847814,
+      "pct_cash": 51.65257494235204,
+      "n_trades": 678
+    },
+    "TFT": {
+      "total_return": 0.28441509320538905,
+      "annual_return": 0.049677593675496956,
+      "sharpe": 0.35460438827576224,
+      "max_drawdown": 0.2858424900055454,
+      "directional_accuracy": 0.46810146041506534,
+      "pct_3x": 5.611068408916219,
+      "pct_1x": 13.604919292851653,
+      "pct_cash": 80.78401229823213,
+      "n_trades": 452
+    },
+    "CNN_LSTM": {
+      "total_return": 2.0710672774042544,
+      "annual_return": 0.24275797137113786,
+      "sharpe": 0.8586770583042204,
+      "max_drawdown": 0.276990628494311,
+      "directional_accuracy": 0.5080707148347425,
+      "pct_3x": 27.286702536510376,
+      "pct_1x": 30.591852421214448,
+      "pct_cash": 42.12144504227518,
+      "n_trades": 250
+    },
+    "LSTM_Attention": {
+      "total_return": 0.31519986121205834,
+      "annual_return": 0.05450432280181694,
+      "sharpe": 0.16481550245928164,
+      "max_drawdown": 0.44842717032022195,
+      "directional_accuracy": 0.4704073789392775,
+      "pct_3x": 22.059953881629514,
+      "pct_1x": 25.36510376633359,
+      "pct_cash": 52.57494235203689,
+      "n_trades": 117
+    },
+    "BiLSTM": {
+      "total_return": 0.5633840651381554,
+      "annual_return": 0.09041036358032395,
+      "sharpe": 0.4376450699283742,
+      "max_drawdown": 0.24076734126176386,
+      "directional_accuracy": 0.45426594926979247,
+      "pct_3x": 7.071483474250577,
+      "pct_1x": 23.059185242121444,
+      "pct_cash": 69.86933128362797,
+      "n_trades": 466
+    },
+    "BiGRU": {
+      "total_return": 1.2767039696388478,
+      "annual_return": 0.17276032569788113,
+      "sharpe": 0.8373068598121813,
+      "max_drawdown": 0.2745913580387874,
+      "directional_accuracy": 0.5011529592621061,
+      "pct_3x": 21.13758647194466,
+      "pct_1x": 29.438893159108375,
+      "pct_cash": 49.42352036894697,
+      "n_trades": 331
+    }
+  },
+  "summary": {
+    "models_beating_spy": 4,
+    "avg_return": 0.7098390042685033,
+    "avg_sharpe": 0.5793192036760125,
+    "avg_max_dd": 0.3861272624003717,
+    "beating_spy_models": [
+      "Ridge",
+      "GradientBoosting",
+      "CNN_LSTM",
+      "BiGRU"
+    ]
+  }
+}

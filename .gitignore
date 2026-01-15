@@ -48,9 +48,30 @@ scripts/catboost_info/
 *.tmp
 temp_*.py
 temp_*.npz
+tmpclaude-*
 
-# Large data backups (keep originals)
+# Claude Code temp directories
+tmpclaude-*-cwd/
+
+# Large data backups
 _archive/data/*_BACKUP*.csv
+
+# Archive folder (deprecated code)
+_archive/
+
+# Bibliography PDFs (too large for git)
+Bibliography/
+
+# Large model files (use Git LFS or download separately)
+# models/*.pkl
+models/checkpoints/
+
+# Compartir profesor (duplicate folder)
+compartir_profesor/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Logs
+*.log
+logs/
