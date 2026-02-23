@@ -34,6 +34,9 @@ darts>=0.24.0
 # GARCH Models
 arch>=5.3.0
 
+# Technical Analysis (REQUIERE INSTALACION ESPECIAL - ver notas abajo)
+TA-Lib>=0.4.25
+
 # Utilidades
 joblib>=1.2.0
 tqdm>=4.64.0
@@ -42,16 +45,33 @@ tqdm>=4.64.0
 # NOTAS:
 # =============================================================================
 #
-# 1. PyTorch: Si tiene GPU NVIDIA, puede instalar la version CUDA:
+# 1. TA-Lib (IMPORTANTE - Requiere instalacion especial):
+#
+#    WINDOWS:
+#      a) Descargar wheel precompilado desde:
+#         https://github.com/cgohlke/talib-build/releases
+#      b) Elegir el archivo correcto para su version de Python:
+#         - Python 3.10: TA_Lib-0.4.32-cp310-cp310-win_amd64.whl
+#         - Python 3.11: TA_Lib-0.4.32-cp311-cp311-win_amd64.whl
+#         - Python 3.12: TA_Lib-0.4.32-cp312-cp312-win_amd64.whl
+#      c) Instalar con: pip install TA_Lib-0.4.32-cpXXX-cpXXX-win_amd64.whl
+#
+#    LINUX/MAC:
+#      a) Instalar la libreria C primero:
+#         - Ubuntu/Debian: sudo apt-get install ta-lib
+#         - Mac: brew install ta-lib
+#      b) Luego: pip install TA-Lib
+#
+# 2. PyTorch: Si tiene GPU NVIDIA, puede instalar la version CUDA:
 #    pip install torch --index-url https://download.pytorch.org/whl/cu118
 #
-# 2. Darts incluye automaticamente:
+# 3. Darts incluye automaticamente:
 #    - prophet (Facebook Prophet)
 #    - pytorch-lightning
 #    - tensorboard
 #
-# 3. Tiempo de instalacion estimado: 5-10 minutos
+# 4. Tiempo de instalacion estimado: 5-10 minutos
 #
-# 4. Espacio en disco requerido: ~3-5 GB (principalmente PyTorch)
+# 5. Espacio en disco requerido: ~3-5 GB (principalmente PyTorch)
 #
 # =============================================================================

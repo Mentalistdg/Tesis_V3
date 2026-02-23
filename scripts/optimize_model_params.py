@@ -31,21 +31,24 @@ SALIDA:
 - results/optimal_model_params.json (umbrales optimos por modelo)
 - results/param_grid_search_results.csv (todos los resultados del grid search)
 
-UMBRALES EXPLICADOS:
---------------------
-Los umbrales definen que percentil de prediccion activa cada posicion:
+ESTRATEGIA: LONG-ONLY
+---------------------
+Esta optimizacion busca los mejores umbrales para una estrategia LONG-ONLY
+que solo usa posiciones {0, +1, +3}:
 
     q_long_extreme = 10  -> Top 10% de predicciones activa posicion +3 (UPRO)
     q_long_moderate = 30 -> Top 30% activa posicion +1 (SPY)
-    q_short_extreme = 10 -> Bottom 10% activa posicion -3 (SPXU)
-    q_short_moderate = 30 -> Bottom 30% activa posicion -1 (SH)
+    (resto)              -> Posicion 0 (CASH)
+
+NO hay posiciones cortas (-1, -3) porque:
+    1. El mercado tiene sesgo alcista historico (~7% anual)
+    2. Las posiciones cortas tienen costos asimetricos (borrow fees, squeezes)
+    3. El riesgo de estar corto es teoricamente ilimitado
 
 Ejemplo con q_long_extreme=10, q_long_moderate=30:
-    Percentil 90-100%  -> +3 (muy alcista, top 10%)
-    Percentil 70-90%   -> +1 (alcista)
-    Percentil 30-70%   ->  0 (neutral, cash)
-    Percentil 10-30%   -> -1 (bajista)
-    Percentil 0-10%    -> -3 (muy bajista, bottom 10%)
+    Percentil 90-100%  -> +3 (muy alcista, top 10%) -> UPRO
+    Percentil 70-90%   -> +1 (alcista)             -> SPY
+    Percentil 0-70%    ->  0 (neutral/proteccion)  -> CASH
 
 NOTA:
 -----
@@ -143,21 +146,26 @@ CONFIG = {
 # FUNCIONES DE POSICIONAMIENTO
 # =============================================================================
 
-def quantile_position_asymmetric(predictions, window=63,
-                                  q_long_extreme=10, q_long_moderate=30,
-                                  q_short_extreme=10, q_short_moderate=30):
+def quantile_position_long_only(predictions, window=63,
+                                 q_long_extreme=10, q_long_moderate=30):
     """
-    Calcula posiciones basadas en percentiles rolling con umbrales ASIMETRICOS.
+    Calcula posiciones LONG-ONLY basadas en percentiles rolling.
 
     Esta funcion convierte predicciones continuas del modelo en posiciones
-    discretas {-3, -1, 0, +1, +3} basandose en donde cae la prediccion
-    actual dentro de la distribucion de predicciones recientes.
+    discretas {0, +1, +3} basandose en donde cae la prediccion actual
+    dentro de la distribucion de predicciones recientes.
+
+    ESTRATEGIA LONG-ONLY:
+    ---------------------
+    - Solo posiciones largas (0, +1, +3)
+    - NO hay posiciones cortas (-1, -3)
+    - Cuando no hay conviccion alcista -> CASH (proteccion)
 
     LOGICA:
     -------
     1. Para cada dia, tomamos una ventana de las ultimas N predicciones
     2. Calculamos en que percentil cae la prediccion de HOY
-    3. Mapeamos ese percentil a una posicion discreta
+    3. Mapeamos ese percentil a una posicion Long-Only
 
     ANTI-LEAKAGE:
     -------------
@@ -170,19 +178,15 @@ def quantile_position_asymmetric(predictions, window=63,
         window: Ventana rolling para calcular percentiles (default 63 = 3 meses)
         q_long_extreme: Top X% para posicion +3 (default 10 = top 10%)
         q_long_moderate: Top X% para posicion +1 (default 30 = top 30%)
-        q_short_extreme: Bottom X% para posicion -3 (default 10 = bottom 10%)
-        q_short_moderate: Bottom X% para posicion -1 (default 30 = bottom 30%)
 
     Returns:
-        positions: Array de posiciones discretas {-3, -1, 0, +1, +3}
+        positions: Array de posiciones discretas {0, +1, +3}
         info: Dict con estadisticas de posicionamiento
 
     Ejemplo con q_long_extreme=10, q_long_moderate=30:
-        Percentil 90-100%  -> +3 (top 10% = muy alcista)
-        Percentil 70-90%   -> +1 (alcista moderado)
-        Percentil 30-70%   ->  0 (neutral -> cash)
-        Percentil 10-30%   -> -1 (bajista moderado)
-        Percentil 0-10%    -> -3 (bottom 10% = muy bajista)
+        Percentil 90-100%  -> +3 (top 10% = muy alcista) -> UPRO
+        Percentil 70-90%   -> +1 (alcista moderado)      -> SPY
+        Percentil 0-70%    ->  0 (sin conviccion)        -> CASH
     """
     predictions = np.array(predictions).flatten()
     n = len(predictions)
@@ -190,16 +194,10 @@ def quantile_position_asymmetric(predictions, window=63,
     percentiles = np.zeros(n)
 
     # Calcular umbrales para LONG (desde arriba)
-    # Si q_long_extreme=10, entonces thresh_long_3x=90
+    # Si q_long_extreme=10, entonces thresh_3x=90
     # Esto significa: si percentil >= 90, posicion = +3
-    thresh_long_3x = 100 - q_long_extreme   # ej: 100-10=90 -> top 10% = +3
-    thresh_long_1x = 100 - q_long_moderate  # ej: 100-30=70 -> 70-90% = +1
-
-    # Calcular umbrales para SHORT (desde abajo)
-    # Si q_short_extreme=10, entonces thresh_short_3x=10
-    # Esto significa: si percentil <= 10, posicion = -3
-    thresh_short_3x = q_short_extreme       # ej: 10 -> bottom 10% = -3
-    thresh_short_1x = q_short_moderate      # ej: 30 -> 10-30% = -1
+    thresh_3x = 100 - q_long_extreme   # ej: 100-10=90 -> top 10% = +3
+    thresh_1x = 100 - q_long_moderate  # ej: 100-30=70 -> 70-90% = +1
 
     for i in range(n):
         # Ventana de predicciones: desde (i - window + 1) hasta i (inclusive)
@@ -219,37 +217,27 @@ def quantile_position_asymmetric(predictions, window=63,
         percentile = np.mean(window_preds <= current_pred) * 100
         percentiles[i] = percentile
 
-        # Mapear percentil a posicion discreta (ASIMETRICO)
-        if percentile >= thresh_long_3x:
+        # Mapear percentil a posicion LONG-ONLY
+        if percentile >= thresh_3x:
             positions[i] = 3   # Top q_long_extreme% -> muy alcista -> UPRO
-        elif percentile >= thresh_long_1x:
-            positions[i] = 1   # Entre thresh_long_1x y thresh_long_3x -> SPY
-        elif percentile <= thresh_short_3x:
-            positions[i] = -3  # Bottom q_short_extreme% -> muy bajista -> SPXU
-        elif percentile <= thresh_short_1x:
-            positions[i] = -1  # Entre thresh_short_3x y thresh_short_1x -> SH
+        elif percentile >= thresh_1x:
+            positions[i] = 1   # Entre thresh_1x y thresh_3x -> SPY
         else:
-            positions[i] = 0   # Zona neutral -> Cash
+            positions[i] = 0   # Sin conviccion alcista -> Cash (proteccion)
 
     # Calcular estadisticas de posicionamiento
     info = {
-        'method': 'quantile_asymmetric',
+        'method': 'quantile_long_only',
         'window': window,
         'q_long_extreme': q_long_extreme,
         'q_long_moderate': q_long_moderate,
-        'q_short_extreme': q_short_extreme,
-        'q_short_moderate': q_short_moderate,
-        'thresh_long_3x': thresh_long_3x,
-        'thresh_long_1x': thresh_long_1x,
-        'thresh_short_3x': thresh_short_3x,
-        'thresh_short_1x': thresh_short_1x,
+        'thresh_3x': thresh_3x,
+        'thresh_1x': thresh_1x,
         'percentiles_mean': np.mean(percentiles),
         'percentiles_std': np.std(percentiles),
-        'pct_pos_3': np.mean(positions == 3) * 100,    # % tiempo en +3
-        'pct_pos_1': np.mean(positions == 1) * 100,    # % tiempo en +1
+        'pct_pos_3': np.mean(positions == 3) * 100,    # % tiempo en +3 (UPRO)
+        'pct_pos_1': np.mean(positions == 1) * 100,    # % tiempo en +1 (SPY)
         'pct_pos_0': np.mean(positions == 0) * 100,    # % tiempo en cash
-        'pct_pos_neg1': np.mean(positions == -1) * 100, # % tiempo en -1
-        'pct_pos_neg3': np.mean(positions == -3) * 100, # % tiempo en -3
     }
 
     return positions, info
@@ -818,25 +806,20 @@ print("PASO 3: Grid Search de Parametros Optimos")
 print("="*80)
 
 param_grid = {
-    'q_long_extreme': [5, 10, 15, 20, 25, 30],
-    'q_long_moderate': [20, 30, 40, 50, 60],
-    'q_short_extreme': [5, 10, 15, 20, 25, 30],
-    'q_short_moderate': [10, 20, 30, 40],
+    'q_long_extreme': [5, 10, 15, 20, 25, 30],     # Top X% para posicion +3
+    'q_long_moderate': [20, 30, 40, 50, 60],       # Top Y% para posicion +1
 }
 
 def evaluate_params(test_pred, fwd_ret, rf, params):
-    """Evalua una combinacion de parametros."""
+    """Evalua una combinacion de parametros Long-Only."""
+    # Validar que q_long_moderate > q_long_extreme
     if params['q_long_moderate'] <= params['q_long_extreme']:
         return None
-    if params['q_short_moderate'] <= params['q_short_extreme']:
-        return None
 
-    positions, info = quantile_position_asymmetric(
+    positions, info = quantile_position_long_only(
         test_pred, window=63,
         q_long_extreme=params['q_long_extreme'],
         q_long_moderate=params['q_long_moderate'],
-        q_short_extreme=params['q_short_extreme'],
-        q_short_moderate=params['q_short_moderate'],
     )
 
     positions = apply_position_filter(positions, CONFIG['min_position_change'])
@@ -860,21 +843,20 @@ def evaluate_params(test_pred, fwd_ret, rf, params):
         'sortino': metrics['sortino_ratio'],
         'max_dd': metrics['max_drawdown'],
         'calmar': metrics['calmar_ratio'],
-        'pct_3x_long': info['pct_pos_3'],
-        'pct_1x_long': info['pct_pos_1'],
-        'pct_cash': info['pct_pos_0'],
-        'pct_short': info['pct_pos_neg1'] + info['pct_pos_neg3'],
+        'pct_3x': info['pct_pos_3'],       # % tiempo en +3 (UPRO)
+        'pct_1x': info['pct_pos_1'],       # % tiempo en +1 (SPY)
+        'pct_cash': info['pct_pos_0'],     # % tiempo en cash
         'total_trades': metrics.get('total_trades', 0),
     }
 
+# Combinaciones Long-Only (solo 2 parametros)
 all_combinations = list(product(
     param_grid['q_long_extreme'],
     param_grid['q_long_moderate'],
-    param_grid['q_short_extreme'],
-    param_grid['q_short_moderate'],
 ))
 
 print(f"\nTotal combinaciones: {len(all_combinations)} x {len(models_data)} modelos")
+print("Estrategia: LONG-ONLY (posiciones 0, +1, +3)")
 
 optimal_params = {}
 all_results = []
@@ -892,12 +874,10 @@ for model_name, model_data in models_data.items():
     best_params = None
     best_result = None
 
-    for q_le, q_lm, q_se, q_sm in all_combinations:
+    for q_le, q_lm in all_combinations:
         params = {
             'q_long_extreme': q_le,
             'q_long_moderate': q_lm,
-            'q_short_extreme': q_se,
-            'q_short_moderate': q_sm,
         }
 
         result = evaluate_params(test_pred, fwd_ret, rf, params)
@@ -923,7 +903,6 @@ for model_name, model_data in models_data.items():
     }
 
     print(f"    Mejor: L({best_params['q_long_extreme']},{best_params['q_long_moderate']}) "
-          f"S({best_params['q_short_extreme']},{best_params['q_short_moderate']}) "
           f"-> Sharpe: {best_result['sharpe']:.2f}")
 
 # =============================================================================
@@ -945,12 +924,10 @@ for model_name in optimal_params.keys():
     opt = optimal_params[model_name]
     p = opt['params']
 
-    positions, _ = quantile_position_asymmetric(
+    positions, _ = quantile_position_long_only(
         test_pred, window=63,
         q_long_extreme=p['q_long_extreme'],
         q_long_moderate=p['q_long_moderate'],
-        q_short_extreme=p['q_short_extreme'],
-        q_short_moderate=p['q_short_moderate'],
     )
 
     positions = apply_position_filter(positions, CONFIG['min_position_change'])
@@ -1018,7 +995,7 @@ for i, (model_name, opt) in enumerate(top5, 1):
     p = opt['params']
     r = opt['result']
     print(f"  {i}. {model_name}: Sharpe={r['sharpe']:.2f}, Return={r['return']*100:.1f}%, "
-          f"L({p['q_long_extreme']},{p['q_long_moderate']}) S({p['q_short_extreme']},{p['q_short_moderate']})")
+          f"L({p['q_long_extreme']},{p['q_long_moderate']})")
 
 print("\n" + "="*80)
 print("OPTIMIZACION COMPLETADA")
