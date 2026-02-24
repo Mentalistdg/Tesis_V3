@@ -1,48 +1,70 @@
 # =============================================================================
-# REQUIREMENTS.TXT - Dependencias del Proyecto
+# REQUIREMENTS.TXT - Dependencias del Proyecto (versiones exactas)
 # =============================================================================
 #
 # Instalar con: pip install -r requirements.txt
 #
 # NOTA: Se recomienda usar un entorno virtual:
-#   python -m venv venv
-#   venv\Scripts\activate     (Windows)
-#   source venv/bin/activate  (Linux/Mac)
+#   python -m venv .venv
+#   .venv\Scripts\activate     (Windows)
+#   source .venv/bin/activate  (Linux/Mac)
 #   pip install -r requirements.txt
 #
+# Python requerido: 3.13.x
 # =============================================================================
 
 # Core Data Science
-pandas>=1.5.0
-numpy>=1.21.0
-scipy>=1.9.0
+pandas==2.3.3
+numpy==2.3.5
+scipy==1.15.3
 
 # Machine Learning - Clasico
-scikit-learn>=1.0.0
+scikit-learn==1.8.0
 
 # Gradient Boosting
-xgboost>=1.7.0
-lightgbm>=3.3.0
-catboost>=1.1.0
+xgboost==3.1.2
+lightgbm==4.6.0
+catboost==1.2.8
 
 # Deep Learning - PyTorch
-torch>=2.0.0
+torch==2.9.1
 
-# Time Series - Darts (incluye Prophet, N-BEATS, TFT, etc.)
-darts>=0.24.0
+# Time Series - Darts (incluye Prophet, N-BEATS, TFT, pytorch-lightning, etc.)
+darts==0.39.0
 
 # GARCH Models
-arch>=5.3.0
+arch==8.0.0
 
 # Technical Analysis (REQUIERE INSTALACION ESPECIAL - ver notas abajo)
-TA-Lib>=0.4.25
+TA-Lib==0.6.8
+
+# Statistical Analysis
+statsmodels==0.14.6
+
+# Visualization
+matplotlib==3.10.8
+seaborn==0.13.2
+plotly==6.5.0
+
+# ML Explainability
+shap==0.50.0
+
+# Optimization
+optuna==4.6.0
+
+# Web App Backend
+fastapi==0.125.0
+uvicorn==0.38.0
+python-multipart==0.0.21
 
 # Utilidades
-joblib>=1.2.0
-tqdm>=4.64.0
+joblib==1.5.2
+tqdm==4.67.1
+openpyxl==3.1.5
+requests==2.32.5
 
 # =============================================================================
-# NOTAS:
+# NOTAS DE INSTALACION:
 # =============================================================================
 #
 # 1. TA-Lib (IMPORTANTE - Requiere instalacion especial):
@@ -50,11 +72,9 @@ tqdm>=4.64.0
 #    WINDOWS:
 #      a) Descargar wheel precompilado desde:
 #         https://github.com/cgohlke/talib-build/releases
-#      b) Elegir el archivo correcto para su version de Python:
-#         - Python 3.10: TA_Lib-0.4.32-cp310-cp310-win_amd64.whl
-#         - Python 3.11: TA_Lib-0.4.32-cp311-cp311-win_amd64.whl
-#         - Python 3.12: TA_Lib-0.4.32-cp312-cp312-win_amd64.whl
-#      c) Instalar con: pip install TA_Lib-0.4.32-cpXXX-cpXXX-win_amd64.whl
+#      b) Elegir el archivo correcto para Python 3.13:
+#         TA_Lib-0.6.8-cp313-cp313-win_amd64.whl
+#      c) Instalar con: pip install TA_Lib-0.6.8-cp313-cp313-win_amd64.whl
 #
 #    LINUX/MAC:
 #      a) Instalar la libreria C primero:
@@ -62,16 +82,26 @@ tqdm>=4.64.0
 #         - Mac: brew install ta-lib
 #      b) Luego: pip install TA-Lib
 #
-# 2. PyTorch: Si tiene GPU NVIDIA, puede instalar la version CUDA:
+# 2. PyTorch: Si tiene GPU NVIDIA, instalar la version CUDA:
 #    pip install torch --index-url https://download.pytorch.org/whl/cu118
 #
 # 3. Darts incluye automaticamente:
 #    - prophet (Facebook Prophet)
 #    - pytorch-lightning
 #    - tensorboard
+#    - neuralforecast
 #
-# 4. Tiempo de instalacion estimado: 5-10 minutos
+# 4. LaTeX (para compilar el paper):
+#    - Windows: Instalar MiKTeX desde https://miktex.org/download
+#      o TeX Live desde https://tug.org/texlive/windows.html
+#    - Linux: sudo apt install texlive-full
+#    - Mac: brew install --cask mactex
 #
-# 5. Espacio en disco requerido: ~3-5 GB (principalmente PyTorch)
+# 5. Node.js (para el frontend):
+#    - Descargar Node.js v22.x desde https://nodejs.org/
+#    - Luego: cd app/frontend && npm install
+#
+# 6. Tiempo de instalacion estimado: 10-15 minutos
+# 7. Espacio en disco requerido: ~5 GB (PyTorch + dependencias)
 #
 # =============================================================================
