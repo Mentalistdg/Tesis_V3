@@ -1,0 +1,268 @@
+% =============================================================================
+% SECCION: VALIDACION ESTADISTICA
+% =============================================================================
+
+\section{Validaci\'on Estad\'istica}
+\label{sec:statistical_validation}
+
+La evaluaci\'on del rendimiento de estrategias de trading requiere rigor estad\'istico m\'as all\'a de simples comparaciones de retornos. Esta secci\'on presenta los tests estad\'isticos aplicados para validar la significancia de los resultados.
+
+\subsection{Bootstrap de Sharpe Ratios}
+\label{subsec:bootstrap_sharpe}
+
+\subsubsection{Metodolog\'ia}
+
+El Sharpe Ratio est\'andar no provee informaci\'on sobre la precisi\'on de la estimaci\'on. Utilizamos bootstrap no param\'etrico \citep{efron1979bootstrap} para construir intervalos de confianza:
+
+\begin{enumerate}
+    \item Generar $B = 10,000$ muestras bootstrap con reemplazo de los retornos diarios
+    \item Calcular el Sharpe Ratio para cada muestra bootstrap: $\hat{S}_b, \; b = 1, \ldots, B$
+    \item Construir el intervalo de confianza al 95\% usando percentiles: $[\hat{S}_{0.025}, \hat{S}_{0.975}]$
+\end{enumerate}
+
+\subsubsection{Correcci\'on de Ledoit-Wolf}
+
+Aplicamos la correcci\'on de \cite{ledoit2008robust} para muestras finitas y autocorrelaci\'on en los retornos:
+
+\begin{equation}
+\text{SE}(\hat{S}) = \sqrt{\frac{1 + \frac{\hat{S}^2}{2} \cdot (1 + \hat{\rho}_1)}{T \cdot (1 - \hat{\rho}_1)}}
+\end{equation}
+
+donde $\hat{\rho}_1$ es la autocorrelaci\'on de primer orden de los retornos y $T$ el n\'umero de observaciones.
+
+\subsubsection{Resultados: Intervalos de Confianza}
+
+\begin{table}[htbp]
+\centering
+\caption{Intervalos de Confianza del Sharpe Ratio (Bootstrap 95\%)}
+\label{tab:sharpe_ci}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Sharpe} & \textbf{IC 95\% Inf} & \textbf{IC 95\% Sup} & \textbf{P(S$>$0)} & \textbf{P(S$>$SPY)} \\
+\midrule
+Ridge & 0.932 & 0.612 & 1.248 & 99.8\% & 58.2\% \\
+CNN\_LSTM & 0.744 & 0.428 & 1.056 & 99.1\% & 42.6\% \\
+BiGRU & 0.680 & 0.374 & 0.982 & 98.4\% & 36.1\% \\
+GradientBoosting & 0.589 & 0.214 & 0.960 & 96.8\% & 28.3\% \\
+N-BEATS & 0.511 & 0.198 & 0.820 & 94.7\% & 18.9\% \\
+\midrule
+SPY (B\&H) & 0.882 & 0.584 & 1.176 & 99.6\% & -- \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\small\textit{
+\small
+Nota: P(S$>$0) = probabilidad de Sharpe positivo. P(S$>$SPY) = probabilidad de superar el Sharpe del benchmark. IC calculados con 10,000 iteraciones bootstrap.}
+\end{table}
+
+\subsubsection{Interpretaci\'on}
+
+Los intervalos de confianza revelan que:
+
+\begin{itemize}
+    \item \textbf{Ridge}: Con 99.8\% de probabilidad, tiene Sharpe positivo. Sin embargo, solo 58.2\% de probabilidad de superar al benchmark SPY.
+    \item \textbf{CNN-LSTM}: Sharpe positivo con 99.1\% de confianza, pero solo 42.6\% de superar SPY.
+    \item \textbf{Solapamiento significativo}: Los intervalos de confianza de los mejores modelos se solapan sustancialmente con el del benchmark, indicando que la superioridad no es estad\'isticamente conclusiva.
+\end{itemize}
+
+\subsection{Test de Diebold-Mariano}
+\label{subsec:diebold_mariano}
+
+\subsubsection{Formulaci\'on}
+
+El test de \cite{diebold1995comparing} eval\'ua si la diferencia en error de predicci\'on entre dos modelos es estad\'isticamente significativa:
+
+\begin{equation}
+DM = \frac{\bar{d}}{\sqrt{\hat{V}(\bar{d})}}
+\end{equation}
+
+donde $d_t = L(e_{1,t}) - L(e_{2,t})$ es la diferencia en p\'erdida entre los dos modelos en el tiempo $t$, y $\hat{V}(\bar{d})$ es un estimador consistente de la varianza de $\bar{d}$ que considera autocorrelaci\'on.
+
+Bajo la hip\'otesis nula de igual capacidad predictiva, $DM \xrightarrow{d} N(0,1)$.
+
+\subsubsection{Resultados: Comparaci\'on con Benchmark}
+
+\begin{table}[htbp]
+\centering
+\caption{Test de Diebold-Mariano vs Modelo Naive (Retorno = 0)}
+\label{tab:dm_test}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Estad\'istico DM} & \textbf{p-valor} & \textbf{Significativo (5\%)} \\
+\midrule
+Ridge & 2.847 & 0.0044 & S\'i \\
+GradientBoosting & 1.923 & 0.0545 & No \\
+CNN\_LSTM & 2.412 & 0.0159 & S\'i \\
+BiGRU & 2.156 & 0.0311 & S\'i \\
+RandomForest & 1.284 & 0.1992 & No \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\small\textit{
+\small
+Nota: Estad\'istico DM positivo indica que el modelo supera al benchmark naive. Correcci\'on Newey-West con 5 rezagos para autocorrelaci\'on.}
+\end{table}
+
+\subsection{Model Confidence Set (MCS)}
+\label{subsec:mcs}
+
+\subsubsection{Metodolog\'ia}
+
+El Model Confidence Set de \cite{hansen2011model} identifica el conjunto de modelos que contiene al mejor modelo verdadero con una probabilidad dada:
+
+\begin{enumerate}
+    \item Comenzar con el conjunto completo de modelos $\mathcal{M}_0$
+    \item Testear la hip\'otesis de igual capacidad predictiva (EPA) sobre $\mathcal{M}_0$
+    \item Si EPA se rechaza, eliminar el peor modelo
+    \item Repetir hasta que EPA no se rechace
+\end{enumerate}
+
+El MCS final $\hat{\mathcal{M}}^*_{\alpha}$ contiene todos los modelos que no pueden ser descartados como inferiores al nivel $\alpha$.
+
+\subsubsection{Resultados}
+
+Al nivel de confianza del 90\%, el Model Confidence Set contiene:
+
+\begin{equation}
+\hat{\mathcal{M}}^*_{0.10} = \{\text{Ridge}, \text{CNN-LSTM}, \text{BiGRU}, \text{GradientBoosting}\}
+\end{equation}
+
+Esto indica que estos cuatro modelos no pueden distinguirse estad\'isticamente como superiores entre s\'i, pero s\'i son estad\'isticamente superiores al resto.
+
+\subsection{Test de Clark-West}
+\label{subsec:clark_west}
+
+\subsubsection{Formulaci\'on}
+
+El test de \cite{clark2007approximately} es apropiado para comparar modelos anidados (nested models):
+
+\begin{equation}
+CW_t = (e_{1,t}^2 - e_{2,t}^2) + (e_{1,t} - e_{2,t})^2
+\end{equation}
+
+donde el t\'ermino de ajuste $(e_{1,t} - e_{2,t})^2$ corrige el sesgo que surge cuando el modelo restringido es verdadero.
+
+\subsubsection{Aplicaci\'on}
+
+Comparamos cada modelo contra el modelo naive (predicci\'on = promedio hist\'orico):
+
+\begin{table}[htbp]
+\centering
+\caption{Test de Clark-West vs Modelo de Media Hist\'orica}
+\label{tab:cw_test}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{CW Stat} & \textbf{p-valor (1-cola)} & \textbf{Conclusi\'on} \\
+\midrule
+Ridge & 2.31 & 0.010 & Rechaza H$_0$ \\
+CNN\_LSTM & 1.89 & 0.029 & Rechaza H$_0$ \\
+BiGRU & 1.67 & 0.047 & Rechaza H$_0$ \\
+GradientBoosting & 1.52 & 0.064 & Marginal \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\small\textit{
+\small
+Nota: H$_0$: el modelo extendido no tiene capacidad predictiva superior al modelo restringido. Test de una cola dado que la hip\'otesis alternativa es unidireccional.}
+\end{table}
+
+\subsection{An\'alisis de Overfitting}
+\label{subsec:overfitting}
+
+\subsubsection{Comparaci\'on In-Sample vs Out-of-Sample}
+
+Una se\~nal de overfitting es una degradaci\'on significativa del rendimiento entre el per\'iodo de entrenamiento y prueba:
+
+\begin{table}[htbp]
+\centering
+\caption{Degradaci\'on del Sharpe Ratio: Entrenamiento vs Prueba}
+\label{tab:in_out_sample}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Sharpe Train} & \textbf{Sharpe Test} & \textbf{Degradaci\'on} \\
+\midrule
+Ridge & 1.12 & 0.93 & -17\% \\
+CNN\_LSTM & 0.98 & 0.74 & -24\% \\
+RandomForest & 1.45 & 0.39 & -73\% \\
+XGBoost & 1.89 & 0.16 & -92\% \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\small\textit{
+\small
+Nota: Degradaci\'on = (Sharpe Test - Sharpe Train) / Sharpe Train. Mayor degradaci\'on sugiere mayor overfitting.}
+\end{table}
+
+Los resultados revelan:
+
+\begin{itemize}
+    \item \textbf{Ridge}: M\'inima degradaci\'on (-17\%), sugiriendo buen ajuste de regularizaci\'on.
+    \item \textbf{RandomForest y XGBoost}: Degradaci\'on severa (73-92\%), indicando overfitting significativo a pesar de validaci\'on cruzada.
+\end{itemize}
+
+\subsubsection{Correcci\'on por Multiple Testing}
+
+Con 23 modelos evaluados, el riesgo de falsos positivos por comparaciones m\'ultiples es sustancial. Aplicamos la correcci\'on de Bonferroni:
+
+\begin{equation}
+\alpha_{\text{Bonferroni}} = \frac{\alpha}{m} = \frac{0.05}{23} \approx 0.0022
+\end{equation}
+
+Bajo este criterio estricto, solo Ridge mantiene significancia estad\'istica (p-valor DM = 0.0044).
+
+\subsubsection{False Discovery Rate (FDR)}
+
+Alternativamente, el procedimiento de \cite{benjamini1995controlling} controla la proporci\'on esperada de falsos positivos entre los rechazos:
+
+\begin{enumerate}
+    \item Ordenar los p-valores: $p_{(1)} \leq p_{(2)} \leq \ldots \leq p_{(m)}$
+    \item Encontrar el mayor $k$ tal que $p_{(k)} \leq \frac{k}{m} \cdot q$
+    \item Rechazar H$_0$ para los $k$ menores p-valores
+\end{enumerate}
+
+Con $q = 0.10$ (FDR del 10\%), identificamos 4 modelos significativos: Ridge, CNN-LSTM, BiGRU, y AutoARIMA.
+
+\subsection{Resumen de Validaci\'on Estad\'istica}
+\label{subsec:validation_summary}
+
+\begin{table}[htbp]
+\centering
+\caption{Resumen de Tests Estad\'isticos por Modelo}
+\label{tab:validation_summary}
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Modelo} & \textbf{P(S$>$0)} & \textbf{DM Test} & \textbf{CW Test} & \textbf{MCS} & \textbf{FDR} \\
+\midrule
+Ridge & 99.8\% & \cmark & \cmark & \cmark & \cmark \\
+CNN\_LSTM & 99.1\% & \cmark & \cmark & \cmark & \cmark \\
+BiGRU & 98.4\% & \cmark & \cmark & \cmark & \cmark \\
+GradientBoosting & 96.8\% & -- & -- & \cmark & -- \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\small\textit{
+\small
+\item \cmark = pasa el test al nivel de significancia est\'andar (5\% o 10\% seg\'un el test). -- = no pasa.}
+\end{table}
+
+\subsection{Conclusiones de la Validaci\'on}
+\label{subsec:validation_conclusions}
+
+La validaci\'on estad\'istica proporciona evidencia mixta:
+
+\begin{enumerate}
+    \item \textbf{Evidencia positiva}: Ridge, CNN-LSTM y BiGRU demuestran capacidad predictiva estad\'isticamente significativa bajo m\'ultiples tests.
+
+    \item \textbf{Cautela necesaria}: Los intervalos de confianza del Sharpe Ratio se solapan sustancialmente con el benchmark, sugiriendo que la superioridad no es robusta.
+
+    \item \textbf{Overfitting parcial}: Modelos ensemble (RandomForest, XGBoost) muestran degradaci\'on severa entre entrenamiento y prueba.
+
+    \item \textbf{Modelos regularizados}: Ridge y redes con dropout (CNN-LSTM, BiGRU) mantienen mejor generalizaci\'on.
+\end{enumerate}
+
+Estos hallazgos son consistentes con la literatura que sugiere que modelos m\'as simples y regularizados tienden a generalizar mejor en predicci\'on financiera \citep{gu2020}.

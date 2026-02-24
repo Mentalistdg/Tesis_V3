@@ -1,0 +1,31 @@
+\begin{table}[htbp]
+\centering
+\caption{M\'etricas de Riesgo Ajustado por Modelo}
+\label{tab:risk_metrics}
+\small
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Sharpe} & \textbf{Sortino} & \textbf{Calmar} & \textbf{Max DD} & \textbf{Win Rate} & \textbf{Dir. Acc.} & \textbf{Pos. Media} \\
+\midrule
+Ridge & 0.932 & 0.811 & 0.828 & -38.6\% & 76.5\% & 71.2\% & 0.97x \\
+GradientBoosting & 0.589 & 0.774 & 0.582 & -49.3\% & 54.0\% & 91.7\% & 2.55x \\
+CNN\_LSTM & 0.744 & 0.773 & 0.876 & -27.7\% & 68.6\% & 79.1\% & 1.12x \\
+BiGRU & 0.680 & 0.670 & 0.629 & -27.5\% & 70.1\% & 76.0\% & 0.93x \\
+RandomForest & 0.385 & 0.395 & 0.439 & -32.2\% & 71.7\% & 75.0\% & 0.89x \\
+NBEATS & 0.511 & 0.419 & 0.517 & -26.4\% & 78.6\% & 64.4\% & 0.52x \\
+LightGBM & 0.381 & 0.327 & 0.331 & -38.3\% & 67.3\% & 75.4\% & 0.73x \\
+CatBoost & 0.467 & 0.438 & 0.466 & -23.6\% & 76.2\% & 66.4\% & 0.43x \\
+XGBoost & 0.161 & 0.213 & 0.166 & -66.1\% & 54.3\% & 98.3\% & 2.92x \\
+SeasonalNaive & 0.220 & 0.268 & 0.281 & -32.9\% & 38.4\% & 79.2\% & 1.00x \\
+BiLSTM & 0.280 & 0.327 & 0.376 & -24.1\% & 73.4\% & 66.7\% & 0.44x \\
+DLinear & 0.265 & 0.218 & 0.301 & -23.1\% & 78.2\% & 62.5\% & 0.41x \\
+NHiTS & 0.167 & 0.126 & 0.212 & -30.8\% & 78.0\% & 62.0\% & 0.48x \\
+LSTM\_Attention & 0.067 & 0.057 & 0.122 & -44.8\% & 76.6\% & 74.9\% & 0.92x \\
+TFT & 0.123 & 0.092 & 0.174 & -28.6\% & 77.1\% & 62.4\% & 0.30x \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Nota: Win Rate = proporci\'on de d\'ias con retorno positivo. Dir. Acc. = precisi\'on direccional respecto al mercado. Pos. Media = posici\'on promedio (0=Cash, 1=SPY, 3=UPRO).
+\end{tablenotes}
+\end{table}

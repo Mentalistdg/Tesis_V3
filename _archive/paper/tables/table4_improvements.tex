@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\caption{Comparacion de Estrategias con Mejoras de Produccion}
+\label{tab:improvements}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Estrategia} & \textbf{Retorno (\%)} & \textbf{Sharpe} & \textbf{Max DD (\%)} \\
+\midrule
+DLinear (Original) & 238.02 & 0.865 & -46.84 \\
+DLinear + DD Control & 40.34 & 0.524 & -25.86 \\
+Ensemble (3 modelos) & 95.71 & 0.931 & -22.78 \\
+Ensemble + DD Control & 59.96 & 0.798 & -21.07 \\
+Market (Buy & Hold) & 96.18 & 0.846 & -25.36 \\
+\bottomrule
+\end{tabular}
+\end{table}

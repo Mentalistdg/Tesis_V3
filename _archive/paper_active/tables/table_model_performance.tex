@@ -1,0 +1,41 @@
+\begin{table}[htbp]
+\centering
+\caption{Rendimiento de los 23 Modelos en el Per\'iodo de Prueba (Oct 2020 - Dic 2025)}
+\label{tab:model_performance}
+\small
+\begin{tabular}{@{}llrrrrrrr@{}}
+\toprule
+\textbf{Rank} & \textbf{Modelo} & \textbf{Categor\'ia} & \textbf{Ret. Total} & \textbf{Ret. Anual} & \textbf{Sharpe} & \textbf{Sortino} & \textbf{Calmar} & \textbf{Max DD} \\
+\midrule
+1 & \textbf{Ridge} & ML & \textcolor{ForestGreen}{318.8\%} & 32.0\% & 0.932 & 0.811 & 0.828 & -38.6\% \\
+2 & \textbf{GradientBoosting} & ML & \textcolor{ForestGreen}{267.5\%} & 28.7\% & 0.589 & 0.774 & 0.582 & -49.3\% \\
+3 & \textbf{CNN\_LSTM} & Hybrid & \textcolor{ForestGreen}{207.1\%} & 24.3\% & 0.744 & 0.773 & 0.876 & -27.7\% \\
+4 & \textbf{BiGRU} & RNN & \textcolor{ForestGreen}{127.7\%} & 17.3\% & 0.680 & 0.670 & 0.629 & -27.5\% \\
+5 & RandomForest & ML & \textcolor{ForestGreen}{97.9\%} & 14.1\% & 0.385 & 0.395 & 0.439 & -32.2\% \\
+6 & NBEATS & DeepLearning & \textcolor{ForestGreen}{93.5\%} & 13.6\% & 0.511 & 0.419 & 0.517 & -26.4\% \\
+7 & LightGBM & GradientBoosting & \textcolor{ForestGreen}{85.2\%} & 12.7\% & 0.381 & 0.327 & 0.331 & -38.3\% \\
+8 & CatBoost & GradientBoosting & \textcolor{ForestGreen}{71.5\%} & 11.0\% & 0.467 & 0.438 & 0.466 & -23.6\% \\
+9 & XGBoost & GradientBoosting & \textcolor{ForestGreen}{71.3\%} & 11.0\% & 0.161 & 0.213 & 0.166 & -66.1\% \\
+10 & SeasonalNaive & TimeSeries & \textcolor{ForestGreen}{57.8\%} & 9.2\% & 0.220 & 0.268 & 0.281 & -32.9\% \\
+11 & BiLSTM & RNN & \textcolor{ForestGreen}{56.3\%} & 9.0\% & 0.280 & 0.327 & 0.376 & -24.1\% \\
+12 & DLinear & DeepLearning & \textcolor{ForestGreen}{41.4\%} & 6.9\% & 0.265 & 0.218 & 0.301 & -23.1\% \\
+13 & NHiTS & DeepLearning & \textcolor{ForestGreen}{38.6\%} & 6.5\% & 0.167 & 0.126 & 0.212 & -30.8\% \\
+14 & LSTM\_Attention & Attention & \textcolor{ForestGreen}{31.5\%} & 5.5\% & 0.067 & 0.057 & 0.122 & -44.8\% \\
+15 & TFT & DeepLearning & \textcolor{ForestGreen}{28.4\%} & 5.0\% & 0.123 & 0.092 & 0.174 & -28.6\% \\
+16 & AutoARIMA & TimeSeries & \textcolor{ForestGreen}{20.1\%} & 3.6\% & 0.516 & -- & -- & -0.0\% \\
+17 & TCN & DeepLearning & \textcolor{ForestGreen}{19.1\%} & 3.4\% & 0.008 & 0.008 & 0.072 & -47.8\% \\
+18 & Prophet & Prophet & \textcolor{ForestGreen}{16.6\%} & 3.0\% & -0.009 & -0.008 & 0.059 & -51.4\% \\
+19 & ElasticNet & ML & \textcolor{ForestGreen}{9.0\%} & 1.7\% & -0.060 & -0.049 & 0.029 & -57.9\% \\
+20 & Lasso & ML & \textcolor{ForestGreen}{3.3\%} & 0.6\% & -0.100 & -0.081 & 0.011 & -58.5\% \\
+21 & ExponentialSmoothing & TimeSeries & \textcolor{BrickRed}{-4.6\%} & -0.9\% & -0.181 & -0.189 & -0.019 & -48.2\% \\
+22 & GARCH & GARCH & \textcolor{BrickRed}{-6.2\%} & -1.2\% & -0.201 & -0.168 & -0.024 & -50.4\% \\
+23 & Theta & TimeSeries & \textcolor{BrickRed}{-19.2\%} & -4.0\% & -0.272 & -0.297 & -0.068 & -59.9\% \\
+\midrule
+-- & SPY (B\&H) & Benchmark & 102.2\% & -- & 0.882 & -- & -- & -25.4\% \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Nota: Los modelos en negrita superan al benchmark SPY Buy \& Hold. Retorno total calculado como producto de (1+r) - 1 sobre el per\'iodo completo. Sharpe ratio anualizado con tasa libre de riesgo promedio del per\'iodo.
+\end{tablenotes}
+\end{table}

@@ -1,0 +1,172 @@
+% =============================================================================
+% SECCION: MARCO DE GESTION DE RIESGO
+% =============================================================================
+
+\section{Marco de Gesti\'on de Riesgo}
+\label{sec:risk_management}
+
+Una estrategia de trading rentable es condici\'on necesaria pero no suficiente para la implementaci\'on en un contexto institucional. La gesti\'on de riesgo constituye el elemento diferenciador entre estrategias acad\'emicamente interesantes y aquellas viables para operaci\'on real. Esta secci\'on presenta el marco de an\'alisis de riesgo aplicado a los 23 modelos evaluados.
+
+\subsection{M\'etricas de Riesgo Ajustado}
+\label{subsec:risk_adjusted_metrics}
+
+\subsubsection{Sharpe Ratio}
+
+El Sharpe Ratio \citep{sharpe1966mutual} mide el exceso de retorno por unidad de volatilidad total:
+
+\begin{equation}
+\text{Sharpe} = \frac{E[R_p - R_f]}{\sigma_p} \cdot \sqrt{252}
+\label{eq:sharpe}
+\end{equation}
+
+donde $R_p$ es el retorno del portafolio, $R_f$ la tasa libre de riesgo, y $\sigma_p$ la desviaci\'on est\'andar de los retornos. El factor $\sqrt{252}$ anualiza la m\'etrica asumiendo 252 d\'ias de trading.
+
+En nuestra muestra, los Sharpe ratios var\'ian significativamente entre modelos. Ridge alcanza el mayor Sharpe (0.932), seguido por CNN-LSTM (0.744) y BiGRU (0.680). Notablemente, cuatro modelos presentan Sharpe negativos, indicando que su rendimiento ajustado por riesgo es inferior a la tasa libre de riesgo.
+
+\subsubsection{Sortino Ratio}
+
+El Sortino Ratio \citep{sortino1991} mejora sobre Sharpe al considerar \'unicamente la volatilidad negativa (downside risk):
+
+\begin{equation}
+\text{Sortino} = \frac{E[R_p - R_f]}{\sigma_d} \cdot \sqrt{252}
+\label{eq:sortino}
+\end{equation}
+
+donde $\sigma_d$ es la desviaci\'on est\'andar de los retornos negativos exclusivamente. Esta m\'etrica es particularmente relevante para estrategias asim\'etricas donde la distribuci\'on de retornos difiere significativamente de una normal.
+
+\subsubsection{Calmar Ratio}
+
+El Calmar Ratio relaciona el retorno anualizado con el m\'aximo drawdown:
+
+\begin{equation}
+\text{Calmar} = \frac{\text{CAGR}}{|\text{Max Drawdown}|}
+\label{eq:calmar}
+\end{equation}
+
+Esta m\'etrica captura la eficiencia de la estrategia en t\'erminos del peor escenario hist\'orico. Un Calmar superior a 1.0 indica que el retorno anual supera la m\'axima p\'erdida experimentada, un umbral deseable para estrategias institucionales.
+
+\subsection{Value at Risk (VaR) y Expected Shortfall}
+\label{subsec:var_cvar}
+
+\subsubsection{Metodolog\'ia}
+
+Calculamos VaR hist\'orico utilizando percentiles emp\'iricos de la distribuci\'on de retornos:
+
+\begin{equation}
+\text{VaR}_{\alpha} = -\text{Percentil}_{\alpha}(R_t)
+\label{eq:var}
+\end{equation}
+
+El VaR al 95\% representa la p\'erdida m\'axima esperada en el 95\% de los casos (es decir, la p\'erdida que solo se supera el 5\% del tiempo).
+
+\subsubsection{Conditional VaR (CVaR)}
+
+El Expected Shortfall o CVaR mide la p\'erdida promedio en los casos que exceden el VaR:
+
+\begin{equation}
+\text{CVaR}_{\alpha} = -E[R_t | R_t < -\text{VaR}_{\alpha}]
+\label{eq:cvar}
+\end{equation}
+
+Esta m\'etrica es preferida por reguladores y gestores institucionales porque captura el riesgo de cola (tail risk) de manera m\'as completa que el VaR tradicional.
+
+\subsubsection{Resultados de Riesgo de Cola}
+
+\begin{table}[htbp]
+\centering
+\caption{Value at Risk y Expected Shortfall por Modelo (Top 10)}
+\label{tab:var_cvar}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{VaR 95\% (30d)} & \textbf{CVaR 95\% (30d)} & \textbf{VaR 99\% (30d)} & \textbf{Peor D\'ia} \\
+\midrule
+Ridge & -8.2\% & -12.1\% & -15.3\% & -9.8\% \\
+GradientBoosting & -12.4\% & -18.7\% & -22.1\% & -14.2\% \\
+CNN\_LSTM & -7.1\% & -10.8\% & -14.2\% & -8.9\% \\
+BiGRU & -6.8\% & -9.9\% & -13.1\% & -8.1\% \\
+RandomForest & -7.9\% & -11.4\% & -15.8\% & -9.4\% \\
+\midrule
+SPY (B\&H) & -5.8\% & -8.2\% & -10.9\% & -6.7\% \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\small\textit{
+\small
+Nota: VaR y CVaR calculados sobre ventana de 30 d\'ias. Valores negativos representan p\'erdidas potenciales.}
+\end{table}
+
+Los resultados revelan un trade-off fundamental: los modelos con mayor retorno (Ridge, GradientBoosting) tambi\'en presentan mayor riesgo de cola. CNN-LSTM y BiGRU ofrecen un balance m\'as favorable entre retorno y riesgo extremo.
+
+\subsection{An\'alisis de Drawdown}
+\label{subsec:drawdown_analysis}
+
+\subsubsection{M\'aximos Drawdowns}
+
+El drawdown mide la ca\'ida desde un m\'aximo hist\'orico:
+
+\begin{equation}
+DD_t = \frac{P_t - \max_{s \leq t}(P_s)}{\max_{s \leq t}(P_s)}
+\label{eq:drawdown}
+\end{equation}
+
+donde $P_t$ es el valor del portafolio en el momento $t$.
+
+\subsubsection{Per\'iodos de Drawdown Significativo}
+
+Durante el per\'iodo de prueba, identificamos tres episodios de drawdown severo que afectaron la mayor\'ia de los modelos:
+
+\begin{enumerate}
+    \item \textbf{Correcci\'on Q4 2021} (Sep-Dic 2021): Drawdowns del 15-25\% en modelos con alta exposici\'on a 3x.
+    \item \textbf{Bear Market 2022} (Ene-Oct 2022): El per\'iodo m\'as desafiante, con drawdowns del 30-50\% para modelos agresivos.
+    \item \textbf{Volatilidad Bancaria 2023} (Mar 2023): Drawdowns agudos del 10-20\% en una semana.
+\end{enumerate}
+
+\subsubsection{Recuperaci\'on de Drawdowns}
+
+Un aspecto cr\'itico es el tiempo de recuperaci\'on. Definimos el tiempo de recuperaci\'on como el n\'umero de d\'ias hasta alcanzar un nuevo m\'aximo:
+
+\begin{equation}
+T_{recovery} = \min\{t' > t_{DD} : P_{t'} \geq \max_{s \leq t_{DD}}(P_s)\}
+\label{eq:recovery}
+\end{equation}
+
+Los modelos con posicionamiento m\'as conservador (mayor \% en Cash) presentan drawdowns menos profundos pero tiempos de recuperaci\'on similares, sugiriendo que la protecci\'on de capital durante ca\'idas compensa la menor participaci\'on en subidas.
+
+\subsection{Control de Riesgo Impl\'icito en la Estrategia}
+\label{subsec:implicit_risk_control}
+
+La estrategia Long-Only implementada incorpora mecanismos naturales de control de riesgo:
+
+\subsubsection{Posici\'on en Cash como Hedge Natural}
+
+Cuando las predicciones del modelo no superan el umbral $q_{1x}$, la estrategia asigna 100\% a Cash (tasa libre de riesgo). Este mecanismo act\'ua como un ``stop-loss'' impl\'icito basado en la confianza del modelo:
+
+\begin{equation}
+\text{Position}_t = \begin{cases}
+3x & \text{si } \hat{r}_t > P_{100-q_{3x}} \\
+1x & \text{si } P_{100-q_{1x}} < \hat{r}_t \leq P_{100-q_{3x}} \\
+0 & \text{si } \hat{r}_t \leq P_{100-q_{1x}}
+\end{cases}
+\end{equation}
+
+Los modelos con mayor porcentaje de tiempo en Cash (AutoARIMA: 99.9\%, DLinear: 79.6\%) presentan los drawdowns m\'as contenidos pero tambi\'en los retornos m\'as modestos.
+
+\subsubsection{Apalancamiento Selectivo}
+
+El uso de UPRO (3x) se reserva exclusivamente para predicciones de alta confianza (percentil superior $q_{3x}$). Esta selectividad limita la exposici\'on a apalancamiento a momentos donde el modelo tiene mayor certeza direccional.
+
+\subsection{Implicaciones para la Implementaci\'on}
+\label{subsec:risk_implications}
+
+Los hallazgos de esta secci\'on tienen implicaciones directas para la implementaci\'on:
+
+\begin{enumerate}
+    \item \textbf{Sizing de Posiciones}: El VaR diario sugiere limitar el tama\~no de posici\'on al nivel donde una p\'erdida del VaR 99\% sea tolerable.
+
+    \item \textbf{Selecci\'on de Modelos}: Para mandatos conservadores, CNN-LSTM y BiGRU ofrecen el mejor balance riesgo-retorno. Para mandatos agresivos, Ridge maximiza retorno aceptando mayor volatilidad.
+
+    \item \textbf{Diversificaci\'on de Modelos}: Un ensemble de modelos con correlaciones imperfectas puede reducir el riesgo agregado sin sacrificar retorno esperado.
+
+    \item \textbf{L\'imites de Drawdown}: Establecer l\'imites de drawdown del 20-25\% como trigger para revisi\'on de par\'ametros o suspensi\'on temporal.
+\end{enumerate}

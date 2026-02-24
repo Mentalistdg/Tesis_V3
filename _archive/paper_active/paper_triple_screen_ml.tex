@@ -1,0 +1,560 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================================
+% PAQUETES
+% ============================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{threeparttable}
+
+% Configuracion de pagina
+\geometry{margin=2.5cm, headheight=14pt}
+\setstretch{1.5}
+
+% Configuracion de encabezados
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Aprendizaje Autom\'atico para Generaci\'on de Alfa en el S\&P 500}}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Configuracion de hyperref
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    filecolor=magenta,
+    urlcolor=cyan!70!black,
+    citecolor=blue!70!black
+}
+
+% Formato de secciones
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{\thesubsubsection}{0.5em}{}
+
+% ============================================================================
+% DOCUMENTO
+% ============================================================================
+\begin{document}
+
+% ============================================================================
+% TITULO
+% ============================================================================
+\thispagestyle{empty}
+\begin{center}
+
+\vspace*{0.8cm}
+
+{\LARGE\bfseries Desafiando la Eficiencia del Mercado:\par}
+\vspace{0.5cm}
+{\Large\bfseries Aprendizaje Autom\'atico para Predicci\'on Direccional\\ y Generaci\'on de Alfa en el S\&P 500\par}
+
+\vspace{1.2cm}
+
+{\large David Gonz\'alez Ca\~n\'on\par}
+\vspace{0.4cm}
+{\normalsize Maestr\'ia en Inteligencia de Negocios para Finanzas\par}
+\vspace{0.2cm}
+{\normalsize Diciembre 2025\par}
+
+\vspace{1.2cm}
+
+\noindent\rule{0.9\textwidth}{0.5pt}
+
+\vspace{0.8cm}
+
+\end{center}
+
+\begin{minipage}{0.95\textwidth}
+\small
+\setstretch{1.25}
+\textbf{Resumen}
+
+\vspace{0.3cm}
+
+Este estudio investiga emp\'iricamente la Hip\'otesis de Eficiencia de Mercado mediante un enfoque estructurado en dos hitos fundamentales. El \textbf{primer hito} consiste en entrenar 23 modelos de aprendizaje autom\'atico y profundo (incluyendo Ridge, XGBoost, LightGBM, LSTM, TCN, y Transformers) para generar predicciones sobre los retornos del S\&P 500. El objetivo no es predecir con exactitud el valor del retorno de ma\~nana, sino obtener suficiente precisi\'on direccional para informar decisiones de inversi\'on. El \textbf{segundo hito} traduce estas predicciones en una estrategia de trading LONG-ONLY que aprovecha el apalancamiento disponible en ETFs (efectivo, SPY 1x, UPRO 3x) para generar alfa positivo despu\'es de costos de transacci\'on.
+
+El proceso de ingenier\'ia de caracter\'isticas transforma 92 variables macroecon\'omicas, financieras y de sentimiento de Bloomberg Terminal en 647 predictores. Esta transformaci\'on incluye t\'ecnicas diversas como indicadores t\'ecnicos cl\'asicos y estimadores de volatilidad basados en precios OHLC (Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang).
+
+Cuatro de veintitr\'es modelos superan al benchmark pasivo, demostrando que la dificultad de superar al mercado es real pero no insuperable. Los hallazgos presentan evidencia emp\'irica de que t\'ecnicas de aprendizaje autom\'atico pueden capturar patrones direccionales explotables en retornos de mercado, contribuyendo al debate sobre la validez de la Hip\'otesis de Eficiencia de Mercado.
+
+\end{minipage}
+
+\vspace{0.8cm}
+
+\begin{center}
+\noindent\rule{0.9\textwidth}{0.5pt}
+\end{center}
+
+\newpage
+
+\vspace*{0.5cm}
+
+\textbf{Palabras clave:} Hip\'otesis de Eficiencia de Mercado, Aprendizaje Autom\'atico, Aprendizaje Profundo, Pron\'ostico de Series Temporales, An\'alisis T\'ecnico, Generaci\'on de Alfa, S\&P 500, Finanzas Cuantitativas, ETFs Apalancados, Gesti\'on de Riesgo
+
+\vspace{0.5cm}
+
+\textbf{Clasificaci\'on JEL:} G14, G17, C45, C53
+
+\vspace{1cm}
+
+% ============================================================================
+% TABLA DE CONTENIDOS
+% ============================================================================
+\tableofcontents
+\newpage
+
+% ============================================================================
+% 1. INTRODUCCION
+% ============================================================================
+\section{Introducci\'on}
+
+\subsection{Contexto y Motivaci\'on}
+
+La Hip\'otesis de Eficiencia de Mercado (HEM), formalizada por \citet{fama1970} hace m\'as de cinco d\'ecadas, permanece como una de las proposiciones m\'as influyentes y debatidas en la econom\'ia financiera contempor\'anea. En su formulaci\'on m\'as estricta, la hip\'otesis postula que los precios de los activos incorporan instant\'anea y completamente toda la informaci\'on disponible, haciendo imposible la obtenci\'on de rendimientos anormales sistem\'aticos a trav\'es de cualquier estrategia de trading basada en datos hist\'oricos o informaci\'on p\'ublica.
+
+Sin embargo, el panorama emp\'irico ha evolucionado considerablemente desde el trabajo seminal de Fama. La proliferaci\'on de anomal\'ias documentadas, la sofisticaci\'on creciente de las t\'ecnicas de aprendizaje autom\'atico, y la disponibilidad de conjuntos de datos cada vez m\'as ricos han reavivado el debate fundamental: \textquestiondown procesan realmente los mercados financieros la informaci\'on de manera eficiente, o existen ineficiencias persistentes susceptibles de explotaci\'on por inversores sofisticados?
+
+Este estudio contribuye a este debate mediante un enfoque emp\'irico estructurado en \textbf{dos hitos fundamentales}:
+
+\textbf{Hito 1 -- Predicci\'on:} Entrenar m\'ultiples modelos de aprendizaje autom\'atico y profundo (23 en total) para generar predicciones sobre los retornos del S\&P 500. El objetivo no es predecir con exactitud el valor num\'erico del retorno de ma\~nana---tarea que la literatura ha demostrado extremadamente dif\'icil---sino obtener suficiente \textit{precisi\'on direccional} para informar decisiones de inversi\'on.
+
+\textbf{Hito 2 -- Implementaci\'on:} Traducir las predicciones de los modelos en una estrategia de trading pr\'actica que aproveche el apalancamiento disponible en ETFs (UPRO 3x, SPY 1x, efectivo) para generar alfa positivo despu\'es de costos de transacci\'on realistas.
+
+Este enfoque reconoce una distinci\'on crucial: mientras que predecir el retorno exacto del mercado puede ser imposible, identificar la \textit{direcci\'on} con precisi\'on suficiente puede ser econ\'omicamente explotable cuando se combina con una estrategia de posicionamiento inteligente.
+
+\subsection{La Relevancia del Debate sobre Eficiencia de Mercado}
+
+El debate sobre la eficiencia de mercado trasciende el \'ambito puramente acad\'emico y tiene implicaciones profundas para la industria de gesti\'on de activos, la regulaci\'on financiera y las decisiones de inversi\'on individuales. Si los mercados son verdaderamente eficientes, los gestores activos de fondos destruyen valor para sus clientes a trav\'es de comisiones y costos de transacci\'on sin generar rendimientos superiores al mercado. En este escenario, la inversi\'on pasiva a trav\'es de fondos indexados representar\'ia la estrategia \'optima para todos los inversores.
+
+Por el contrario, si existen ineficiencias sistem\'aticas y explotables, surge la posibilidad de que estrategias cuantitativas sofisticadas puedan generar rendimientos ajustados por riesgo superiores. Esta posibilidad ha impulsado el crecimiento exponencial de la industria de hedge funds cuantitativos, que seg\'un estimaciones de la industria gestiona m\'as de un bill\'on de d\'olares en activos globalmente.
+
+La presente investigaci\'on se sit\'ua en la intersecci\'on de estos debates al examinar si las t\'ecnicas m\'as avanzadas de aprendizaje autom\'atico, combinadas con indicadores t\'ecnicos probados en la pr\'actica, pueden identificar patrones predecibles en los retornos del mercado de valores.
+
+\subsection{Contribuciones al Conocimiento}
+
+Este estudio realiza m\'ultiples contribuciones originales al cuerpo de conocimiento existente:
+
+\textbf{Primera contribuci\'on -- Marco de dos hitos:} Se presenta un enfoque estructurado que separa claramente la fase de predicci\'on (entrenamiento de modelos) de la fase de implementaci\'on (estrategia de trading). Esta separaci\'on permite evaluar independientemente la capacidad predictiva de los modelos y la eficacia de la estrategia de posicionamiento.
+
+\textbf{Segunda contribuci\'on -- Comparaci\'on exhaustiva de modelos:} Se entrenan y eval\'uan 23 modelos distintos que abarcan desde regresi\'on lineal regularizada hasta arquitecturas de deep learning de \'ultima generaci\'on (Transformers, TCN, LSTM bidireccionales), proporcionando una visi\'on panor\'amica del estado del arte en predicci\'on de retornos financieros.
+
+\textbf{Tercera contribuci\'on -- Transparencia y reproducibilidad:} A diferencia de gran parte del trabajo acad\'emico en finanzas cuantitativas que depende de conjuntos de datos anonimizados o propietarios, se proporciona documentaci\'on completa de las 92 variables base, las 647 caracter\'isticas derivadas, y cada transformaci\'on metodol\'ogica empleada.
+
+\textbf{Cuarta contribuci\'on -- An\'alisis de riesgo comprehensivo:} Se implementa un marco de gesti\'on de riesgo que incluye m\'ultiples m\'etricas (Sharpe, Sortino, Calmar, VaR, CVaR) y an\'alisis de drawdown detallado.
+
+\textbf{Quinta contribuci\'on -- An\'alisis de reg\'imenes de mercado:} Se eval\'ua el desempe\~no de los modelos bajo diferentes condiciones de mercado (alcista, bajista, lateral, alta volatilidad), proporcionando insights sobre robustez y adaptabilidad.
+
+\textbf{Sexta contribuci\'on -- Validaci\'on estad\'istica rigurosa:} Se aplican tests estad\'isticos formales (Diebold-Mariano, Clark-West, Model Confidence Set) para validar la significancia del outperformance observado.
+
+\textbf{S\'eptima contribuci\'on -- La paradoja del Directional Accuracy:} Se documenta que el Directional Accuracy (DA) no es un predictor confiable de rentabilidad ($\rho = -0.14$), proponiendo el indicador DA@3x como m\'etrica m\'as relevante para evaluar estrategias de trading.
+
+\subsection{Estructura del Documento}
+
+El documento est\'a organizado siguiendo la l\'ogica de los dos hitos fundamentales:
+
+\textbf{Contexto te\'orico:} La Secci\'on 2 presenta una revisi\'on de la literatura relevante sobre eficiencia de mercado, anomal\'ias documentadas, y aplicaciones de aprendizaje autom\'atico en finanzas.
+
+\textbf{Hito 1 -- Predicci\'on:} La Secci\'on 3 describe la metodolog\'ia de predicci\'on: fuentes de datos, ingenier\'ia de caracter\'isticas, especificaciones de los 23 modelos, y el marco de evaluaci\'on.
+
+\textbf{Hito 2 -- Implementaci\'on:} La Secci\'on 4 presenta los resultados emp\'iricos detallados. La Secci\'on 5 analiza la paradoja del Directional Accuracy y propone m\'etricas alternativas. La Secci\'on 6 analiza el marco de gesti\'on de riesgo. La Secci\'on 7 examina el desempe\~no por reg\'imenes de mercado. La Secci\'on 8 presenta la validaci\'on estad\'istica. La Secci\'on 9 analiza los costos de transacci\'on.
+
+\textbf{Discusi\'on y cierre:} La Secci\'on 10 discute las implicaciones para el debate sobre eficiencia de mercado. La Secci\'on 11 examina limitaciones y robustez. La Secci\'on 12 concluye con un resumen de hallazgos. Los ap\'endices proporcionan documentaci\'on t\'ecnica detallada.
+
+% ============================================================================
+% 2. REVISION DE LITERATURA Y FUNDAMENTOS TEORICOS
+% ============================================================================
+\section{Revisi\'on de Literatura y Fundamentos Te\'oricos}
+
+\subsection{La Hip\'otesis de Eficiencia de Mercado: Origen y Evoluci\'on}
+
+\subsubsection{Fundamentos Conceptuales}
+
+La noci\'on de que los precios de mercado reflejan la informaci\'on disponible tiene ra\'ices que se remontan a los trabajos pioneros de Louis Bachelier a principios del siglo XX. Sin embargo, la formulaci\'on moderna de la Hip\'otesis de Eficiencia de Mercado se atribuye principalmente a Eugene Fama, cuyo art\'iculo seminal de 1970 estableci\'o el marco conceptual que domina el pensamiento financiero hasta el d\'ia de hoy.
+
+\citet{fama1970} defini\'o un mercado eficiente como aquel en el que los precios ``reflejan completamente'' la informaci\'on disponible. Esta definici\'on aparentemente simple encierra profundas implicaciones para la pr\'actica de inversi\'on y la teor\'ia financiera. Fama distingui\'o tres formas de eficiencia de mercado:
+
+La \textbf{eficiencia en forma d\'ebil} postula que los precios actuales incorporan completamente toda la informaci\'on contenida en la secuencia hist\'orica de precios.
+
+La \textbf{eficiencia en forma semi-fuerte} extiende esta noci\'on al postular que los precios reflejan toda la informaci\'on p\'ublicamente disponible.
+
+La \textbf{eficiencia en forma fuerte} representa la proposici\'on m\'as extrema: los precios reflejan toda la informaci\'on, incluyendo informaci\'on privada.
+
+\subsubsection{La Paradoja de Grossman-Stiglitz}
+
+Una cr\'itica te\'orica fundamental a la HEM fue planteada por \citet{grossman1980}, quienes demostraron la imposibilidad l\'ogica de mercados perfectamente eficientes. Su argumento, conocido como la ``paradoja de la informaci\'on'', revela una contradicci\'on interna: si nadie tiene incentivos para recopilar informaci\'on, entonces los precios no pueden reflejar esa informaci\'on.
+
+\citet{grossman1980} concluyen que los mercados deben ser ``eficientemente ineficientes''---lo suficientemente ineficientes para compensar a quienes invierten en la adquisici\'on de informaci\'on, pero no tan ineficientes como para permitir ganancias excesivas.
+
+\subsection{Anomal\'ias de Mercado y Evidencia Contra la HEM}
+
+D\'ecadas de investigaci\'on emp\'irica han documentado numerosas ``anomal\'ias''---patrones sistem\'aticos en los rendimientos que aparentemente contradicen las predicciones de eficiencia. \citet{dong2022} documentan m\'as de 150 predictores de retornos identificados en la literatura acad\'emica.
+
+\subsection{Aprendizaje Autom\'atico en Valoraci\'on de Activos}
+
+\citet{gu2020} proporcionan un tratamiento comprehensivo de este campo, demostrando que las redes neuronales, el gradient boosting, y otros m\'etodos no lineales superan sustancialmente a la regresi\'on lineal en la predicci\'on de rendimientos de acciones individuales.
+
+\citet{zeng2023} presentan un hallazgo sorprendente: un modelo simple de descomposici\'on lineal (DLinear) supera a arquitecturas sofisticadas basadas en Transformers en m\'ultiples benchmarks de pron\'ostico.
+
+\subsection{El Sistema Triple Screen de Alexander Elder}
+
+Alexander Elder introdujo el sistema Triple Screen en su influyente libro ``Trading for a Living'' \citep{elder1993}. El sistema representa un enfoque sistem\'atico para el timing de mercado que ha logrado amplia adopci\'on entre traders profesionales durante m\'as de tres d\'ecadas.
+
+% ============================================================================
+% 3. DATOS Y METODOLOGIA
+% ============================================================================
+\section{Datos y Metodolog\'ia}
+
+\subsection{Fuentes de Datos y Construcci\'on de la Muestra}
+
+El an\'alisis emplea datos diarios de Bloomberg Terminal abarcando desde el 3 de enero de 2000 hasta el 12 de diciembre de 2025, comprendiendo 6,507 d\'ias de negociaci\'on. El conjunto de datos integra 92 variables base organizadas en siete categor\'ias tem\'aticas.
+
+\subsection{Ingenier\'ia de Caracter\'isticas}
+
+Las variables en bruto raramente sirven como predictores efectivos en su forma original. Siguiendo pr\'acticas establecidas en finanzas cuantitativas \citep{gu2020}, se transforman las 92 variables base en 647 caracter\'isticas a trav\'es de un pipeline sistem\'atico de ingenier\'ia de caracter\'isticas.
+
+\subsection{Variable Objetivo y Divisi\'on de Muestra}
+
+El objetivo de predicci\'on es el retorno en exceso a un d\'ia del S\&P 500 sobre la tasa libre de riesgo:
+
+\begin{equation}
+y_t = r_{t+1}^{SPY} - r_{t+1}^{f}
+\end{equation}
+
+Para asegurar una evaluaci\'on rigurosa fuera de muestra, se emplea una divisi\'on temporal sin aleatorizaci\'on:
+\begin{itemize}[noitemsep]
+    \item \textbf{Entrenamiento:} Enero 2000 - Septiembre 2020 (5,205 d\'ias)
+    \item \textbf{Prueba:} Octubre 2020 - Diciembre 2025 (1,302 d\'ias)
+\end{itemize}
+
+\subsection{Especificaciones de Modelos}
+
+Evaluamos 23 modelos abarcando cuatro categor\'ias metodol\'ogicas:
+
+\textbf{Modelos de ML Cl\'asico:} Ridge, Lasso, ElasticNet, RandomForest, GradientBoosting
+
+\textbf{Gradient Boosting Avanzado:} XGBoost, LightGBM, CatBoost
+
+\textbf{Series Temporales:} AutoARIMA, ExponentialSmoothing, Theta, SeasonalNaive, Prophet, GARCH
+
+\textbf{Deep Learning:} DLinear, N-BEATS, N-HiTS, TCN, TFT, BiLSTM, BiGRU, CNN-LSTM, LSTM+Attention
+
+\subsection{Sistema de Posicionamiento por Percentiles}
+
+Convertimos las predicciones continuas a posiciones discretas mediante umbrales basados en percentiles:
+
+\begin{equation}
+\text{posici\'on}_t = \begin{cases}
++3 \text{ (UPRO)} & \text{si } \hat{y}_t > Q_{q_{3x}} \\
++1 \text{ (SPY)} & \text{si } Q_{q_{1x}} < \hat{y}_t \leq Q_{q_{3x}} \\
+0 \text{ (Cash)} & \text{si } \hat{y}_t \leq Q_{q_{1x}}
+\end{cases}
+\end{equation}
+
+Los retornos de la estrategia se calculan como:
+\begin{equation}
+r_t^{estrategia} = r_t^f + \text{posici\'on}_t \times (r_t^{SPY} - r_t^f) - \text{costos}_t
+\end{equation}
+
+% ============================================================================
+% 4. RESULTADOS EMPIRICOS (EXPANDIDO)
+% ============================================================================
+\input{sections/section_results_expanded}
+
+% ============================================================================
+% 5. LA PARADOJA DEL DIRECTIONAL ACCURACY
+% ============================================================================
+\input{sections/section_da_paradox}
+
+% ============================================================================
+% 6. GESTION DE RIESGO
+% ============================================================================
+\input{sections/section_risk_management}
+
+% ============================================================================
+% 7. ANALISIS DE REGIMENES DE MERCADO
+% ============================================================================
+\input{sections/section_regime_analysis}
+
+% ============================================================================
+% 8. VALIDACION ESTADISTICA
+% ============================================================================
+\input{sections/section_statistical_validation}
+
+% ============================================================================
+% 9. ANALISIS DE COSTOS DE TRANSACCION (EXPANDIDO)
+% ============================================================================
+\input{sections/section_costs_expanded}
+
+% ============================================================================
+% 10. DISCUSION: IMPLICACIONES PARA LA EFICIENCIA DE MERCADO
+% ============================================================================
+\section{Discusi\'on: Contribuciones al Debate sobre Eficiencia de Mercado}
+
+\subsection{Resumen de Hallazgos Emp\'iricos}
+
+Los hallazgos emp\'iricos principales de este estudio son:
+
+\begin{enumerate}[noitemsep]
+    \item El modelo Ridge genera un alfa de 216 puntos porcentuales sobre cinco a\~nos (318.8\% vs 102.2\% del mercado)
+    \item Este outperformance persiste despu\'es de costos de transacci\'on realistas
+    \item El ratio de Sharpe de 0.93 supera al benchmark (0.88)
+    \item Cuatro de veintitr\'es modelos superan al benchmark en retorno total
+    \item La estrategia LONG-ONLY demuestra que es posible generar alfa sin posiciones cortas
+\end{enumerate}
+
+\subsection{Interpretaci\'on desde la Perspectiva de Eficiencia de Mercado}
+
+\subsubsection{El Argumento contra la Eficiencia}
+
+Los resultados pueden interpretarse como evidencia contra la eficiencia de mercado:
+
+\textbf{Magnitud del outperformance:} Un alfa de 216 puntos porcentuales es econ\'omicamente significativo y dif\'icil de atribuir completamente a suerte o compensaci\'on por riesgo convencional.
+
+\textbf{Consistencia de resultados:} M\'ultiples modelos con metodolog\'ias distintas logran outperformance, sugiriendo se\~nal predictiva real.
+
+\textbf{Diversidad metodol\'ogica:} Los modelos exitosos incluyen tanto m\'etodos lineales como gradient boosting y deep learning.
+
+\subsubsection{El Argumento a Favor de la Eficiencia}
+
+Una interpretaci\'on alternativa es parcialmente consistente con mercados eficientes:
+
+\textbf{Complejidad computacional:} La extracci\'on de la se\~nal predictiva requiere procesar 647 caracter\'isticas con algoritmos sofisticados.
+
+\textbf{Prima de renta variable amplificada:} Parte del rendimiento proviene de exposici\'on larga promedio positiva.
+
+\textbf{Per\'iodo de prueba espec\'ifico:} El per\'iodo incluye recuperaci\'on post-COVID y mercados alcistas predominantes.
+
+\subsection{Reconciliando las Interpretaciones}
+
+Se considera que la verdad reside en un punto intermedio:
+
+\textbf{Ineficiencia explotable:} Los resultados sugieren que el mercado no es perfectamente eficiente.
+
+\textbf{Eficiencia adaptativa con fricciones:} Siguiendo el marco de ``Mercados Adaptativos'' de \citet{lo2019}, los mercados son aproximadamente eficientes pero exhiben patrones predecibles explotables por participantes sofisticados.
+
+% ============================================================================
+% 10. LIMITACIONES Y ROBUSTEZ
+% ============================================================================
+\section{Limitaciones y Consideraciones de Robustez}
+
+\subsection{Limitaciones del Estudio}
+
+\subsubsection{Per\'iodo de Prueba}
+
+El per\'iodo de prueba (octubre 2020 -- diciembre 2025) comprende predominantemente mercados alcistas. Una evaluaci\'on completa requerir\'ia desempe\~no a trav\'es de ciclos de mercado completos, incluyendo recesiones sostenidas.
+
+\subsubsection{Mercado \'Unico}
+
+El an\'alisis se enfoca exclusivamente en el S\&P 500. La generalizabilidad a otros mercados no puede asumirse sin verificaci\'on emp\'irica adicional.
+
+\subsubsection{Estabilidad de Par\'ametros}
+
+Los hiperpar\'ametros fueron seleccionados una vez y mantenidos fijos. En implementaci\'on real, se requerir\'ian procedimientos de recalibraci\'on peri\'odica.
+
+\subsubsection{Impacto de Mercado No Modelado}
+
+El modelo de costos asume que las posiciones pueden ejecutarse sin impacto de mercado. Para capital significativo, el impacto podr\'ia reducir la rentabilidad.
+
+\subsection{An\'alisis de Robustez}
+
+\subsubsection{Diversidad de Modelos Exitosos}
+
+M\'ultiples arquitecturas diferentes logran superar al benchmark:
+\begin{itemize}[noitemsep]
+    \item Ridge (regularizaci\'on lineal): 318.8\%, Sharpe 0.93
+    \item GradientBoosting (ensemble de \'arboles): 267.5\%, Sharpe 0.59
+    \item CNN\_LSTM (deep learning h\'ibrido): 207.1\%, Sharpe 0.74
+    \item BiGRU (red recurrente): 127.7\%, Sharpe 0.68
+\end{itemize}
+
+Esta diversidad metodol\'ogica sugiere que la se\~nal predictiva puede ser capturada por enfoques conceptualmente distintos, proporcionando evidencia de robustez.
+
+% ============================================================================
+% 11. CONCLUSION
+% ============================================================================
+\section{Conclusi\'on}
+
+\subsection{Resumen de Hallazgos}
+
+Este estudio ha investigado emp\'iricamente la Hip\'otesis de Eficiencia de Mercado mediante un enfoque estructurado en dos hitos fundamentales:
+
+\textbf{Hito 1 -- Predicci\'on:} Se entrenaron 23 modelos de aprendizaje autom\'atico y profundo utilizando 647 caracter\'isticas derivadas de 92 variables de Bloomberg.
+
+\textbf{Hito 2 -- Implementaci\'on:} Las predicciones se tradujeron en una estrategia LONG-ONLY de posiciones discretas.
+
+Los hallazgos principales son:
+
+\textbf{Primero,} el modelo Ridge alcanza un ratio de Sharpe de 0.93 con retornos acumulados del 318.8\% sobre el per\'iodo de prueba, superando al benchmark pasivo (102.2\%). La estrategia genera un alfa de 216 puntos porcentuales despu\'es de costos.
+
+\textbf{Segundo,} cuatro de veintitr\'es modelos superan al benchmark pasivo en retorno total, demostrando que superar al mercado es dif\'icil pero no imposible.
+
+\textbf{Tercero,} la diversidad metodol\'ogica de los modelos exitosos sugiere que la se\~nal predictiva es robusta y puede ser capturada por enfoques conceptualmente distintos.
+
+\textbf{Cuarto,} el modelo Ridge permanece en efectivo el 62\% del tiempo, ejemplificando un enfoque conservador que prioriza la preservaci\'on de capital.
+
+\subsection{Contribuciones al Debate sobre Eficiencia de Mercado}
+
+Los resultados presentan un desaf\'io matizado a la Hip\'otesis de Eficiencia de Mercado. Se documenta rendimientos anormales sistem\'aticos de magnitud sustancial que persisten utilizando \'unicamente informaci\'on p\'ublica y una estrategia de implementaci\'on pr\'actica.
+
+Se considera que los hallazgos son m\'as consistentes con una forma de ``eficiencia adaptativa'' donde los mercados son aproximadamente eficientes pero no perfectamente eficientes.
+
+\subsection{Implicaciones Pr\'acticas}
+
+Para practicantes, este estudio ofrece varias lecciones:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Simplicidad sobre complejidad:} Modelos simples como Ridge pueden superar a arquitecturas sofisticadas
+    \item \textbf{Direccionalidad sobre precisi\'on:} El objetivo debe ser capturar la direcci\'on del mercado con suficiente precisi\'on
+    \item \textbf{Costos de transacci\'on:} Las estrategias de alto turnover raramente son viables
+    \item \textbf{Ingenier\'ia de caracter\'isticas:} La extracci\'on sistem\'atica de informaci\'on genera valor predictivo
+    \item \textbf{Apalancamiento selectivo:} La estrategia LONG-ONLY con niveles discretos permite capturar alfa mientras se gestiona el riesgo
+\end{enumerate}
+
+\subsection{Direcciones para Investigaci\'on Futura}
+
+\textbf{Extensi\'on a otros mercados:} \textquestiondown Se generalizan los hallazgos a otros \'indices de renta variable o clases de activos?
+
+\textbf{An\'alisis de r\'egimen:} \textquestiondown Puede mejorarse el desempe\~no mediante detecci\'on expl\'icita de reg\'imenes de mercado?
+
+\textbf{Optimizaci\'on de costos:} \textquestiondown Pueden desarrollarse modelos que optimicen expl\'icitamente el trade-off entre se\~nal predictiva y turnover?
+
+\textbf{Integraci\'on de datos alternativos:} \textquestiondown Agregar\'ian valor fuentes de datos no tradicionales?
+
+\subsection{Reflexiones Finales}
+
+La b\'usqueda de rendimientos superiores en los mercados financieros representa uno de los ejercicios m\'as desafiantes en la intersecci\'on de finanzas, estad\'istica e inteligencia artificial. El presente estudio sugiere que oportunidades explotables pueden existir para aquellos dispuestos a combinar rigurosidad acad\'emica con pragmatismo de practicante.
+
+Sin embargo, se mantiene humildad respecto a los resultados. Los mercados financieros son sistemas adaptativos complejos donde el \'exito pasado no garantiza desempe\~no futuro. Se anima a otros investigadores a validar, extender, y desafiar los hallazgos.
+
+% ============================================================================
+% REFERENCIAS
+% ============================================================================
+\newpage
+\bibliographystyle{apalike}
+
+\begin{thebibliography}{99}
+
+\bibitem[Ang et al., 2006]{ang2006}
+Ang, A., Hodrick, R. J., Xing, Y., \& Zhang, X. (2006).
+\newblock The Cross-Section of Volatility and Expected Returns.
+\newblock \textit{The Journal of Finance}, 61(1), 259--299.
+
+\bibitem[Diebold \& Mariano, 1995]{diebold1995}
+Diebold, F. X., \& Mariano, R. S. (1995).
+\newblock Comparing Predictive Accuracy.
+\newblock \textit{Journal of Business \& Economic Statistics}, 13(3), 253--263.
+
+\bibitem[Dong et al., 2022]{dong2022}
+Dong, X., Li, Y., Rapach, D., \& Zhou, G. (2022).
+\newblock Anomalies and the Expected Market Return.
+\newblock \textit{The Journal of Finance}, 77(1), 639--681.
+
+\bibitem[Elder, 1993]{elder1993}
+Elder, A. (1993).
+\newblock \textit{Trading for a Living: Psychology, Trading Tactics, Money Management}.
+\newblock John Wiley \& Sons.
+
+\bibitem[Fama, 1970]{fama1970}
+Fama, E. F. (1970).
+\newblock Efficient Capital Markets: A Review of Theory and Empirical Work.
+\newblock \textit{The Journal of Finance}, 25(2), 383--417.
+
+\bibitem[Grossman \& Stiglitz, 1980]{grossman1980}
+Grossman, S. J., \& Stiglitz, J. E. (1980).
+\newblock On the Impossibility of Informationally Efficient Markets.
+\newblock \textit{American Economic Review}, 70(3), 393--408.
+
+\bibitem[Gu et al., 2020]{gu2020}
+Gu, S., Kelly, B., \& Xiu, D. (2020).
+\newblock Empirical Asset Pricing via Machine Learning.
+\newblock \textit{The Review of Financial Studies}, 33(5), 2223--2273.
+
+\bibitem[Hansen et al., 2011]{hansen2011}
+Hansen, P. R., Lunde, A., \& Nason, J. M. (2011).
+\newblock The Model Confidence Set.
+\newblock \textit{Econometrica}, 79(2), 453--497.
+
+\bibitem[Lo, 2019]{lo2019}
+Lo, A. W. (2019).
+\newblock \textit{Adaptive Markets: Financial Evolution at the Speed of Thought}.
+\newblock Princeton University Press.
+
+\bibitem[L\'opez de Prado, 2018]{lopezdeprado2018}
+L\'opez de Prado, M. (2018).
+\newblock \textit{Advances in Financial Machine Learning}.
+\newblock John Wiley \& Sons.
+
+\bibitem[Zeng et al., 2023]{zeng2023}
+Zeng, A., Chen, M., Zhang, L., \& Xu, Q. (2023).
+\newblock Are Transformers Effective for Time Series Forecasting?
+\newblock \textit{Proceedings of the AAAI Conference on Artificial Intelligence}, 37(9), 11121--11128.
+
+\end{thebibliography}
+
+% ============================================================================
+% APENDICES
+% ============================================================================
+\newpage
+\appendix
+
+\section{Especificaci\'on Completa de Variables}
+
+Este ap\'endice documenta el conjunto completo de 92 variables base empleadas en el an\'alisis. Todos los datos provienen de Bloomberg Terminal.
+
+Las variables se organizan en siete categor\'ias:
+\begin{itemize}[noitemsep]
+    \item \textbf{Variables de Mercado (M1--M18):} ETFs de renta variable y renta fija
+    \item \textbf{Variables Macroecon\'omicas (E1--E10):} Indicadores de actividad econ\'omica
+    \item \textbf{Variables de Tasas de Inter\'es (I1--I20):} Rendimientos y spreads
+    \item \textbf{Variables de Commodities (P1--P13):} Futuros y divisas
+    \item \textbf{Variables de Volatilidad (V1--V13):} VIX y estructura de t\'erminos
+    \item \textbf{Variables de Sentimiento (S1--S11):} Encuestas y ratios
+    \item \textbf{Variables Dummy de Calendario (D1--D7):} Efectos de calendario
+\end{itemize}
+
+\section{Detalles de Ingenier\'ia de Caracter\'isticas}
+
+Las 647 caracter\'isticas se derivan de las 92 variables base mediante:
+
+\begin{itemize}[noitemsep]
+    \item Retornos multi-horizonte: $h \in \{1, 5, 21, 63, 126, 252\}$ d\'ias
+    \item Indicadores t\'ecnicos: RSI, MACD, Bollinger \%B, ATR
+    \item Estimadores de volatilidad OHLC: Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang
+    \item Caracter\'isticas Triple Screen: Indicadores semanales y diarios
+    \item Estructura de t\'erminos de volatilidad: Pendientes y z-scores del VIX
+    \item Correlaciones cross-asset: Correlaciones m\'oviles de 21 d\'ias
+    \item Rezagos y estad\'isticas m\'oviles
+\end{itemize}
+
+% ============================================================================
+% APENDICE C: HIPERPARAMETROS
+% ============================================================================
+\input{sections/appendix_hyperparameters}
+
+% ============================================================================
+% APENDICE D: PARAMETROS OPTIMOS
+% ============================================================================
+\input{sections/appendix_optimal_params}
+
+\end{document}

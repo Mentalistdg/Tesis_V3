@@ -56,11 +56,13 @@ tmpclaude-*-cwd/
 # Large data backups
 _archive/data/*_BACKUP*.csv
 
-# Archive folder (deprecated code)
-_archive/
+# Archive folder (deprecated code) - exclude most subfolders
+_archive/data/
+_archive/data_raw/
+_archive/models/
 
-# Bibliography PDFs (too large for git)
-Bibliography/
+# Bibliography PDFs at root level (too large for git)
+/Bibliography/
 
 # Large model files (use Git LFS or download separately)
 # models/*.pkl

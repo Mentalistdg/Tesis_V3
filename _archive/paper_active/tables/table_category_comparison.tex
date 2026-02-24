@@ -1,0 +1,24 @@
+\begin{table}[htbp]
+\centering
+\caption{Rendimiento Promedio por Categor\'ia de Modelo}
+\label{tab:category_comparison}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Categor\'ia} & \textbf{N} & \textbf{Ret. Prom.} & \textbf{Mejor Ret.} & \textbf{Sharpe Prom.} & \textbf{DD Prom.} & \textbf{Mejor Modelo} \\
+\midrule
+Hybrid & 1 & \textcolor{ForestGreen}{207.1\%} & 207.1\% & 0.744 & -27.7\% & CNN\_LSTM \\
+ML & 5 & \textcolor{ForestGreen}{139.3\%} & 318.8\% & 0.349 & -47.3\% & Ridge \\
+RNN & 2 & \textcolor{ForestGreen}{92.0\%} & 127.7\% & 0.480 & -25.8\% & BiGRU \\
+GradientBoosting & 3 & \textcolor{ForestGreen}{76.0\%} & 85.2\% & 0.337 & -42.7\% & LightGBM \\
+DeepLearning & 5 & \textcolor{ForestGreen}{44.2\%} & 93.5\% & 0.215 & -31.3\% & NBEATS \\
+Attention & 1 & \textcolor{ForestGreen}{31.5\%} & 31.5\% & 0.067 & -44.8\% & LSTM\_Attention \\
+Prophet & 1 & \textcolor{ForestGreen}{16.6\%} & 16.6\% & -0.009 & -51.4\% & Prophet \\
+TimeSeries & 4 & \textcolor{ForestGreen}{13.5\%} & 57.8\% & 0.071 & -35.3\% & SeasonalNaive \\
+GARCH & 1 & \textcolor{BrickRed}{-6.2\%} & -6.2\% & -0.201 & -50.4\% & GARCH \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Nota: N = n\'umero de modelos en la categor\'ia. ML = Machine Learning cl\'asico, GradientBoosting = XGBoost/LightGBM/CatBoost, DeepLearning = redes Darts, RNN = Bi-LSTM/Bi-GRU, TimeSeries = ARIMA/ETS/Theta.
+\end{tablenotes}
+\end{table}

@@ -1,0 +1,23 @@
+\begin{table}[H]
+\centering
+\caption{Comparacion de Modelos de Machine Learning}
+\label{tab:model_comparison}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Modelo} & \textbf{Retorno (\%)} & \textbf{Sharpe} & \textbf{Max DD (\%)} & \textbf{Pos. Media} & \textbf{Dir. Acc. (\%)} \\
+\midrule
+DARTS_DLinear & 238.02 & 0.865 & -46.84 & 1.97 & 54.6 \\
+DARTS_TiDE & 90.95 & 0.586 & -44.91 & 0.06 & 51.8 \\
+DARTS_TFT & 79.85 & 0.525 & -46.50 & -0.32 & 49.6 \\
+DARTS_AutoARIMA & 36.76 & 0.839 & -10.90 & 0.44 & 54.3 \\
+DARTS_ExpSmoothing & 16.28 & 0.462 & -12.54 & 0.33 & 53.8 \\
+DARTS_TCN & 13.59 & 0.810 & -4.61 & 0.17 & 54.4 \\
+DARTS_Prophet & 13.51 & 0.303 & -23.73 & 0.36 & 53.1 \\
+DARTS_TSMixer & 8.92 & 0.418 & -7.90 & 0.05 & 49.2 \\
+SK_ElasticNet & 7.95 & 0.758 & -2.69 & 0.10 & 54.4 \\
+SK_Lasso & 7.95 & 0.758 & -2.69 & 0.10 & 54.4 \\
+\midrule
+\textit{Mercado (Benchmark)} & 96.18 & 0.846 & -25.36 & 1.00 & - \\
+\bottomrule
+\end{tabular}
+\end{table}
