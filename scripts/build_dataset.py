@@ -115,7 +115,7 @@ GARANTIAS ANTI-DATA LEAKAGE:
 2. Rolling windows SIEMPRE miran hacia atras (nunca center=True)
 3. Target usa shift(-1) para representar retorno FUTURO
 4. Risk-free rate en t es la tasa CONOCIDA en t (sin shift adicional)
-5. Warmup period de 252 dias eliminado para evitar NaN en features
+5. NaN residuales de ventanas rolling se imputan en train_models.py (SimpleImputer median)
 6. Validacion automatica al final del pipeline (funcion validate_no_leakage)
 
 ================================================================================
@@ -155,16 +155,13 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 
 CONFIG = {
     # Periodos para lags
-    'lag_periods': [1, 2, 3, 5, 10, 21, 63],
+    'lag_periods': [1, 5, 21],
 
     # Ventanas para rolling statistics
     'rolling_windows': [5, 10, 21, 63, 126, 252],
 
     # Ventanas para correlaciones cross-asset
     'correlation_windows': [21, 63],
-
-    # Periodo de warmup (dias a eliminar al inicio)
-    'warmup_period': 252,
 
     # Umbral de NaN permitido por fila
     'max_nan_pct': 0.5,
@@ -203,7 +200,7 @@ COLUMN_MAPPING = {
     'XLI US Equity': 'M17',
     'XLU US Equity': 'M18',
 
-    # Economic Indicators (E1-E18)
+    # Economic Indicators (E1-E19)
     'GDP CQOQ Index': 'E1',
     'NAPMPMI Index': 'E2',
     'CONSSENT Index': 'E3',
@@ -218,11 +215,11 @@ COLUMN_MAPPING = {
     'IP CHNG Index': 'E12',
     'CONCCONF Index': 'E13',
     'NAPMNMI Index': 'E14',
-    'Extra E15': 'E15',
+    'Extra E15': 'E15',  # Housing Starts (NHSPATOT Index - inicios de construcción)
     'ETSLTOTL Index': 'E16',
     'GDP CYOY Index': 'E17',
     'CPTICHNG Index': 'E18',
-    'PITLCHNG Index': 'E20',
+    'PITLCHNG Index': 'E19',
 
     # Interest Rates (I1-I20)
     'FDTR Index': 'I1',
@@ -246,18 +243,18 @@ COLUMN_MAPPING = {
     'LUACTRUU Index': 'I19',
     'LQD US Equity': 'I20',
 
-    # Commodities (P1-P13)
+    # Commodities (P1-P11)
     'CL1 Comdty': 'P1',
     'HO1 Comdty': 'P2',
-    'GC1 Comdty': 'P4',
-    'SI1 Comdty': 'P5',
-    'GLD US Equity': 'P7',
-    'SLV US Equity': 'P8',
-    'USO US Equity': 'P9',
-    'DBC US Equity': 'P10',
-    'DBA US Equity': 'P11',
-    'BCOMTR Index': 'P12',
-    'GSCITR Index': 'P13',
+    'GC1 Comdty': 'P3',
+    'SI1 Comdty': 'P4',
+    'GLD US Equity': 'P5',
+    'SLV US Equity': 'P6',
+    'USO US Equity': 'P7',
+    'DBC US Equity': 'P8',
+    'DBA US Equity': 'P9',
+    'BCOMTR Index': 'P10',
+    'GSCITR Index': 'P11',
 
     # Volatility (V1-V13)
     'VIX Index': 'V1',
@@ -274,17 +271,17 @@ COLUMN_MAPPING = {
     'VIY1 Index': 'V12',
     'V2X Index': 'V13',
 
-    # Sentiment (S1-S12)
+    # Sentiment (S1-S10)
     'AAII BULLISH Index': 'S1',
-    'PUT Index': 'S4',
-    'NYHL Index': 'S5',
-    'TICK Index': 'S6',
-    'TRIN Index': 'S7',
-    'ADD Index': 'S8',
-    'MCCL Index': 'S9',
-    'MCSU Index': 'S10',
-    'SRVOL Index': 'S11',
-    'PCUSEQUI Index': 'S12',
+    'PUT Index': 'S2',
+    'NYHL Index': 'S3',
+    'TICK Index': 'S4',
+    'TRIN Index': 'S5',
+    'ADD Index': 'S6',
+    'MCCL Index': 'S7',
+    'MCSU Index': 'S8',
+    'SRVOL Index': 'S9',
+    'PCUSEQUI Index': 'S10',
 }
 
 
@@ -557,6 +554,7 @@ def calculate_technical_features(df):
     # ==========================================================================
     # Estos son los datos del dia t que usaremos para calcular indicadores.
     # En el dia t, todos estos valores son CONOCIDOS al cierre del mercado.
+
     O = df['SPY_OPEN'].values      # Open[t]: precio de apertura del dia t
     H = df['SPY_HIGH'].values      # High[t]: precio maximo del dia t
     L = df['SPY_LOW'].values       # Low[t]: precio minimo del dia t
@@ -697,10 +695,176 @@ def calculate_volume_features(df):
         vol_ma = volume.rolling(window=window).mean()
         features[f'SPY_volume_ratio_{window}'] = volume / (vol_ma + 1e-10)
 
-    # Z-score del volumen
-    vol_mean = volume.rolling(21).mean()
-    vol_std = volume.rolling(21).std()
-    features['SPY_volume_zscore'] = (volume - vol_mean) / (vol_std + 1e-10)
+    return features
+
+
+def calculate_advanced_technical_indicators(df):
+    """
+    Calcula indicadores tecnicos avanzados: Ichimoku, Fibonacci, Donchian,
+    Keltner, MFI, CMF, y senales de estrategia.
+
+    ============================================================================
+    GARANTIA ANTI-DATA LEAKAGE
+    ============================================================================
+
+    Todos los calculos usan solo datos pasados y del dia actual:
+    - rolling().max/min/sum() mira hacia atras por defecto en pandas
+    - shift(1) trae valores pasados
+    - TA-Lib (MFI, EMA, ATR) son backward-looking por diseno
+    - No hay shift(-n) en ningun calculo
+    """
+    features = {}
+
+    # Extraer OHLCV como numpy arrays (para TA-Lib)
+    H = df['SPY_HIGH'].values
+    L = df['SPY_LOW'].values
+    C = df['SPY_CLOSE'].values
+    V = df['SPY_VOLUME'].values
+
+    # Extraer como pandas Series (para operaciones rolling)
+    close = df['SPY_CLOSE']
+    high = df['SPY_HIGH']
+    low = df['SPY_LOW']
+    volume = df['SPY_VOLUME']
+
+    # =========================================================================
+    # GRUPO 1: Ichimoku Cloud (13 features)
+    # =========================================================================
+    # TA-Lib no incluye Ichimoku. Calculo manual con rolling max/min.
+    tenkan = (high.rolling(9).max() + low.rolling(9).min()) / 2
+    kijun = (high.rolling(26).max() + low.rolling(26).min()) / 2
+    senkou_a = (tenkan + kijun) / 2
+    senkou_b = (high.rolling(52).max() + low.rolling(52).min()) / 2
+
+    features['ICHI_tenkan'] = tenkan
+    features['ICHI_kijun'] = kijun
+    features['ICHI_senkou_a'] = senkou_a
+    features['ICHI_senkou_b'] = senkou_b
+    features['ICHI_cloud_thickness'] = (senkou_a - senkou_b) / close
+
+    cloud_upper = pd.concat([senkou_a, senkou_b], axis=1).max(axis=1)
+    cloud_lower = pd.concat([senkou_a, senkou_b], axis=1).min(axis=1)
+    above_cloud = (close > cloud_upper).astype(int)
+    below_cloud = (close < cloud_lower).astype(int)
+
+    features['ICHI_above_cloud'] = above_cloud
+    features['ICHI_below_cloud'] = below_cloud
+    features['ICHI_in_cloud'] = 1 - above_cloud - below_cloud
+    features['ICHI_price_vs_tenkan'] = (close - tenkan) / close
+    features['ICHI_price_vs_kijun'] = (close - kijun) / close
+    features['ICHI_tk_cross_bull'] = ((tenkan > kijun) & (tenkan.shift(1) <= kijun.shift(1))).astype(int)
+    features['ICHI_tk_cross_bear'] = ((tenkan < kijun) & (tenkan.shift(1) >= kijun.shift(1))).astype(int)
+    features['ICHI_bullish_setup'] = (above_cloud & (tenkan > kijun)).astype(int)
+
+    # =========================================================================
+    # GRUPO 2: Fibonacci Retracement (18 features)
+    # =========================================================================
+    for period in [63, 126]:
+        roll_max = close.rolling(period).max()
+        roll_min = close.rolling(period).min()
+        roll_range = roll_max - roll_min
+
+        features[f'FIB_position_{period}'] = (close - roll_min) / (roll_range + 1e-10)
+
+        fib_levels = {'236': 0.236, '382': 0.382, '500': 0.500, '618': 0.618, '786': 0.786}
+        for name, level in fib_levels.items():
+            fib_price = roll_min + roll_range * level
+            dist = (close - fib_price) / close
+            features[f'FIB_{name}_{period}_dist'] = dist
+
+            if name in ['382', '500', '618']:
+                features[f'FIB_{name}_{period}_zone'] = (dist.abs() < 0.02).astype(int)
+
+    # =========================================================================
+    # GRUPO 3: Donchian Channels (8 features)
+    # =========================================================================
+    for period in [20, 55]:
+        don_high = high.rolling(period).max()
+        don_low = low.rolling(period).min()
+        don_range = don_high - don_low
+
+        features[f'DON_position_{period}'] = (close - don_low) / (don_range + 1e-10)
+        features[f'DON_width_pct_{period}'] = don_range / close * 100
+        features[f'DON_breakout_high_{period}'] = (close >= don_high).astype(int)
+        features[f'DON_breakout_low_{period}'] = (close <= don_low).astype(int)
+
+    # =========================================================================
+    # GRUPO 4: Keltner Channels (3 features)
+    # =========================================================================
+    kelt_multiplier = 1.5
+    for period in [15, 20]:
+        ema = talib.EMA(C, timeperiod=period)
+        atr = talib.ATR(H, L, C, timeperiod=period)
+        features[f'KELT_position_{period}'] = (C - ema) / (kelt_multiplier * atr + 1e-10)
+
+    # BB squeeze: Bollinger Band width < Keltner Channel width
+    bb_upper, bb_middle, bb_lower = talib.BBANDS(C, timeperiod=20, nbdevup=2, nbdevdn=2)
+    bb_width = bb_upper - bb_lower
+    kelt_ema_20 = talib.EMA(C, timeperiod=20)
+    kelt_atr_20 = talib.ATR(H, L, C, timeperiod=20)
+    kelt_width = 2 * kelt_multiplier * kelt_atr_20
+    features['KELT_BB_squeeze'] = (bb_width < kelt_width).astype(int)
+
+    # =========================================================================
+    # GRUPO 5: Money Flow Index (4 features) - TA-Lib MFI
+    # =========================================================================
+    features['MFI_14'] = talib.MFI(H, L, C, V.astype(float), timeperiod=14)
+    features['MFI_21'] = talib.MFI(H, L, C, V.astype(float), timeperiod=21)
+    mfi_14 = features['MFI_14']
+    features['MFI_overbought'] = (mfi_14 > 80).astype(int)
+    features['MFI_oversold'] = (mfi_14 < 20).astype(int)
+
+    # =========================================================================
+    # GRUPO 6: Chaikin Money Flow (4 features)
+    # =========================================================================
+    mf_multiplier = ((close - low) - (high - close)) / (high - low + 1e-10)
+    mf_volume = mf_multiplier * volume
+
+    for period in [20, 50]:
+        features[f'CMF_{period}'] = mf_volume.rolling(period).sum() / (volume.rolling(period).sum() + 1e-10)
+
+    cmf_20 = features['CMF_20']
+    features['CMF_positive'] = (cmf_20 > 0).astype(int)
+    features['CMF_negative'] = (cmf_20 < 0).astype(int)
+
+    # =========================================================================
+    # GRUPO 7: Strategy Signals (10 features)
+    # =========================================================================
+    # Calcular indicadores necesarios inline
+    rsi_14 = pd.Series(talib.RSI(C, timeperiod=14), index=df.index)
+    sma_50 = close.rolling(50).mean()
+    sma_200 = close.rolling(200).mean()
+    adx_14 = pd.Series(talib.ADX(H, L, C, timeperiod=14), index=df.index)
+
+    features['STRAT_RSI14_overbought'] = (rsi_14 > 70).astype(int)
+    features['STRAT_RSI14_oversold'] = (rsi_14 < 30).astype(int)
+    features['STRAT_RSI14_neutral_bull'] = ((rsi_14 >= 40) & (rsi_14 <= 60)).astype(int)
+    features['STRAT_above_200MA'] = (close > sma_200).astype(int)
+    features['STRAT_golden_cross'] = ((sma_50 > sma_200) & (sma_50.shift(1) <= sma_200.shift(1))).astype(int)
+    features['STRAT_death_cross'] = ((sma_50 < sma_200) & (sma_50.shift(1) >= sma_200.shift(1))).astype(int)
+    features['STRAT_bullish_trend'] = ((close > sma_50) & (sma_50 > sma_200)).astype(int)
+    features['STRAT_strong_trend'] = (adx_14 > 25).astype(int)
+
+    # Confluence: combinacion de multiples senales
+    bullish_sum = (
+        features['STRAT_above_200MA'] +
+        features['STRAT_bullish_trend'] +
+        features['STRAT_strong_trend'] +
+        (rsi_14 > 50).astype(int)
+    )
+    bearish_sum = (
+        (close < sma_200).astype(int) +
+        (rsi_14 < 50).astype(int) +
+        features['STRAT_strong_trend'] +
+        ((close < sma_50) & (sma_50 < sma_200)).astype(int)
+    )
+    features['STRAT_bullish_confluence'] = (bullish_sum >= 3).astype(int)
+    features['STRAT_bearish_confluence'] = (bearish_sum >= 3).astype(int)
+
+    # Convertir numpy arrays a Series (operaciones pandas ya retornan Series)
+    for key in features:
+        if not isinstance(features[key], pd.Series):
+            features[key] = pd.Series(features[key], index=df.index)
 
     return features
 
@@ -993,11 +1157,6 @@ def calculate_log_range_features(df):
     log_range = np.log(H / L)
     features['LR_log_range'] = log_range
 
-    # Z-score del log-range
-    lr_mean = log_range.rolling(21).mean()
-    lr_std = log_range.rolling(21).std()
-    features['LR_zscore'] = (log_range - lr_mean) / (lr_std + 1e-10)
-
     # Medias moviles en diferentes ventanas
     for w in [5, 10, 21, 63]:
         features[f'LR_ma{w}'] = log_range.rolling(w).mean()
@@ -1203,8 +1362,6 @@ def calculate_microstructure_features(df):
     range_std = features['INTRA_RANGE_PCT'].rolling(21).std()
     features['RANGE_PCT_MA_21'] = range_ma
     features['RANGE_PCT_STD_21'] = range_std
-    features['RANGE_PCT_ZSCORE'] = (features['INTRA_RANGE_PCT'] - range_ma) / (range_std + 1e-10)
-
     return features
 
 
@@ -1222,8 +1379,8 @@ def calculate_cross_asset_features(df):
 
     # Correlaciones con otros activos
     cross_assets = {
-        'TLT': 'I7',    # Bonds 10Y
-        'GLD': 'P4',    # Gold
+        'TLT': 'I7',    # GT10 Govt yield (proxy for bond correlation via yield changes)
+        'GLD': 'P3',    # Gold
         'OIL': 'P1',    # Oil
         'DXY': 'M9',    # Dollar
         'VIX': 'V1',    # VIX
@@ -1249,10 +1406,6 @@ def calculate_vix_features(df):
         return features
 
     vix = df['V1']
-
-    # VIX basicos
-    features['VIX_zscore_21'] = (vix - vix.rolling(21).mean()) / (vix.rolling(21).std() + 1e-10)
-    features['VIX_zscore_63'] = (vix - vix.rolling(63).mean()) / (vix.rolling(63).std() + 1e-10)
 
     # Regimen
     features['VIX_regime_high'] = (vix > vix.rolling(252).quantile(0.75)).astype(int)
@@ -1312,7 +1465,6 @@ def calculate_credit_features(df):
         hy = df['I16']
         features['hy_spread_chg_5d'] = hy.diff(5)
         features['hy_spread_chg_21d'] = hy.diff(21)
-        features['hy_spread_zscore'] = (hy - hy.rolling(63).mean()) / (hy.rolling(63).std() + 1e-10)
         features['hy_spread_regime_high'] = (hy > hy.rolling(252).quantile(0.8)).astype(int)
 
     # Investment Grade spread
@@ -1595,12 +1747,10 @@ def calculate_rolling_stats(df, important_cols):
     for col in important_cols:
         if col in df.columns:
             series = df[col]
-            for window in [5, 10, 21, 63]:
+            for window in [21, 63]:
                 # rolling(window) sin center=True: ventana hacia atras (seguro)
                 features[f'{col}_roll_mean_{window}'] = series.rolling(window).mean()
                 features[f'{col}_roll_std_{window}'] = series.rolling(window).std()
-                features[f'{col}_roll_min_{window}'] = series.rolling(window).min()
-                features[f'{col}_roll_max_{window}'] = series.rolling(window).max()
 
     return features
 
@@ -1641,15 +1791,6 @@ def calculate_variable_transformations(df, cols):
 
         # pct_change(): retorno de t-1 a t (usa datos conocidos)
         features[f'{col}_pct_change'] = series.pct_change()
-
-        # Z-score con rolling de 21 dias (ventana hacia atras)
-        mean = series.rolling(21).mean()
-        std = series.rolling(21).std()
-        features[f'{col}_zscore'] = (series - mean) / (std + 1e-10)
-
-        # Ratio vs SMA20 (SMA usa ultimos 20 dias, mira hacia atras)
-        sma20 = series.rolling(20).mean()
-        features[f'{col}_sma20_ratio'] = series / (sma20 + 1e-10)
 
         # Momentum: diferencia entre hoy y hace 5 dias (datos conocidos)
         features[f'{col}_momentum_5'] = series.diff(5)
@@ -1763,12 +1904,6 @@ def calculate_additional_vix_features(df):
 
     vix = df['V1']
 
-    # Z-scores adicionales
-    for window in [5, 10, 21, 63]:
-        mean = vix.rolling(window).mean()
-        std = vix.rolling(window).std()
-        features[f'V1_zscore_{window}'] = (vix - mean) / (std + 1e-10)
-
     # VIX Futures (si existen)
     for i, col in enumerate(['V12', 'V2', 'V3', 'V4'], start=1):
         if col in df.columns:
@@ -1788,27 +1923,18 @@ def calculate_additional_vix_features(df):
         features['vix_x_curve_inverted'] = vix * df['yield_curve_inverted']
 
     # Volatility surface features
-    if 'V5' in df.columns:  # VVIX
-        features['vvix_vix_ratio'] = df['V5'] / (vix + 1e-10)
-        vvix_mean = df['V5'].rolling(63).mean()
-        vvix_std = df['V5'].rolling(63).std()
-        features['vvix_zscore'] = (df['V5'] - vvix_mean) / (vvix_std + 1e-10)
+    if 'V5' in df.columns:  # V5 = VXEEM (emerging markets vol), NOT VVIX
+        features['vvix_vix_ratio'] = df['V5'] / (vix + 1e-10)  # NOTE: misnomer, actually VXEEM/VIX ratio
 
-    # SKEW features
+    # V6 = VXEFA (developed markets vol, range ~10-50), NOT SKEW Index
+    # NOTE: threshold 130 never triggers for VXEFA — this feature is always 0
     if 'V6' in df.columns:
-        skew = df['V6']
-        skew_mean = skew.rolling(63).mean()
-        skew_std = skew.rolling(63).std()
-        features['skew_zscore'] = (skew - skew_mean) / (skew_std + 1e-10)
-        features['skew_high'] = (skew > 130).astype(int)
+        features['skew_high'] = (df['V6'] > 130).astype(int)
 
     # Vol risk premium
-    if 'SPY_volatility_21' in df.columns or 'SPY_CLOSE' in df.columns:
+    if 'SPY_CLOSE' in df.columns:
         realized_vol = df['SPY_CLOSE'].pct_change().rolling(21).std() * np.sqrt(252) * 100
         features['vol_risk_premium'] = vix - realized_vol
-        vrp_mean = features['vol_risk_premium'].rolling(63).mean()
-        vrp_std = features['vol_risk_premium'].rolling(63).std()
-        features['vol_premium_zscore'] = (features['vol_risk_premium'] - vrp_mean) / (vrp_std + 1e-10)
 
     return features
 
@@ -1823,10 +1949,6 @@ def calculate_additional_yield_features(df):
     if 'I7' in df.columns and 'I5' in df.columns:
         spread = df['I7'] - df['I5']
         features['yield_spread_10_2_change_1d'] = spread.diff(1)
-
-        spread_mean = spread.rolling(63).mean()
-        spread_std = spread.rolling(63).std()
-        features['yield_spread_10_2_zscore'] = (spread - spread_mean) / (spread_std + 1e-10)
 
     return features
 
@@ -1932,12 +2054,13 @@ def calculate_other_market_features(df):
     if 'V11' in df.columns:
         features['CVIX'] = df['V11']
 
-    # Commodities con nombres alternativos
+    # Commodities con nombres descriptivos (alias codes no corresponden al código P actual)
+    # P3=GC1 (gold futures), P4=SI1 (silver futures), P1=CL1 (crude oil), P10=BCOMTR (commodity idx)
     commodity_mapping = {
-        'P4': 'P9_GOLD',
-        'P5': 'P10_SILVER',
-        'P1': 'P12_OIL',
-        'P12': 'P11_CMDTY_IDX',
+        'P3': 'P9_GOLD',       # NOTE: alias says P9 but source is P3 (GC1 Comdty)
+        'P4': 'P10_SILVER',    # NOTE: alias says P10 but source is P4 (SI1 Comdty)
+        'P1': 'P12_OIL',      # NOTE: alias says P12 but source is P1 (CL1 Comdty)
+        'P10': 'P11_CMDTY_IDX', # NOTE: alias says P11 but source is P10 (BCOMTR Index)
     }
 
     for orig, alt in commodity_mapping.items():
@@ -2247,6 +2370,11 @@ def build_dataset():
     all_features.update(volume_features)
     print(f"  + Volume features: {len(volume_features)} [datos hasta t]")
 
+    # Indicadores tecnicos avanzados (Ichimoku, Fibonacci, Donchian, Keltner, MFI, CMF, Strategy)
+    advanced_tech = calculate_advanced_technical_indicators(df)
+    all_features.update(advanced_tech)
+    print(f"  + Advanced technical indicators: {len(advanced_tech)} [datos hasta t]")
+
     # =========================================================================
     # PASO 4: Elder Triple Screen
     # =========================================================================
@@ -2349,9 +2477,11 @@ def build_dataset():
     print("\nPASO 10: Normalization (Z-Score)")
     print("-" * 80)
 
-    zscore_features = calculate_zscore_features(df, all_features)
-    all_features.update(zscore_features)
-    print(f"  + Z-score normalized: {len(zscore_features)}")
+    # Z-score normalized: ELIMINADO
+    # Los z-scores de indicadores (RSI, MACD, etc.) son redundantes con los
+    # indicadores base y pueden generar dudas sobre data leakage en revision academica.
+    zscore_features = {}
+    print(f"  + Z-score normalized: 0 (eliminado - redundante con indicadores base)")
 
     # =========================================================================
     # PASO 11: Features Adicionales
@@ -2656,35 +2786,35 @@ def build_dataset():
             'end': str(df_final['date'].max())
         },
         'target_column': 'market_forward_excess_returns',
-        'feature_categories': {
-            'technical': len(tech_features),
-            'momentum': len(momentum_features),
-            'volume': len(volume_features),
-            'elder_triple_screen': len(elder_features),
-            'volatility_classic': len(classic_vol),
-            'volatility_entropy': len(ie_features),
-            'volatility_log_range': len(lr_features),
-            'volatility_carr': len(carr_features),
-            'volatility_range_garch': len(rg_features),
-            'microstructure': len(micro_features),
-            'cross_asset': len(cross_features),
-            'vix': len(vix_features),
-            'yield_curve': len(yield_features),
-            'credit': len(credit_features),
-            'sector': len(sector_features),
-            'economic': len(econ_features),
-            'regime': len(regime_features),
-            'interaction': len(interaction_features),
-            'zscore': len(zscore_features),
-            'lagged': len(lagged_features),
-            'rolling': len(rolling_features),
-        },
+        'feature_categories': {k: len([f for f in v if f in df_final.columns]) for k, v in {
+            'technical': tech_features,
+            'momentum': momentum_features,
+            'volume': volume_features,
+            'elder_triple_screen': elder_features,
+            'volatility_classic': classic_vol,
+            'volatility_entropy': ie_features,
+            'volatility_log_range': lr_features,
+            'volatility_carr': carr_features,
+            'volatility_range_garch': rg_features,
+            'microstructure': micro_features,
+            'cross_asset': cross_features,
+            'vix': vix_features,
+            'yield_curve': yield_features,
+            'credit': credit_features,
+            'sector': sector_features,
+            'economic': econ_features,
+            'regime': regime_features,
+            'interaction': interaction_features,
+            'zscore': zscore_features,
+            'lagged': lagged_features,
+            'rolling': rolling_features,
+        }.items()},
         'anti_leakage_measures': [
             'All features use only past information (t-k, k>=1)',
             'Rolling windows look backward only',
             'Forward returns calculated with shift(-1)',
             'Risk-free rate aligned with forward returns period',
-            'Warmup period rows removed',
+            'Residual NaN from rolling windows imputed in train_models.py',
         ],
         'references': [
             'Elder, A. (1993). Trading for a Living',

@@ -117,33 +117,40 @@ body {
 }
 
 /* ============================================================================
-   TABLE STYLES - Clean institutional look
+   TABLE STYLES - TradingView-inspired institutional look
    ============================================================================ */
 
 .table-dark {
   @apply w-full text-xs;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .table-dark th {
-  @apply text-left font-medium py-2 px-3;
+  @apply text-left font-semibold py-2 px-3;
   color: var(--color-text-secondary);
-  border-bottom: 1px solid var(--color-border);
-  text-transform: uppercase;
-  font-size: 0.65rem;
-  letter-spacing: 0.05em;
+  border-bottom: 1px solid #333;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
 }
 
 .table-dark td {
-  @apply py-2 px-3;
-  border-bottom: 1px solid var(--color-border);
+  @apply py-1.5 px-3;
+  border-bottom: 1px solid #1a1a1a;
+  font-variant-numeric: tabular-nums;
 }
 
 .table-dark tr {
-  transition: background-color 0.15s ease;
+  transition: background-color 0.12s ease;
+}
+
+.table-dark tbody tr:nth-child(even) {
+  background-color: #0d0d0d;
 }
 
 .table-dark tbody tr:hover {
-  background-color: var(--color-bg-card-hover);
+  background-color: #141414;
+  box-shadow: inset 2px 0 0 0 var(--color-accent-red);
 }
 
 /* ============================================================================
@@ -324,6 +331,64 @@ input:focus, button:focus, select:focus {
 @keyframes skeleton-loading {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* Spinner ring animation */
+@keyframes spin-ring {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #222222;
+  border-top-color: var(--color-accent-red);
+  border-radius: 50%;
+  animation: spin-ring 1s linear infinite;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+/* ============================================================================
+   FILTER BAR - TradingView-style filter pills & inputs
+   ============================================================================ */
+
+.filter-pill {
+  @apply px-2 py-0.5 rounded text-xs font-medium border transition-colors cursor-pointer;
+  line-height: 1.5;
+}
+
+.filter-pill:hover {
+  border-color: var(--color-border-light);
+}
+
+.filter-date-input {
+  @apply rounded text-xs font-mono px-2 py-0.5;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  color-scheme: dark;
+  width: 130px;
+}
+
+.filter-date-input:focus {
+  outline: 1px solid var(--color-accent-red);
+  outline-offset: 0;
+}
+
+.filter-divider {
+  width: 1px;
+  height: 18px;
+  background-color: var(--color-border);
+  flex-shrink: 0;
+}
+
+/* Sortable header alignment helper */
+.justify-inherit {
+  justify-content: inherit;
 }
 
 /* ============================================================================

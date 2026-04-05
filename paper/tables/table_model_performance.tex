@@ -1,0 +1,43 @@
+\begin{table}[htbp]
+\centering
+\caption{Rendimiento de los 23 Modelos en el Per\'iodo de Prueba (Oct 2020 - Dic 2025)}
+\label{tab:model_performance}
+\small
+\begin{tabular}{@{}rlrrrr@{}}
+\toprule
+\textbf{Rank} & \textbf{Modelo} & \textbf{Ret. Total} & \textbf{Sharpe} & \textbf{Sortino} & \textbf{Max DD} \\
+\midrule
+1 & \textbf{LSTM+Attention} & \textcolor{ForestGreen}{+400.0\%} & 1.327 & 2.631 & 20.5\% \\
+2 & \textbf{Ridge} & \textcolor{ForestGreen}{+263.2\%} & 0.881 & 1.291 & 31.8\% \\
+3 & \textbf{RandomForest} & \textcolor{ForestGreen}{+131.0\%} & 0.666 & 1.380 & 14.7\% \\
+4 & \textbf{CNN-LSTM} & \textcolor{ForestGreen}{+129.0\%} & 0.599 & 1.161 & 35.6\% \\
+\cmidrule(lr){1-6}
+5 & DLinear & +67.9\% & 0.426 & 0.681 & 33.1\% \\
+6 & GradientBoosting & +66.8\% & 0.622 & 1.287 & 8.3\% \\
+7 & CatBoost & +47.4\% & 0.232 & 0.456 & 30.9\% \\
+8 & Theta & +44.6\% & 0.563 & 0.949 & 12.7\% \\
+9 & SeasonalNaive & +44.5\% & 0.150 & 0.210 & 32.9\% \\
+10 & NBEATS & +44.4\% & 0.182 & 0.319 & 25.5\% \\
+11 & Lasso & +39.0\% & 0.202 & 0.466 & 19.3\% \\
+12 & GARCH & +27.2\% & 0.202 & 0.287 & 21.8\% \\
+13 & LightGBM & +27.1\% & 0.106 & 0.145 & 24.3\% \\
+14 & NHiTS & +22.1\% & 0.038 & 0.053 & 48.1\% \\
+15 & AutoARIMA & +18.3\% & 0.387 & 0.497 & 0.0\% \\
+16 & TCN & +18.1\% & 0.001 & 0.002 & 35.0\% \\
+17 & TFT & +14.8\% & $-$0.020 & $-$0.032 & 44.6\% \\
+18 & XGBoost & +13.5\% & $-$0.024 & $-$0.034 & 43.1\% \\
+19 & ElasticNet & +9.8\% & $-$0.068 & $-$0.110 & 39.6\% \\
+20 & Prophet & +7.6\% & $-$0.234 & $-$0.311 & 11.7\% \\
+21 & BiLSTM & +6.2\% & $-$0.082 & $-$0.133 & 54.7\% \\
+22 & ExpSmoothing & \textcolor{BrickRed}{$-$14.5\%} & $-$0.233 & $-$0.311 & 59.6\% \\
+23 & BiGRU & \textcolor{BrickRed}{$-$32.3\%} & $-$0.457 & $-$0.573 & 58.5\% \\
+\midrule
+-- & SPY (B\&H) & +102.2\% & 0.663 & 0.922 & 25.4\% \\
+-- & UPRO 3x (B\&H) & +246.4\% & 0.465 & 0.669 & 64.8\% \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Nota: Los modelos en negrita superan al \textit{benchmark} SPY Buy \& Hold. UPRO 3x B\&H incluye \textit{expense ratio} (0.91\%/a\~no) y \textit{bid-ask spread}. El \textit{volatility decay} inherente a los ETF apalancados est\'a capturado por la composici\'on diaria de retornos 3$\times$.
+\end{tablenotes}
+\end{table}

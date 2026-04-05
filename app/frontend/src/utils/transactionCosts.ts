@@ -1,4 +1,4 @@
-// Transaction cost utilities - consistent across all pages
+// Transaction cost utilities — LONG-ONLY strategy {0, +1, +3}
 // Based on evaluate_strategy.py bid-ask spreads
 // ALL calculations use trade-by-trade compounding for consistency
 
@@ -12,8 +12,6 @@ export function getBidAskCost(position: number): number {
     case 3: return 0.0005;   // UPRO: 0.05%
     case 1: return 0.0002;   // SPY: 0.02%
     case 0: return 0;        // Cash: 0%
-    case -1: return 0.0004;  // SH: 0.04%
-    case -3: return 0.0006;  // SPXU: 0.06%
     default: return 0;
   }
 }
@@ -23,10 +21,8 @@ export function getTradeTransactionCost(position: number): number {
   return getBidAskCost(position) * 2;
 }
 
-// Discretize position to {-3, -1, 0, +1, +3}
+// Discretize position to {0, +1, +3}
 export function discretizePosition(pos: number): number {
-  if (pos <= -2) return -3;      // SPXU (3x short)
-  if (pos <= -0.5) return -1;    // SH (1x short)
   if (pos < 0.5) return 0;       // Cash
   if (pos < 2) return 1;         // SPY (1x long)
   return 3;                       // UPRO (3x long)
@@ -51,7 +47,7 @@ export interface TradeWithCapital {
 // Calculate trades with capital (trade-by-trade with compound interest)
 // This is THE SOURCE OF TRUTH for all calculations
 // NOTE: trade.total_return from backend ALREADY includes transaction costs (net return)
-// So we DON'T apply tx costs again - just use the returns directly
+// So we DON'T apply tx costs again — just use the returns directly
 // IMPORTANT: Include ALL trades (including cash periods) to get correct compounding
 export function calculateTradesWithCapital(
   trades: Trade[],
@@ -177,59 +173,6 @@ export function calculateSummaryFromTrades(
 
   return { finalCapital, totalTxCosts, netReturn, grossReturn, costBreakdown };
 }
-
-// ============================================================================
-// LEGACY FUNCTIONS - Use calculateSummaryFromTrades for consistency
-// These are kept for backward compatibility but should be migrated
-// ============================================================================
-
-// Calculate total transaction costs (DEPRECATED - use calculateSummaryFromTrades)
-export function calculateTotalTransactionCosts(
-  nTrades: number,
-  pct3xLong: number,
-  pctLong: number,
-  pctCash: number,
-  pctShort: number,
-  pct3xShort: number,
-  initialCapital: number = INITIAL_CAPITAL
-): number {
-  const avgCostPct =
-    (pct3xLong / 100) * getTradeTransactionCost(3) +
-    (pctLong / 100) * getTradeTransactionCost(1) +
-    (pctCash / 100) * getTradeTransactionCost(0) +
-    (pctShort / 100) * getTradeTransactionCost(-1) +
-    (pct3xShort / 100) * getTradeTransactionCost(-3);
-  return nTrades * avgCostPct * initialCapital;
-}
-
-// Adjust return for transaction costs (DEPRECATED - use calculateSummaryFromTrades)
-export function adjustReturnForCosts(
-  grossReturn: number,
-  nTrades: number,
-  pct3xLong: number,
-  pctLong: number,
-  pctCash: number,
-  pctShort: number,
-  pct3xShort: number
-): number {
-  const avgCostPct =
-    (pct3xLong / 100) * getTradeTransactionCost(3) +
-    (pctLong / 100) * getTradeTransactionCost(1) +
-    (pctCash / 100) * getTradeTransactionCost(0) +
-    (pctShort / 100) * getTradeTransactionCost(-1) +
-    (pct3xShort / 100) * getTradeTransactionCost(-3);
-  const totalCostPct = nTrades * avgCostPct;
-  return grossReturn - totalCostPct;
-}
-
-// Transaction cost breakdown by position type
-export const TRANSACTION_COST_BREAKDOWN = {
-  '+3x (UPRO)': { bidAsk: 0.0005, roundTrip: 0.001, label: '0.10%' },
-  '+1x (SPY)': { bidAsk: 0.0002, roundTrip: 0.0004, label: '0.04%' },
-  '0 (Cash)': { bidAsk: 0, roundTrip: 0, label: '0%' },
-  '-1x (SH)': { bidAsk: 0.0004, roundTrip: 0.0008, label: '0.08%' },
-  '-3x (SPXU)': { bidAsk: 0.0006, roundTrip: 0.0012, label: '0.12%' },
-};
 
 // Format currency
 export function formatCurrency(value: number): string {

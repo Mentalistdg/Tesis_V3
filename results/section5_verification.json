@@ -1,0 +1,673 @@
+{
+  "section": "Section 5 - La Paradoja del Directional Accuracy",
+  "n_test_days": 1301,
+  "checks": [
+    {
+      "name": "DA Ridge",
+      "computed": 0.468101,
+      "paper_value": 0.468101,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA Lasso",
+      "computed": 0.50269,
+      "paper_value": 0.50269,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA ElasticNet",
+      "computed": 0.492698,
+      "paper_value": 0.492698,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA RandomForest",
+      "computed": 0.458878,
+      "paper_value": 0.458878,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA GradientBoosting",
+      "computed": 0.458109,
+      "paper_value": 0.458109,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA XGBoost",
+      "computed": 0.543428,
+      "paper_value": 0.543428,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA LightGBM",
+      "computed": 0.454266,
+      "paper_value": 0.454266,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA CatBoost",
+      "computed": 0.465027,
+      "paper_value": 0.465027,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA AutoARIMA",
+      "computed": 0.49731,
+      "paper_value": 0.49731,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA ExponentialSmoothing",
+      "computed": 0.512683,
+      "paper_value": 0.512683,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA Theta",
+      "computed": 0.545734,
+      "paper_value": 0.545734,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA Prophet",
+      "computed": 0.530361,
+      "paper_value": 0.530361,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA SeasonalNaive",
+      "computed": 0.523444,
+      "paper_value": 0.523444,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA GARCH",
+      "computed": 0.543428,
+      "paper_value": 0.543428,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA DLinear",
+      "computed": 0.492698,
+      "paper_value": 0.492698,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA NBEATS",
+      "computed": 0.501153,
+      "paper_value": 0.501153,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA NHiTS",
+      "computed": 0.53113,
+      "paper_value": 0.53113,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA TCN",
+      "computed": 0.461952,
+      "paper_value": 0.461952,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA TFT",
+      "computed": 0.46349,
+      "paper_value": 0.46349,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA CNN_LSTM",
+      "computed": 0.455035,
+      "paper_value": 0.455035,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA LSTM_Attention",
+      "computed": 0.469639,
+      "paper_value": 0.469639,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA BiLSTM",
+      "computed": 0.468101,
+      "paper_value": 0.468101,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "DA BiGRU",
+      "computed": 0.504996,
+      "paper_value": 0.504996,
+      "tolerance": 1e-10,
+      "passed": true,
+      "note": "diff=0.00e+00"
+    },
+    {
+      "name": "Paper DA% GARCH",
+      "computed": 54.3,
+      "paper_value": 54.3,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Paper DA% Theta",
+      "computed": 54.6,
+      "paper_value": 54.6,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Paper DA% ExponentialSmoothing",
+      "computed": 51.3,
+      "paper_value": 51.3,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Paper DA% LSTM_Attention",
+      "computed": 47.0,
+      "paper_value": 47.0,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Paper DA% Ridge",
+      "computed": 46.8,
+      "paper_value": 46.8,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Paper DA% CNN_LSTM",
+      "computed": 45.5,
+      "paper_value": 45.5,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "DA@3x LSTM_Attention",
+      "computed": 62.3,
+      "paper_value": 62.3,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "n_3x_days=159, diff=0.0pp"
+    },
+    {
+      "name": "%Time3x LSTM_Attention",
+      "computed": 12.2,
+      "paper_value": 12.2,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "DA@3x Ridge",
+      "computed": 58.5,
+      "paper_value": 58.5,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "n_3x_days=270, diff=0.0pp"
+    },
+    {
+      "name": "%Time3x Ridge",
+      "computed": 20.8,
+      "paper_value": 20.8,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "DA@3x RandomForest",
+      "computed": 51.5,
+      "paper_value": 51.5,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "n_3x_days=68, diff=0.0pp"
+    },
+    {
+      "name": "%Time3x RandomForest",
+      "computed": 5.2,
+      "paper_value": 5.2,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "DA@3x CNN_LSTM",
+      "computed": 58.6,
+      "paper_value": 58.6,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "n_3x_days=157, diff=0.0pp"
+    },
+    {
+      "name": "%Time3x CNN_LSTM",
+      "computed": 12.1,
+      "paper_value": 12.1,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "DA@3x GARCH",
+      "computed": 63.6,
+      "paper_value": 63.6,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "n_3x_days=22, diff=0.0pp"
+    },
+    {
+      "name": "%Time3x GARCH",
+      "computed": 1.7,
+      "paper_value": 1.7,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "DA@3x Theta",
+      "computed": 53.3,
+      "paper_value": 53.3,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "n_3x_days=30, diff=0.0pp"
+    },
+    {
+      "name": "%Time3x Theta",
+      "computed": 2.3,
+      "paper_value": 2.3,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "rho(DA, Return)",
+      "computed": -0.37,
+      "paper_value": -0.37,
+      "tolerance": 0.05,
+      "passed": "True",
+      "note": "exact rho=-0.3663, p-value=0.0856, diff=0.00"
+    },
+    {
+      "name": "Return GARCH",
+      "computed": 27.2,
+      "paper_value": 27.2,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Return Theta",
+      "computed": 44.6,
+      "paper_value": 44.6,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Return ExponentialSmoothing",
+      "computed": -14.5,
+      "paper_value": -14.5,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Return LSTM_Attention",
+      "computed": 400.0,
+      "paper_value": 400.0,
+      "tolerance": 1.0,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Return Ridge",
+      "computed": 263.2,
+      "paper_value": 263.0,
+      "tolerance": 1.0,
+      "passed": true,
+      "note": "diff=0.2pp"
+    },
+    {
+      "name": "Return CNN_LSTM",
+      "computed": 129.0,
+      "paper_value": 129.0,
+      "tolerance": 1.0,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Return RandomForest",
+      "computed": 131.0,
+      "paper_value": 131.0,
+      "tolerance": 1.0,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "LSTM_Attention %cash",
+      "computed": 55.1,
+      "paper_value": 55.0,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.1pp"
+    },
+    {
+      "name": "LSTM_Attention %3x",
+      "computed": 12.2,
+      "paper_value": 12.2,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp (prose says '12.2%' and '12%')"
+    },
+    {
+      "name": "LSTM_Attention DA (prose)",
+      "computed": 47.0,
+      "paper_value": 47.0,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "LSTM_Attention DA@3x (prose)",
+      "computed": 62.3,
+      "paper_value": 62.3,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "GARCH DA@3x (prose)",
+      "computed": 63.6,
+      "paper_value": 63.6,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "GARCH %3x (prose)",
+      "computed": 1.7,
+      "paper_value": 1.7,
+      "tolerance": 0.5,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Theta DA general (prose)",
+      "computed": 54.6,
+      "paper_value": 54.6,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "Theta DA@3x (prose)",
+      "computed": 53.3,
+      "paper_value": 53.3,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    },
+    {
+      "name": "GARCH has highest DA@3x",
+      "computed": "GARCH (63.6%)",
+      "paper_value": "GARCH (63.6%)",
+      "tolerance": "N/A",
+      "passed": true,
+      "note": "All models: GARCH=63.6%, LSTM_Attention=62.3%, GradientBoosting=59.3%, CNN_LSTM=58.6%, Ridge=58.5%"
+    },
+    {
+      "name": "rho(DA, Return) is negative",
+      "computed": "-0.3663",
+      "paper_value": "< 0",
+      "tolerance": "N/A",
+      "passed": "True",
+      "note": "Paper claims 'moderadamente negativa'"
+    },
+    {
+      "name": "High-DA (>54%) models have below-avg return",
+      "computed": "avg=28.5%",
+      "paper_value": "< all-model avg (60.7%)",
+      "tolerance": "N/A",
+      "passed": "True",
+      "note": "High-DA models: XGBoost(DA=54.3%,Ret=13.5%), Theta(DA=54.6%,Ret=44.6%), GARCH(DA=54.3%,Ret=27.2%)"
+    },
+    {
+      "name": "RandomForest DA General (table)",
+      "computed": 45.9,
+      "paper_value": 45.9,
+      "tolerance": 0.2,
+      "passed": true,
+      "note": "diff=0.0pp"
+    }
+  ],
+  "summary": {
+    "total_checks": 61,
+    "passed": 61,
+    "failed": 0,
+    "all_pass": true
+  },
+  "computed_values": {
+    "da_all_models": {
+      "Ridge": 0.468101,
+      "Lasso": 0.50269,
+      "ElasticNet": 0.492698,
+      "RandomForest": 0.458878,
+      "GradientBoosting": 0.458109,
+      "XGBoost": 0.543428,
+      "LightGBM": 0.454266,
+      "CatBoost": 0.465027,
+      "AutoARIMA": 0.49731,
+      "ExponentialSmoothing": 0.512683,
+      "Theta": 0.545734,
+      "Prophet": 0.530361,
+      "SeasonalNaive": 0.523444,
+      "GARCH": 0.543428,
+      "DLinear": 0.492698,
+      "NBEATS": 0.501153,
+      "NHiTS": 0.53113,
+      "TCN": 0.461952,
+      "TFT": 0.46349,
+      "CNN_LSTM": 0.455035,
+      "LSTM_Attention": 0.469639,
+      "BiLSTM": 0.468101,
+      "BiGRU": 0.504996
+    },
+    "da3x_all_models": {
+      "LSTM_Attention": {
+        "da3x": 62.3,
+        "n_3x_days": 159,
+        "pct_3x": 12.2
+      },
+      "Ridge": {
+        "da3x": 58.5,
+        "n_3x_days": 270,
+        "pct_3x": 20.8
+      },
+      "RandomForest": {
+        "da3x": 51.5,
+        "n_3x_days": 68,
+        "pct_3x": 5.2
+      },
+      "CNN_LSTM": {
+        "da3x": 58.6,
+        "n_3x_days": 157,
+        "pct_3x": 12.1
+      },
+      "GARCH": {
+        "da3x": 63.6,
+        "n_3x_days": 22,
+        "pct_3x": 1.7
+      },
+      "Theta": {
+        "da3x": 53.3,
+        "n_3x_days": 30,
+        "pct_3x": 2.3
+      },
+      "Lasso": {
+        "da3x": 50.0,
+        "n_3x_days": 18,
+        "pct_3x": 1.4
+      },
+      "ElasticNet": {
+        "da3x": 41.7,
+        "n_3x_days": 48,
+        "pct_3x": 3.7
+      },
+      "GradientBoosting": {
+        "da3x": 59.3,
+        "n_3x_days": 54,
+        "pct_3x": 4.2
+      },
+      "XGBoost": {
+        "da3x": 51.6,
+        "n_3x_days": 378,
+        "pct_3x": 29.1
+      },
+      "LightGBM": {
+        "da3x": 54.2,
+        "n_3x_days": 48,
+        "pct_3x": 3.7
+      },
+      "CatBoost": {
+        "da3x": 55.8,
+        "n_3x_days": 52,
+        "pct_3x": 4.0
+      },
+      "AutoARIMA": {
+        "da3x": null,
+        "n_3x_days": 0,
+        "pct_3x": 0.0
+      },
+      "ExponentialSmoothing": {
+        "da3x": 57.2,
+        "n_3x_days": 348,
+        "pct_3x": 26.7
+      },
+      "Prophet": {
+        "da3x": 53.3,
+        "n_3x_days": 30,
+        "pct_3x": 2.3
+      },
+      "SeasonalNaive": {
+        "da3x": 55.1,
+        "n_3x_days": 263,
+        "pct_3x": 20.2
+      },
+      "DLinear": {
+        "da3x": 52.3,
+        "n_3x_days": 86,
+        "pct_3x": 6.6
+      },
+      "NBEATS": {
+        "da3x": 50.8,
+        "n_3x_days": 181,
+        "pct_3x": 13.9
+      },
+      "NHiTS": {
+        "da3x": 57.0,
+        "n_3x_days": 93,
+        "pct_3x": 7.1
+      },
+      "TCN": {
+        "da3x": 56.0,
+        "n_3x_days": 100,
+        "pct_3x": 7.7
+      },
+      "TFT": {
+        "da3x": 55.6,
+        "n_3x_days": 279,
+        "pct_3x": 21.4
+      },
+      "BiLSTM": {
+        "da3x": 48.7,
+        "n_3x_days": 158,
+        "pct_3x": 12.1
+      },
+      "BiGRU": {
+        "da3x": 52.0,
+        "n_3x_days": 204,
+        "pct_3x": 15.7
+      }
+    },
+    "rho_da_return": {
+      "pearson_r": -0.3663,
+      "p_value": 0.0856
+    },
+    "return_all_models": {
+      "Ridge": 2.631684,
+      "Lasso": 0.389842,
+      "ElasticNet": 0.09763,
+      "RandomForest": 1.31026,
+      "GradientBoosting": 0.668288,
+      "XGBoost": 0.135048,
+      "LightGBM": 0.271197,
+      "CatBoost": 0.47429,
+      "AutoARIMA": 0.182679,
+      "ExponentialSmoothing": -0.145058,
+      "Theta": 0.446232,
+      "Prophet": 0.076474,
+      "SeasonalNaive": 0.444622,
+      "GARCH": 0.27247,
+      "DLinear": 0.679462,
+      "NBEATS": 0.444355,
+      "NHiTS": 0.22121,
+      "TCN": 0.180942,
+      "TFT": 0.147673,
+      "CNN_LSTM": 1.289909,
+      "LSTM_Attention": 3.999784,
+      "BiLSTM": 0.062006,
+      "BiGRU": -0.322877
+    }
+  }
+}

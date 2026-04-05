@@ -1,4 +1,4 @@
-# AWS Deployment Guide - Strategy Visualizer App
+# AWS Deployment Guide - CRONOS Strategy Visualizer
 
 ## Infraestructura Actual
 
@@ -7,8 +7,9 @@
 | **IP Publica** | 3.20.234.106 |
 | **URL** | http://3.20.234.106 |
 | **Instancia EC2** | t3.micro, Ubuntu 24.04 LTS |
+| **Instance ID** | i-0bae26943c56844d7 |
 | **Region** | us-east-2 (Ohio) |
-| **Key Pair** | `tesis-key.pem` (en carpeta Downloads) |
+| **SSH Key** | `~/.ssh/tesis-ec2` (generada localmente, marzo 2026) |
 
 ### Arquitectura
 
@@ -30,50 +31,76 @@ Usuario --> Nginx (puerto 80) --> /home/ubuntu/dist (frontend estatico)
 ## Conexion SSH
 
 ```powershell
-ssh -i "$env:USERPROFILE\Downloads\tesis-key.pem" ubuntu@3.20.234.106
+ssh -i "$env:USERPROFILE\.ssh\tesis-ec2" ubuntu@3.20.234.106
+```
+
+### Para agentes Claude Code (desde bash)
+
+Claude Code en Windows necesita usar `powershell.exe` para capturar output de SSH:
+
+```bash
+# Ejecutar comando remoto y capturar output:
+powershell.exe -Command "(ssh -i C:\Users\dgonz\.ssh\tesis-ec2 ubuntu@3.20.234.106 'COMANDO') 2>&1 | Out-String"
+
+# IMPORTANTE: ssh directo desde bash NO captura stdout. Siempre usar el wrapper de PowerShell.
+```
+
+Ejemplo verificar backend:
+
+```bash
+powershell.exe -Command "(ssh -i C:\Users\dgonz\.ssh\tesis-ec2 ubuntu@3.20.234.106 'curl -s http://localhost:8000/') 2>&1 | Out-String"
 ```
 
 ---
 
 ## Actualizar la App
 
-### Opcion 1: Solo cambios en el Backend (Python/JSON)
-
-Si modificaste `main.py` o los archivos en `app/backend/data/`:
+### Paso 1: Build del frontend (local)
 
 ```powershell
-# 1. Subir archivos modificados (desde PowerShell local)
-scp -i "$env:USERPROFILE\Downloads\tesis-key.pem" -r "E:\PycharmProjects\Tesis_2\Tesis_V3\app\backend" ubuntu@3.20.234.106:/home/ubuntu/
-
-# 2. Conectar al servidor
-ssh -i "$env:USERPROFILE\Downloads\tesis-key.pem" ubuntu@3.20.234.106
-
-# 3. Reiniciar backend (en Ubuntu)
-pkill -f uvicorn
-cd /home/ubuntu/backend && source venv/bin/activate
-nohup uvicorn main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+npm run build --prefix "C:\Users\dgonz\PycharmProjects\Tesis_V3\app\frontend"
 ```
 
-### Opcion 2: Cambios en el Frontend (React/TypeScript)
-
-Si modificaste archivos en `app/frontend/src/`:
+### Paso 2: Subir frontend
 
 ```powershell
-# 1. Recompilar frontend (desde PowerShell local)
-cd E:\PycharmProjects\Tesis_2\Tesis_V3\app\frontend
-npm run build
-
-# 2. Subir dist al servidor
-scp -i "$env:USERPROFILE\Downloads\tesis-key.pem" -r "E:\PycharmProjects\Tesis_2\Tesis_V3\app\frontend\dist" ubuntu@3.20.234.106:/home/ubuntu/
-
-# 3. Conectar y arreglar permisos (en Ubuntu)
-ssh -i "$env:USERPROFILE\Downloads\tesis-key.pem" ubuntu@3.20.234.106
-chmod -R 755 /home/ubuntu/dist
+scp -i "$env:USERPROFILE\.ssh\tesis-ec2" -r "C:\Users\dgonz\PycharmProjects\Tesis_V3\app\frontend\dist" ubuntu@3.20.234.106:/home/ubuntu/
 ```
 
-### Opcion 3: Cambios en ambos
+### Paso 3: Subir backend (main.py + JSONs)
 
-Ejecutar ambos procedimientos en orden.
+```powershell
+# Solo main.py
+scp -i "$env:USERPROFILE\.ssh\tesis-ec2" "C:\Users\dgonz\PycharmProjects\Tesis_V3\app\backend\main.py" ubuntu@3.20.234.106:/home/ubuntu/backend/
+
+# Solo los JSONs de datos
+scp -i "$env:USERPROFILE\.ssh\tesis-ec2" C:\Users\dgonz\PycharmProjects\Tesis_V3\app\backend\data\* ubuntu@3.20.234.106:/home/ubuntu/backend/data/
+```
+
+### Paso 4: Reiniciar backend y fijar permisos
+
+```powershell
+# Fijar permisos frontend
+ssh -i "$env:USERPROFILE\.ssh\tesis-ec2" ubuntu@3.20.234.106 "chmod -R 755 /home/ubuntu/dist"
+
+# Matar backend viejo
+ssh -i "$env:USERPROFILE\.ssh\tesis-ec2" ubuntu@3.20.234.106 "pkill -f uvicorn"
+
+# Levantar backend nuevo (usar ruta directa al binario, NO source activate)
+ssh -i "$env:USERPROFILE\.ssh\tesis-ec2" ubuntu@3.20.234.106 "nohup /home/ubuntu/backend/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --app-dir /home/ubuntu/backend > /home/ubuntu/backend/backend.log 2>&1 &"
+```
+
+### Paso 5: Verificar
+
+```powershell
+# Backend
+ssh -i "$env:USERPROFILE\.ssh\tesis-ec2" ubuntu@3.20.234.106 "curl -s http://localhost:8000/"
+# Debe devolver: {"status":"ok","message":"Strategy Visualizer API"}
+
+# Frontend: abrir http://3.20.234.106 en navegador
+```
+
+**IMPORTANTE para reiniciar uvicorn:** No usar `source venv/bin/activate` en sesiones SSH no-interactivas — no funciona. Siempre usar la ruta directa: `/home/ubuntu/backend/venv/bin/uvicorn`.
 
 ---
 
@@ -91,15 +118,13 @@ Ejecutar ambos procedimientos en orden.
 2. Seleccionar `tesis-strategy-app`
 3. Instance state -> **Start instance**
 4. Esperar 1-2 minutos
-5. Conectar por SSH e iniciar backend:
+5. Iniciar backend:
 
 ```powershell
-ssh -i "$env:USERPROFILE\Downloads\tesis-key.pem" ubuntu@3.20.234.106
+ssh -i "$env:USERPROFILE\.ssh\tesis-ec2" ubuntu@3.20.234.106 "nohup /home/ubuntu/backend/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --app-dir /home/ubuntu/backend > /home/ubuntu/backend/backend.log 2>&1 &"
 ```
 
-```bash
-cd /home/ubuntu/backend && source venv/bin/activate && nohup uvicorn main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
-```
+**Nota:** Si no hay Elastic IP asignada, la IP publica cambia al reiniciar la instancia. Verificar la nueva IP en AWS Console -> EC2 -> Instances.
 
 ---
 
@@ -173,13 +198,19 @@ Reglas de entrada configuradas:
 
 ## Troubleshooting
 
+### Error "Permission denied (publickey)" al hacer SSH
+
+La key SSH `~/.ssh/tesis-ec2` no esta autorizada en el servidor. Opciones:
+
+1. Usar **EC2 Instance Connect** desde AWS Console (Connect -> pestaña "EC2 Instance Connect", NO "Serial Console") para acceder temporalmente y agregar la key publica a `~/.ssh/authorized_keys`
+2. Generar una nueva key con `ssh-keygen -t rsa -b 2048 -f "$env:USERPROFILE\.ssh\tesis-ec2"` y agregar la `.pub` al servidor via Instance Connect
+
 ### Error "Connection refused"
 
 El backend no esta corriendo. Iniciarlo:
 
 ```bash
-cd /home/ubuntu/backend && source venv/bin/activate
-nohup uvicorn main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+nohup /home/ubuntu/backend/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --app-dir /home/ubuntu/backend > /home/ubuntu/backend/backend.log 2>&1 &
 ```
 
 ### Error 403/404 en frontend
@@ -201,10 +232,7 @@ sudo tail -50 /var/log/nginx/error.log
 
 ### La IP cambio
 
-Si no tienes Elastic IP, la IP cambia al reiniciar. Crear una:
-
-1. EC2 -> Elastic IPs -> Allocate
-2. Actions -> Associate -> Seleccionar instancia
+Si no tienes Elastic IP, la IP cambia al reiniciar. Verificar en AWS Console -> EC2 -> Instances la nueva IP.
 
 ---
 
@@ -220,12 +248,25 @@ Si no tienes Elastic IP, la IP cambia al reiniciar. Crear una:
 
 ## Archivos Importantes Locales
 
-| Archivo | Descripcion |
-|---------|-------------|
-| `app/frontend/src/services/api.ts` | API_BASE debe ser `''` para produccion |
-| `app/backend/data/*.json` | Datos pre-computados de modelos |
-| `app/backend/main.py` | Endpoints FastAPI |
+| Archivo | Ubicacion Local |
+|---------|-----------------|
+| SSH key privada | `C:\Users\dgonz\.ssh\tesis-ec2` |
+| SSH key publica | `C:\Users\dgonz\.ssh\tesis-ec2.pub` |
+| Frontend source | `C:\Users\dgonz\PycharmProjects\Tesis_V3\app\frontend\` |
+| Backend source | `C:\Users\dgonz\PycharmProjects\Tesis_V3\app\backend\` |
+| Backend data JSONs | `C:\Users\dgonz\PycharmProjects\Tesis_V3\app\backend\data\` |
+| Data update script | `C:\Users\dgonz\PycharmProjects\Tesis_V3\paper\update_backend_data.py` |
 
 ---
 
-**Ultima actualizacion:** Enero 2026
+## Clave Publica de tesis-ec2
+
+Si necesitas autorizar `tesis-ec2` en el servidor (via EC2 Instance Connect):
+
+```bash
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuBfB8hq/rh/AoLtDITu2pWUm2BV2Is5FFWErJh0E6F47k2aBwETSr1cj/QNklQi5ciVpn0joJpbWwneLYfic0OtlMJVFW7pL7enJvflf8MnB2hNHa3qIXFJo38ZHAvz8nsNgujnBQd7Gv69l91eXWX/oUEYXeYch8RI5Y5yeB0Ke9YqRCkRb1E52eBnF4oS3N7G2/c1tEjmoLnASnLt62nClfZXaQpIvtC6qpGo0etJPJF5rLcwqcm0D2lyVwySwsVdsHTSRnpuhNreqk7G7aNsNABxHTwiiIiOVL9IbvRUnxPfE26WKvI1KVQNNE8NHLMHXg6EnlJwMqDfgxuxPr dgonz@Mark" >> ~/.ssh/authorized_keys
+```
+
+---
+
+**Ultima actualizacion:** Marzo 2026

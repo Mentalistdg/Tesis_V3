@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getRegimes, getModels } from '../services/api';
 import type { RegimeData, ModelsResponse } from '../types';
 import { Thermometer, TrendingUp, TrendingDown, Activity, Cloud } from 'lucide-react';
 import { clsx } from 'clsx';
+import LoadingScreen from '../components/LoadingScreen';
+import { useTableSort } from '../hooks/useTableSort';
+import SortableHeader from '../components/SortableHeader';
 
 const regimeConfig = {
   bull: { label: 'Bull Market', icon: TrendingUp, color: 'text-[#00c853]', bgColor: 'bg-[#00c853]/10' },
@@ -35,8 +38,36 @@ export default function RegimePage() {
     }
   }
 
+  // Hooks must be above early returns
+  interface RegimePerfRow {
+    model: string;
+    performance: { total_return: number; n_days: number };
+  }
+
+  const regimePerformanceRaw = useMemo<RegimePerfRow[]>(() => {
+    if (!regimeData) return [];
+    return Object.entries(regimeData.regime_performance)
+      .map(([model, regimes]) => ({
+        model,
+        performance: regimes[selectedRegime] || { total_return: 0, n_days: 0 }
+      }))
+      .filter(p => p.performance.n_days > 0);
+  }, [regimeData, selectedRegime]);
+
+  const regimeAccessor = useMemo(() => ({
+    model: (r: RegimePerfRow) => r.model,
+    total_return: (r: RegimePerfRow) => r.performance.total_return,
+    n_days: (r: RegimePerfRow) => r.performance.n_days,
+  }), []);
+
+  const {
+    sortedData: regimePerformance,
+    requestSort: requestRegimeSort,
+    getSortDirection: getRegimeSortDir,
+  } = useTableSort(regimePerformanceRaw, 'total_return', 'desc', regimeAccessor);
+
   if (loading) {
-    return <div className="text-center py-8 text-[#737373]">Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (!regimeData || !modelsData) {
@@ -45,15 +76,6 @@ export default function RegimePage() {
 
   const currentRegime = regimeConfig[regimeData.current_regime as keyof typeof regimeConfig] || regimeConfig.unknown;
   const CurrentIcon = currentRegime.icon;
-
-  // Get performance for selected regime
-  const regimePerformance = Object.entries(regimeData.regime_performance)
-    .map(([model, regimes]) => ({
-      model,
-      performance: regimes[selectedRegime] || { total_return: 0, n_days: 0 }
-    }))
-    .filter(p => p.performance.n_days > 0)
-    .sort((a, b) => b.performance.total_return - a.performance.total_return);
 
   return (
     <div className="space-y-6">
@@ -129,9 +151,9 @@ export default function RegimePage() {
             <thead>
               <tr>
                 <th className="w-8">#</th>
-                <th className="w-40">Model</th>
-                <th className="w-24 text-right">Return</th>
-                <th className="w-20 text-right">Days</th>
+                <SortableHeader label="Model" sortKey="model" activeDirection={getRegimeSortDir('model')} onSort={requestRegimeSort} className="w-40" />
+                <SortableHeader label="Return" sortKey="total_return" activeDirection={getRegimeSortDir('total_return')} onSort={requestRegimeSort} className="w-24 text-right" />
+                <SortableHeader label="Days" sortKey="n_days" activeDirection={getRegimeSortDir('n_days')} onSort={requestRegimeSort} className="w-20 text-right" />
               </tr>
             </thead>
             <tbody>

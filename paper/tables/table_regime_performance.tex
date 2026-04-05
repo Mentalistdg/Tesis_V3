@@ -1,0 +1,27 @@
+\begin{table}[htbp]
+\centering
+\caption{Rendimiento por R\'egimen de Mercado (Top 10 Modelos)}
+\label{tab:regime_performance}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Bull} & \textbf{Sideways} & \textbf{Bear} & \textbf{High Vol} \\
+ & \textit{(133 d\'ias)} & \textit{(938 d\'ias)} & \textit{(49 d\'ias)} & \textit{(121 d\'ias)} \\
+\midrule
+LSTM\_Attention & \textcolor{BrickRed}{-3.3\%} & \textcolor{ForestGreen}{208.5\%} & \textcolor{ForestGreen}{54.6\%} & \textcolor{BrickRed}{-3.4\%} \\
+Ridge & \textcolor{BrickRed}{-5.7\%} & \textcolor{ForestGreen}{78.8\%} & \textcolor{ForestGreen}{55.5\%} & \textcolor{ForestGreen}{35.9\%} \\
+RandomForest & \textcolor{ForestGreen}{2.4\%} & \textcolor{ForestGreen}{27.2\%} & \textcolor{ForestGreen}{55.5\%} & \textcolor{ForestGreen}{14.0\%} \\
+CNN\_LSTM & \textcolor{BrickRed}{-1.1\%} & \textcolor{ForestGreen}{16.5\%} & \textcolor{ForestGreen}{44.3\%} & \textcolor{ForestGreen}{19.2\%} \\
+DLinear & \textcolor{ForestGreen}{5.6\%} & \textcolor{ForestGreen}{20.2\%} & \textcolor{ForestGreen}{26.7\%} & \textcolor{BrickRed}{-2.4\%} \\
+GradientBoosting & \textcolor{ForestGreen}{4.8\%} & \textcolor{ForestGreen}{22.5\%} & \textcolor{ForestGreen}{5.1\%} & \textcolor{ForestGreen}{23.5\%} \\
+CatBoost & \textcolor{ForestGreen}{5.6\%} & \textcolor{ForestGreen}{21.0\%} & \textcolor{ForestGreen}{23.8\%} & \textcolor{BrickRed}{-4.3\%} \\
+Theta & \textcolor{ForestGreen}{2.2\%} & \textcolor{ForestGreen}{13.9\%} & \textcolor{ForestGreen}{0.4\%} & \textcolor{ForestGreen}{1.7\%} \\
+SeasonalNaive & \textcolor{BrickRed}{-18.5\%} & \textcolor{ForestGreen}{0.4\%} & \textcolor{ForestGreen}{23.4\%} & \textcolor{ForestGreen}{37.6\%} \\
+NBEATS & \textcolor{BrickRed}{-6.8\%} & \textcolor{BrickRed}{-1.5\%} & \textcolor{ForestGreen}{47.6\%} & \textcolor{ForestGreen}{10.8\%} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Nota: Bull = retorno acumulado $>$ 10\% y volatilidad $<$ 20\% en ventana de 60 d\'ias. Bear = retorno $<$ -10\%. High Vol = volatilidad $>$ 25\%. Sideways = resto.
+\end{tablenotes}
+\end{table}

@@ -1,0 +1,136 @@
+% =============================================================================
+% SECCION: ANALISIS POR REGIMEN DE MERCADO
+% =============================================================================
+
+\section{An\'alisis por R\'egimen de Mercado}
+\label{sec:regime_analysis}
+
+El rendimiento de las estrategias de trading var\'ia significativamente seg\'un las condiciones de mercado. En esta secci\'on se examina el comportamiento de los 23 modelos bajo diferentes reg\'imenes, con el objetivo de informar la gesti\'on t\'actica de activos.
+
+\subsection{Definici\'on de Reg\'imenes}
+\label{subsec:regime_definition}
+
+Clasificamos cada d\'ia de trading en uno de cuatro reg\'imenes utilizando una ventana rolling de 60 d\'ias:
+
+\subsubsection{Criterios de Clasificaci\'on}
+
+\begin{enumerate}
+    \item \textbf{Bull Market}: Retorno acumulado $> 10\%$ y volatilidad anualizada $< 20\%$
+    \begin{equation}
+    \text{Bull} \equiv \left(\prod_{i=t-59}^{t}(1+r_i) - 1 > 0.10\right) \land \left(\sigma_{60d} \cdot \sqrt{252} < 0.20\right)
+    \end{equation}
+
+    \item \textbf{Bear Market}: Retorno acumulado $< -10\%$
+    \begin{equation}
+    \text{Bear} \equiv \prod_{i=t-59}^{t}(1+r_i) - 1 < -0.10
+    \end{equation}
+
+    \item \textbf{High Volatility}: Volatilidad anualizada $> 25\%$ (sin cumplir Bull/Bear)
+    \begin{equation}
+    \text{HighVol} \equiv \sigma_{60d} \cdot \sqrt{252} > 0.25
+    \end{equation}
+
+    \item \textbf{Sideways}: Ninguno de los anteriores (mercado lateral)
+\end{enumerate}
+
+\subsection{Distribuci\'on de Reg\'imenes en el Per\'iodo de Prueba}
+\label{subsec:regime_distribution}
+
+El per\'iodo de prueba (Octubre 2020 - Diciembre 2025) present\'o la siguiente distribuci\'on de reg\'imenes:
+
+\begin{table}[htbp]
+\centering
+\caption{Distribuci\'on de Reg\'imenes de Mercado}
+\label{tab:regime_distribution}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{R\'egimen} & \textbf{D\'ias} & \textbf{Porcentaje} & \textbf{Caracter\'isticas} \\
+\midrule
+Sideways & 938 & 72.1\% & Mercado sin tendencia clara \\
+Bull & 133 & 10.2\% & Rally sostenido, baja volatilidad \\
+High Volatility & 121 & 9.3\% & Incertidumbre elevada \\
+Bear & 49 & 3.8\% & Correcciones significativas \\
+Unknown & 60 & 4.6\% & Per\'iodo de warmup inicial \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La predominancia del r\'egimen Sideways (72\%) es consistente con la naturaleza del S\&P 500 como \'indice diversificado que raramente presenta tendencias extremas prolongadas.
+
+\subsection{Rendimiento por Modelo por R\'egimen}
+\label{subsec:regime_performance}
+
+\subsubsection{Bull Market (133 d\'ias)}
+
+Durante per\'iodos alcistas con baja volatilidad, los retornos de la estrategia son generalmente modestos dado que los modelos permanecen mayoritariamente en efectivo: CatBoost y DLinear lideran con +5.6\%, seguidos por GradientBoosting (+4.8\%) y GARCH (+4.2\%). En el extremo opuesto, SeasonalNaive ($-$18.5\%), TFT ($-$9.0\%) y NBEATS ($-$6.8\%) registran p\'erdidas, lo que sugiere que su posicionamiento durante \textit{rallies} prolongados resulta contraproducente. Notablemente, los cuatro modelos ganadores del estudio---LSTM\_Attention ($-$3.3\%), Ridge ($-$5.7\%), CNN-LSTM ($-$1.1\%) y RandomForest (+2.4\%)---presentan retornos modestos o negativos en mercados alcistas, indicando que su ventaja proviene de otros reg\'imenes.
+
+\subsubsection{Bear Market (49 d\'ias)}
+
+Durante correcciones significativas del mercado, BiLSTM (+70.6\%), RandomForest (+55.5\%), Ridge (+55.5\%) y LSTM\_Attention (+54.6\%) lideran con retornos notablemente positivos. Es destacable que 21 de 23 modelos logran retornos positivos durante mercados bajistas---incluso los de menor rendimiento, Theta (+0.4\%) y AutoARIMA (+0.4\%), generan ganancias marginales---confirmando que el posicionamiento en efectivo y la selectividad del apalancamiento act\'uan como mecanismos de protecci\'on efectivos dentro de la estrategia Long-Only. GARCH ($-$6.3\%) es el \'unico modelo con retorno significativamente negativo en este r\'egimen.
+
+\subsubsection{High Volatility (121 d\'ias)}
+
+Durante per\'iodos de alta incertidumbre, SeasonalNaive (+37.6\%), Ridge (+35.9\%) y GradientBoosting (+23.5\%) obtienen los mejores resultados, mientras que BiLSTM ($-$15.3\%), ElasticNet ($-$11.1\%) y BiGRU ($-$7.8\%) registran las mayores p\'erdidas. Parad\'ojicamente, GARCH---dise\~nado espec\'ificamente para modelar volatilidad condicional---presenta un desempe\~no negativo ($-$1.6\%) precisamente en el r\'egimen de alta volatilidad, lo que sugiere que su estimaci\'on de la varianza condicional no se traduce en un mejor \textit{timing} de posiciones dentro de la estrategia de trading empleada.
+
+\subsubsection{Sideways (938 d\'ias)}
+
+Durante el r\'egimen predominante---que abarca el 72\% del per\'iodo de prueba---LSTM\_Attention (+208.5\%) destaca de manera abrumadora, seguido por Ridge (+78.8\%) y RandomForest (+27.2\%), mientras que BiLSTM ($-$30.8\%), BiGRU ($-$30.0\%) y XGBoost ($-$24.3\%) registran las mayores p\'erdidas. Es en el mercado lateral donde se acumula la mayor parte del rendimiento total, y el dominio absoluto de LSTM\_Attention en este r\'egimen---m\'as del doble que el segundo modelo---explica en gran medida su liderazgo general.
+
+\subsection{Tabla Completa de Rendimiento por R\'egimen}
+\label{subsec:regime_table}
+
+\input{tables/table_regime_performance}
+
+\subsection{An\'alisis de Consistencia Cross-R\'egimen}
+\label{subsec:cross_regime}
+
+Un modelo ideal deber\'ia rendir de manera consistente en los distintos reg\'imenes. Se eval\'ua la consistencia mediante la desviaci\'on est\'andar de rendimientos por r\'egimen:
+
+\begin{equation}
+\text{Consistencia}_m = \frac{1}{\sigma(\{R_{m,\text{Bull}}, R_{m,\text{Bear}}, R_{m,\text{Sideways}}, R_{m,\text{HighVol}}\})}
+\end{equation}
+
+\begin{table}[htbp]
+\centering
+\caption{Consistencia Cross-R\'egimen de Modelos (Top 10)}
+\label{tab:cross_regime_consistency}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Bull} & \textbf{Bear} & \textbf{Sideways} & \textbf{HighVol} & \textbf{Consistencia} \\
+\midrule
+LSTM\_Attention & $-$3.3\% & +54.6\% & +208.5\% & $-$3.4\% & Baja \\
+Ridge & $-$5.7\% & +55.5\% & +78.8\% & +35.9\% & Media \\
+RandomForest & +2.4\% & +55.5\% & +27.2\% & +14.0\% & Alta \\
+CNN\_LSTM & $-$1.1\% & +44.3\% & +16.5\% & +19.2\% & Media \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Implicaciones para Gesti\'on T\'actica}
+\label{subsec:tactical_implications}
+
+Los resultados sugieren varias estrategias de gesti\'on t\'actica.
+
+\subsubsection{Rotaci\'on de Modelos por R\'egimen}
+
+La heterogeneidad en el rendimiento por r\'egimen abre la posibilidad de una rotaci\'on t\'actica de modelos. En r\'egimen alcista, CatBoost, DLinear y GradientBoosting capturan mejor las tendencias sostenidas. Durante correcciones, BiLSTM, RandomForest y Ridge ofrecen la mayor protecci\'on y generaci\'on de alfa. En per\'iodos de alta volatilidad, SeasonalNaive, Ridge y GradientBoosting mantienen el mejor desempe\~no. Finalmente, en mercados laterales---el r\'egimen predominante---LSTM\_Attention domina de manera abrumadora, seguido por Ridge y RandomForest. Notablemente, Ridge aparece como el \'unico modelo consistentemente competitivo en los cuatro reg\'imenes (excepto Bull), lo que explica su posici\'on como segundo mejor modelo del estudio.
+
+\subsubsection{Ensemble Din\'amico}
+
+Alternativamente, los modelos pueden ponderarse din\'amicamente seg\'un el r\'egimen identificado:
+
+\begin{equation}
+\hat{r}_{t,\text{ensemble}} = \sum_{m=1}^{M} w_{m,\text{regime}(t)} \cdot \hat{r}_{m,t}
+\end{equation}
+
+donde $w_{m,\text{regime}(t)}$ son pesos que dependen del r\'egimen actual, optimizados hist\'oricamente para cada combinaci\'on modelo-r\'egimen.
+
+\subsubsection{Advertencia sobre Detecci\'on de R\'egimen}
+
+Es crucial notar que la detecci\'on de r\'egimen es ex-post en el presente an\'alisis. En implementaci\'on real, el r\'egimen solo puede identificarse con rezago (60 d\'ias en la definici\'on empleada), lo que limita la aplicabilidad de rotaci\'on t\'actica perfecta. Sin embargo, transiciones de r\'egimen tienden a ser persistentes, permitiendo cierto grado de anticipaci\'on.
+
+\subsection{LSTM\_Attention: El Modelo L\'ider}
+\label{subsec:lstm_attention_leader}
+
+LSTM\_Attention destaca como el modelo con mejor rendimiento ajustado por riesgo, combinando el mayor retorno (+400\%) con un drawdown contenido (20.5\%) y el mayor Sharpe ratio (1.33). Su selectividad---55\% del tiempo en efectivo---le permite concentrar la exposici\'on en los momentos de mayor convicci\'on, particularmente en el r\'egimen lateral donde acumula +208.5\%. Ridge mantiene su m\'erito como modelo consistente a trav\'es de m\'ultiples reg\'imenes, ofreciendo una alternativa m\'as simple y transparente.

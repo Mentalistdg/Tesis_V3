@@ -4,6 +4,7 @@ import { getModels, getModelDetail } from '../services/api';
 import type { ModelsResponse, ModelData } from '../types';
 import { AlertTriangle, TrendingDown, Shield } from 'lucide-react';
 import { calculateSummaryFromTrades, INITIAL_CAPITAL } from '../utils/transactionCosts';
+import LoadingScreen from '../components/LoadingScreen';
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
@@ -69,7 +70,7 @@ export default function RiskPage() {
     const tradeSummary = modelData.trades && modelData.trades.length > 0
       ? calculateSummaryFromTrades(modelData.trades, INITIAL_CAPITAL)
       : null;
-    const netReturn = tradeSummary?.netReturn ?? modelData.metrics.total_return;
+    const netReturn = tradeSummary?.netReturn ?? modelData.metrics?.total_return ?? 0;
 
     // Annualize using same formula as Overview: CAGR = (1 + total)^(1/years) - 1
     const years = modelsData.test_period.n_days / 252;
@@ -199,7 +200,7 @@ export default function RiskPage() {
   const riskMetrics = calculateRiskMetrics();
 
   if (loading) {
-    return <div className="text-center py-8 text-[#737373]">Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (!modelData || !riskMetrics) {
@@ -241,7 +242,7 @@ export default function RiskPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[#1a1a1a] rounded p-4 text-center">
             <div className="text-xs text-[#737373] uppercase mb-2">Sharpe</div>
-            <div className="text-2xl font-bold">{modelData.metrics.sharpe.toFixed(3)}</div>
+            <div className="text-2xl font-bold">{(modelData.metrics?.sharpe ?? 0).toFixed(3)}</div>
           </div>
           <div className="bg-[#1a1a1a] rounded p-4 text-center">
             <div className="text-xs text-[#737373] uppercase mb-2">Sortino</div>

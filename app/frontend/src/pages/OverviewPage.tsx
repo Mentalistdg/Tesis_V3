@@ -1,11 +1,14 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getModels, getMarketData, getModelDetail } from '../services/api';
-import type { ModelsResponse, MarketData, ModelSummary, ModelData } from '../types';
+import type { ModelsResponse, MarketData, ModelSummary, ModelData, Trade } from '../types';
 import { createChart, IChartApi } from 'lightweight-charts';
 import { TrendingUp, Award, Shield, BarChart2, DollarSign } from 'lucide-react';
 import { clsx } from 'clsx';
 import { calculateSummaryFromTrades, INITIAL_CAPITAL } from '../utils/transactionCosts';
+import LoadingScreen from '../components/LoadingScreen';
+import { useTableSort } from '../hooks/useTableSort';
+import SortableHeader from '../components/SortableHeader';
 
 // Chart colors for top 5 models
 const CHART_COLORS = ['#c41e3a', '#00c853', '#ff6b35', '#4ecdc4', '#a855f7'];
@@ -28,15 +31,15 @@ export default function OverviewPage() {
   const [modelDetails, setModelDetails] = useState<Record<string, ModelData>>({});
   const [chartData, setChartData] = useState<ChartModelData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortKey, setSortKey] = useState<keyof ModelSummary>('total_return');
-  const [sortDesc, setSortDesc] = useState(true);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const navigate = useNavigate();
 
-  // Load all data on mount
+  // Load all data on mount, with minimum 4s splash for branding
   useEffect(() => {
     async function loadAllData() {
+      const splashMin = new Promise(resolve => setTimeout(resolve, 4000));
+
       try {
         setLoading(true);
 
@@ -58,7 +61,7 @@ export default function OverviewPage() {
         );
         setModelDetails(details);
 
-        // Step 3: Get top 5 models for chart (same order as table - by total_return from JSON)
+        // Step 3: Get top 5 models for chart
         const sortedModels = [...models.models].sort((a, b) => b.total_return - a.total_return);
         const top5 = sortedModels
           .slice(0, 5)
@@ -79,8 +82,12 @@ export default function OverviewPage() {
 
         setChartData(top5);
 
+        // Wait for splash minimum before hiding
+        await splashMin;
+
       } catch (err) {
         console.error('Failed to load data:', err);
+        await splashMin;
       } finally {
         setLoading(false);
       }
@@ -195,87 +202,76 @@ export default function OverviewPage() {
     return calculateSummaryFromTrades(detail.trades, INITIAL_CAPITAL);
   }
 
-  function handleSort(key: keyof ModelSummary) {
-    if (sortKey === key) {
-      setSortDesc(!sortDesc);
-    } else {
-      setSortKey(key);
-      setSortDesc(true);
-    }
-  }
-
   function handleRowDoubleClick(modelName: string) {
     navigate(`/detail/${modelName}`);
   }
 
+  // Hooks must be above early returns
+  const allModels = useMemo(() => {
+    if (!modelsData || !marketData) return [];
+    const spyFinalValue = modelsData.benchmark.spy_final_value ?? modelsData.benchmark.final_value ?? modelsData.config.initial_capital;
+    const spyTotalReturn = modelsData.benchmark.total_return ?? 0;
+    const spyReturns = marketData.returns ?? [];
+    const spyYears = spyReturns.length / 252;
+    const spyAnnualReturn = spyYears > 0 ? Math.pow(1 + spyTotalReturn, 1 / spyYears) - 1 : 0;
+    const spySharpe = modelsData.benchmark.sharpe ?? 0;
+    const spyMaxDD = modelsData.benchmark.max_drawdown ?? 0;
+    const buyAndHoldModel: ModelSummary = {
+      model: 'Buy & Hold (SPY)',
+      category: 'Benchmark',
+      final_equity: spyFinalValue,
+      profit_loss: spyFinalValue - modelsData.config.initial_capital,
+      total_return: spyTotalReturn,
+      annual_return: spyAnnualReturn,
+      market_return: spyTotalReturn,
+      excess_return: 0,
+      sharpe: spySharpe,
+      sortino: 0,
+      calmar: 0,
+      max_drawdown: spyMaxDD,
+      n_trades: 0,
+      pct_long: 100,
+      pct_cash: 0,
+    };
+    return [...modelsData.models, buyAndHoldModel];
+  }, [modelsData, marketData]);
+
+  const overviewAccessor = useMemo(() => ({
+    model: (m: ModelSummary) => m.model,
+    final_equity: (m: ModelSummary) => m.final_equity ?? 0,
+    total_return: (m: ModelSummary) => {
+      if (m.category === 'Benchmark') return m.total_return;
+      const summary = getModelSummary(m.model);
+      return summary?.netReturn ?? m.total_return;
+    },
+    sharpe: (m: ModelSummary) => m.sharpe,
+    max_drawdown: (m: ModelSummary) => m.max_drawdown,
+    n_trades: (m: ModelSummary) => {
+      if (m.category === 'Benchmark') return 0;
+      const detail = modelDetails[m.model];
+      if (!detail?.trades?.length) return m.n_trades;
+      return detail.trades.filter((t: Trade) => Math.abs(t.entry_position) >= 0.5).length;
+    },
+  }), [modelDetails]);
+
+  const {
+    sortedData: sortedModels, requestSort: requestOverviewSort,
+    getSortDirection: getOverviewSortDir,
+  } = useTableSort(allModels, 'total_return', 'desc', overviewAccessor);
+
   if (loading) {
-    return <div className="text-center py-8 text-[#737373]">Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (!modelsData || !marketData) {
     return <div className="text-center py-8 text-[#c41e3a]">Failed to load data</div>;
   }
 
-  // Create Buy & Hold as a virtual model for comparison
+  // Derive values from loaded data
   const spyFinalValue = modelsData.benchmark.spy_final_value ?? modelsData.benchmark.final_value ?? modelsData.config.initial_capital;
-  const spyTotalReturn = modelsData.benchmark.spy_total_return ?? modelsData.benchmark.total_return ?? 0;
-  const buyAndHoldModel: ModelSummary = {
-    model: 'Buy & Hold (SPY)',
-    category: 'Benchmark',
-    final_equity: spyFinalValue,
-    profit_loss: spyFinalValue - modelsData.config.initial_capital,
-    total_return: spyTotalReturn,
-    annual_return: marketData.metrics.annual_return,
-    market_return: spyTotalReturn,
-    excess_return: 0,
-    sharpe: marketData.metrics.sharpe,
-    sharpe_ci_lower: 0,
-    sharpe_ci_upper: 0,
-    prob_sharpe_positive: 0,
-    sortino: 0,
-    calmar: 0,
-    max_drawdown: marketData.metrics.max_drawdown,
-    win_rate: 0,
-    mean_position: 1,
-    n_trades: 0,
-    pct_3x_long: 0,
-    pct_long: 100,
-    pct_cash: 0,
-    pct_short: 0,
-    pct_3x_short: 0,
-    transaction_costs: 0,
-    optimal_params: { q_3x: 0, q_1x: 0 },
-    return_improvement: 0,
-    sharpe_improvement: 0,
-  };
+  const spyTotalReturn = modelsData.benchmark.total_return ?? 0;
 
-  const allModels = [...modelsData.models, buyAndHoldModel];
-
-  // Get net return for sorting (what investors actually earn after costs)
-  const getNetReturn = (model: ModelSummary): number => {
-    if (model.category === 'Benchmark') {
-      return model.total_return; // SPY has no tx costs
-    }
-    const summary = getModelSummary(model.model);
-    return summary?.netReturn ?? model.total_return;
-  };
-
-  const sortedModels = allModels.sort((a, b) => {
-    // When sorting by 'total_return', use net return (actual investor return)
-    if (sortKey === 'total_return') {
-      const aVal = getNetReturn(a);
-      const bVal = getNetReturn(b);
-      return sortDesc ? bVal - aVal : aVal - bVal;
-    }
-    const aVal = a[sortKey];
-    const bVal = b[sortKey];
-    if (typeof aVal === 'number' && typeof bVal === 'number') {
-      return sortDesc ? bVal - aVal : aVal - bVal;
-    }
-    return 0;
-  });
-
-  // Derive best model from models array (first model in list, or null if empty)
+  // Derive best model
   const bestModel = modelsData.models.length > 0 ? modelsData.models[0] : null;
   const bestSharpe = modelsData.models.length > 0
     ? modelsData.models.reduce((best, m) => m.sharpe > best.sharpe ? m : best)
@@ -283,12 +279,11 @@ export default function OverviewPage() {
   const lowestDD = modelsData.models.length > 0
     ? modelsData.models.reduce((best, m) => m.max_drawdown > best.max_drawdown ? m : best)
     : null;
-  const beatingMarket = modelsData.models_beating_spy ?? modelsData.models_beating_benchmark ?? 0;
+  const beatingMarket = modelsData.models_beating_spy ?? 0;
 
-  // Calculate trade-based summary for best model (consistent with all pages)
   const bestModelSummary = bestModel ? getModelSummary(bestModel.model) : null;
 
-  // Get top 5 model names for legend (from chartData state)
+  // Get top 5 model names for legend
   const top5Models = chartData.map(m => m.name);
 
   return (
@@ -298,7 +293,7 @@ export default function OverviewPage() {
         <div>
           <h2 className="text-xl font-semibold text-white">Optimized Strategy Performance</h2>
           <p className="text-sm text-[#737373] mt-1">
-            Initial Capital: {formatCurrency(modelsData.config.initial_capital)}{modelsData.config.n_bootstrap ? ` | Bootstrap: ${modelsData.config.n_bootstrap.toLocaleString()} samples` : ''} | Strategy: {modelsData.strategy ?? 'Optimized'}
+            Initial Capital: {formatCurrency(modelsData.config.initial_capital)} | Strategy: {modelsData.strategy ?? 'LONG-ONLY'}
           </p>
         </div>
         <span className="text-sm text-[#737373]">
@@ -306,7 +301,7 @@ export default function OverviewPage() {
         </span>
       </div>
 
-      {/* Best Model Highlight - LONG-ONLY */}
+      {/* Best Model Highlight */}
       <div className="card bg-gradient-to-r from-[#111111] to-[#1a1a1a] border-l-4 border-[#00c853]">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
@@ -320,7 +315,7 @@ export default function OverviewPage() {
             </div>
             <div className="text-sm text-[#737373] mt-1">
               {bestModelSummary && (
-                <>P&L: +{formatCurrency(bestModelSummary.finalCapital - INITIAL_CAPITAL)} ({(bestModelSummary.netReturn * 100).toFixed(0)}%)</>
+                <>P&L: +{formatCurrency(bestModelSummary.finalCapital - INITIAL_CAPITAL)} ({(bestModelSummary.netReturn * 100).toFixed(1)}%)</>
               )}
             </div>
           </div>
@@ -332,16 +327,16 @@ export default function OverviewPage() {
             <div>
               <div className="text-sm text-[#737373]">Return</div>
               <div className="text-xl font-semibold text-[#00c853]">
-                +{((bestModel?.total_return ?? 0) * 100).toFixed(0)}%
+                +{((bestModel?.total_return ?? 0) * 100).toFixed(1)}%
               </div>
             </div>
             <div>
               <div className="text-sm text-[#737373]">3x UPRO</div>
-              <div className="text-xl font-semibold text-white">{(bestModel?.pct_3x_long ?? 0).toFixed(0)}%</div>
+              <div className="text-xl font-semibold text-white">{(bestModel?.pct_3x ?? 0).toFixed(1)}%</div>
             </div>
             <div>
               <div className="text-sm text-[#737373]">Cash</div>
-              <div className="text-xl font-semibold text-white">{(bestModel?.pct_cash ?? 0).toFixed(0)}%</div>
+              <div className="text-xl font-semibold text-white">{(bestModel?.pct_cash ?? 0).toFixed(1)}%</div>
             </div>
           </div>
         </div>
@@ -380,7 +375,7 @@ export default function OverviewPage() {
             {beatingMarket}/{modelsData.total_models}
           </div>
           <div className="text-sm text-[#737373] mt-1">
-            {((beatingMarket / modelsData.total_models) * 100).toFixed(0)}% of models
+            {((beatingMarket / modelsData.total_models) * 100).toFixed(1)}% of models
           </div>
         </div>
 
@@ -393,7 +388,7 @@ export default function OverviewPage() {
             {formatCurrency(spyFinalValue)}
           </div>
           <div className="text-sm text-[#737373] mt-1">
-            +{(spyTotalReturn * 100).toFixed(0)}% return
+            +{(spyTotalReturn * 100).toFixed(1)}% return
           </div>
         </div>
       </div>
@@ -419,75 +414,31 @@ export default function OverviewPage() {
         <div ref={chartContainerRef} className="w-full" />
       </div>
 
-      {/* Models Table */}
+      {/* Models Table - Simplified */}
       <div className="card">
         <h3 className="text-lg font-medium mb-4 text-white">Model Rankings</h3>
-        <p className="text-sm text-[#737373] mb-4">Double-click a row to see model details</p>
+        <p className="text-xs text-[#525252] mb-4">Double-click a row to see model details</p>
 
         <div className="overflow-x-auto">
           <table className="table-dark">
             <thead>
               <tr>
                 <th className="w-8">#</th>
-                <th
-                  className="w-32 cursor-pointer hover:text-white"
-                  onClick={() => handleSort('model')}
-                >
-                  Model
-                </th>
-                <th
-                  className="w-24 text-right cursor-pointer hover:text-white"
-                  onClick={() => handleSort('final_equity')}
-                >
-                  Final Capital {sortKey === 'final_equity' && (sortDesc ? '↓' : '↑')}
-                </th>
-                <th className="w-16 text-right">Gross Ret</th>
-                <th
-                  className="w-20 text-right cursor-pointer hover:text-white"
-                  onClick={() => handleSort('total_return')}
-                >
-                  Net Ret {sortKey === 'total_return' && (sortDesc ? '↓' : '↑')}
-                </th>
-                <th className="w-16 text-right">Annual</th>
-                <th className="w-16 text-right">vs SPY</th>
-                <th
-                  className="w-16 text-right cursor-pointer hover:text-white"
-                  onClick={() => handleSort('sharpe')}
-                >
-                  Sharpe {sortKey === 'sharpe' && (sortDesc ? '↓' : '↑')}
-                </th>
-                <th
-                  className="w-20 text-right cursor-pointer hover:text-white"
-                  onClick={() => handleSort('prob_sharpe_positive')}
-                >
-                  P(S&gt;0) {sortKey === 'prob_sharpe_positive' && (sortDesc ? '↓' : '↑')}
-                </th>
-                <th
-                  className="w-16 text-right cursor-pointer hover:text-white"
-                  onClick={() => handleSort('max_drawdown')}
-                >
-                  Max DD {sortKey === 'max_drawdown' && (sortDesc ? '↓' : '↑')}
-                </th>
-                <th
-                  className="w-14 text-right cursor-pointer hover:text-white"
-                  onClick={() => handleSort('n_trades')}
-                >
-                  Trades {sortKey === 'n_trades' && (sortDesc ? '↓' : '↑')}
-                </th>
-                <th className="w-20 text-right">Tx Costs</th>
+                <SortableHeader label="Model" sortKey="model" activeDirection={getOverviewSortDir('model')} onSort={requestOverviewSort} />
+                <SortableHeader label="Final Capital" sortKey="final_equity" activeDirection={getOverviewSortDir('final_equity')} onSort={requestOverviewSort} className="text-right" />
+                <SortableHeader label="Net Return" sortKey="total_return" activeDirection={getOverviewSortDir('total_return')} onSort={requestOverviewSort} className="text-right" />
+                <th className="text-right">vs SPY</th>
+                <SortableHeader label="Sharpe" sortKey="sharpe" activeDirection={getOverviewSortDir('sharpe')} onSort={requestOverviewSort} className="text-right" />
+                <SortableHeader label="Max DD" sortKey="max_drawdown" activeDirection={getOverviewSortDir('max_drawdown')} onSort={requestOverviewSort} className="text-right" />
+                <SortableHeader label="Trades" sortKey="n_trades" activeDirection={getOverviewSortDir('n_trades')} onSort={requestOverviewSort} className="text-right" />
               </tr>
             </thead>
             <tbody>
               {sortedModels.map((model, idx) => {
                 const isBenchmark = model.category === 'Benchmark';
-                // Use trade-based calculation for consistency with Trades page
                 const summary = !isBenchmark ? getModelSummary(model.model) : null;
-                const grossReturn = summary?.grossReturn ?? model.total_return;
                 const netReturn = summary?.netReturn ?? model.total_return;
                 const excessReturn = netReturn - spyTotalReturn;
-                // Annualize: (1 + total)^(252/days) - 1
-                const years = modelsData.test_period.n_days / 252;
-                const annualReturn = Math.pow(1 + netReturn, 1 / years) - 1;
 
                 return (
                   <tr
@@ -509,25 +460,11 @@ export default function OverviewPage() {
                       {formatCurrency(summary ? summary.finalCapital : (model.final_equity ?? INITIAL_CAPITAL))}
                     </td>
                     <td className={clsx(
-                      "text-right font-mono",
-                      isBenchmark ? "text-[#525252]" :
-                      grossReturn >= 0 ? "text-[#a3a3a3]" : "text-[#737373]"
-                    )}>
-                      {isBenchmark ? `${(grossReturn * 100).toFixed(0)}%` : `${(grossReturn * 100).toFixed(0)}%`}
-                    </td>
-                    <td className={clsx(
                       "text-right font-mono font-semibold",
-                      isBenchmark ? "text-[#00c853]" :
+                      isBenchmark ? "text-[#525252]" :
                       netReturn >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
                     )}>
-                      {isBenchmark ? `${(netReturn * 100).toFixed(0)}%` : `${(netReturn * 100).toFixed(0)}%`}
-                    </td>
-                    <td className={clsx(
-                      "text-right font-mono",
-                      isBenchmark ? "text-[#525252]" :
-                      annualReturn >= 0 ? "text-[#a3a3a3]" : "text-[#737373]"
-                    )}>
-                      {(annualReturn * 100).toFixed(1)}%
+                      {netReturn >= 0 ? '+' : ''}{(netReturn * 100).toFixed(1)}%
                     </td>
                     <td className={clsx(
                       "text-right font-mono font-semibold",
@@ -535,7 +472,7 @@ export default function OverviewPage() {
                       excessReturn > 0 ? "text-[#00c853]" :
                       excessReturn < 0 ? "text-[#c41e3a]" : "text-[#737373]"
                     )}>
-                      {isBenchmark ? "-" : `${excessReturn >= 0 ? '+' : ''}${(excessReturn * 100).toFixed(0)}%`}
+                      {isBenchmark ? "-" : `${excessReturn >= 0 ? '+' : ''}${(excessReturn * 100).toFixed(1)}%`}
                     </td>
                     <td className="text-right font-mono">
                       <span className={clsx(
@@ -543,19 +480,6 @@ export default function OverviewPage() {
                       )}>
                         {model.sharpe.toFixed(2)}
                       </span>
-                      {!isBenchmark && model.sharpe_ci_lower !== undefined && model.sharpe_ci_upper !== undefined && (
-                        <div className="text-xs text-[#525252]">
-                          [{model.sharpe_ci_lower.toFixed(1)}, {model.sharpe_ci_upper.toFixed(1)}]
-                        </div>
-                      )}
-                    </td>
-                    <td className={clsx(
-                      "text-right font-mono",
-                      isBenchmark ? "text-[#525252]" :
-                      (model.prob_sharpe_positive ?? 0) >= 0.99 ? "text-[#00c853]" :
-                      (model.prob_sharpe_positive ?? 0) >= 0.95 ? "text-[#a3a3a3]" : "text-[#525252]"
-                    )}>
-                      {isBenchmark ? "-" : model.prob_sharpe_positive !== undefined ? `${(model.prob_sharpe_positive * 100).toFixed(0)}%` : "-"}
                     </td>
                     <td className={clsx(
                       "text-right font-mono",
@@ -564,76 +488,11 @@ export default function OverviewPage() {
                       {(model.max_drawdown * 100).toFixed(1)}%
                     </td>
                     <td className="text-right font-mono text-[#a3a3a3]">
-                      {isBenchmark ? "-" : model.n_trades}
-                    </td>
-                    <td className="text-right font-mono text-[#f59e0b]">
-                      {isBenchmark ? "-" : `-$${(summary?.totalTxCosts ?? 0).toFixed(0)}`}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Position Distribution & Cost Breakdown - LONG-ONLY */}
-      <div className="card">
-        <h3 className="text-lg font-medium mb-4 text-white">Position Distribution & Cost Breakdown (LONG-ONLY)</h3>
-        <div className="overflow-x-auto">
-          <table className="table-dark">
-            <thead>
-              <tr>
-                <th className="w-32">Model</th>
-                <th className="w-24 text-center">+3x UPRO</th>
-                <th className="w-24 text-center">+1x SPY</th>
-                <th className="w-24 text-center">Cash</th>
-                <th className="w-20 text-right">Trading</th>
-                <th className="w-20 text-right">Expense</th>
-                <th className="w-20 text-right">VolDrag</th>
-                <th className="w-20 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedModels.filter(m => m.category !== 'Benchmark').map((model) => {
-                const summary = getModelSummary(model.model);
-                const costs = summary?.costBreakdown;
-                // For LONG-ONLY: pct_3x = UPRO, pct_1x = SPY, pct_cash = Cash
-                const pctUpro = model.pct_3x ?? model.pct_3x_long ?? 0;
-                const pctSpy = model.pct_1x ?? (model.pct_long - (model.pct_3x ?? model.pct_3x_long ?? 0));
-                const pctCash = model.pct_cash ?? 0;
-                return (
-                  <tr key={model.model}>
-                    <td className="font-medium text-white">{model.model}</td>
-                    <td className="text-center">
-                      <div className="inline-block w-12 h-3 rounded" style={{
-                        background: `linear-gradient(to right, #00c853 ${pctUpro}%, #1a1a1a ${pctUpro}%)`,
-                      }} />
-                      <span className="ml-1 text-xs text-[#a3a3a3]">{pctUpro.toFixed(0)}%</span>
-                    </td>
-                    <td className="text-center">
-                      <div className="inline-block w-12 h-3 rounded" style={{
-                        background: `linear-gradient(to right, #22d3ee ${pctSpy}%, #1a1a1a ${pctSpy}%)`,
-                      }} />
-                      <span className="ml-1 text-xs text-[#a3a3a3]">{pctSpy.toFixed(0)}%</span>
-                    </td>
-                    <td className="text-center">
-                      <div className="inline-block w-12 h-3 rounded" style={{
-                        background: `linear-gradient(to right, #525252 ${pctCash}%, #1a1a1a ${pctCash}%)`,
-                      }} />
-                      <span className="ml-1 text-xs text-[#a3a3a3]">{pctCash.toFixed(0)}%</span>
-                    </td>
-                    <td className="text-right font-mono text-[#a3a3a3]">
-                      ${(costs?.trading ?? 0).toFixed(0)}
-                    </td>
-                    <td className="text-right font-mono text-[#a3a3a3]">
-                      ${(costs?.expense ?? 0).toFixed(0)}
-                    </td>
-                    <td className="text-right font-mono text-[#a3a3a3]">
-                      ${(costs?.volDrag ?? 0).toFixed(0)}
-                    </td>
-                    <td className="text-right font-mono text-[#f59e0b] font-semibold">
-                      -${(costs?.total ?? 0).toFixed(0)}
+                      {isBenchmark ? "-" : (() => {
+                        const detail = modelDetails[model.model];
+                        if (!detail?.trades?.length) return model.n_trades;
+                        return detail.trades.filter((t: Trade) => Math.abs(t.entry_position) >= 0.5).length;
+                      })()}
                     </td>
                   </tr>
                 );

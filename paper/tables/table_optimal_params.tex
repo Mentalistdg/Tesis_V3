@@ -1,0 +1,39 @@
+\begin{table}[htbp]
+\centering
+\caption{Par\'ametros \'Optimos de Umbral por Modelo}
+\label{tab:optimal_params}
+\small
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Categor\'ia} & \textbf{$q_{3x}$ (\%)} & \textbf{$q_{1x}$ (\%)} & \textbf{Interpretaci\'on} \\
+\midrule
+LSTM\_Attention & RNN & 5 & 50 & Top 5\% $\rightarrow$ 3x, Top 50\% $\rightarrow$ 1x \\
+Ridge & ML & 20 & 30 & Top 20\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
+RandomForest & ML & 5 & 40 & Top 5\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
+CNN\_LSTM & RNN & 20 & 40 & Top 20\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
+DLinear & DeepLearning & 5 & 60 & Top 5\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+GradientBoosting & ML & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+CatBoost & GradientBoosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+Theta & TimeSeries & 15 & 60 & Top 15\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+SeasonalNaive & TimeSeries & 5 & 60 & Top 5\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+NBEATS & DeepLearning & 10 & 20 & Top 10\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+Lasso & ML & 5 & 40 & Top 5\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
+GARCH & Specialized & 5 & 30 & Top 5\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
+LightGBM & GradientBoosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+NHiTS & DeepLearning & 5 & 60 & Top 5\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+AutoARIMA & TimeSeries & 10 & 30 & Top 10\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
+TCN & DeepLearning & 5 & 30 & Top 5\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
+TFT & DeepLearning & 20 & 60 & Top 20\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+XGBoost & GradientBoosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+ElasticNet & ML & 10 & 60 & Top 10\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+Prophet & Specialized & 15 & 60 & Top 15\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+BiLSTM & RNN & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+ExponentialSmoothing & TimeSeries & 30 & 60 & Top 30\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+BiGRU & RNN & 30 & 40 & Top 30\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Nota: $q_{3x}$ = percentil para posici\'on UPRO (3x). $q_{1x}$ = percentil para posici\'on SPY (1x). Predicciones por debajo del percentil $q_{1x}$ resultan en posici\'on Cash (0). Par\'ametros optimizados mediante grid search sobre conjunto de validaci\'on.
+\end{tablenotes}
+\end{table}

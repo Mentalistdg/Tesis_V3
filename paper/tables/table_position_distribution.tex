@@ -1,0 +1,39 @@
+\begin{table}[htbp]
+\centering
+\caption{Distribuci\'on de Posiciones por Modelo (Estrategia Long-Only)}
+\label{tab:position_distribution}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{UPRO (3x)} & \textbf{SPY (1x)} & \textbf{Cash (0)} & \textbf{Total Long} & \textbf{N\textdegree{} Trades} \\
+\midrule
+LSTM\_Attention & 12.2\% & 32.7\% & 55.1\% & 44.9\% & 465 \\
+Ridge & 20.8\% & 17.0\% & 62.3\% & 37.7\% & 409 \\
+RandomForest & 5.2\% & 16.9\% & 77.9\% & 22.1\% & 175 \\
+CNN\_LSTM & 12.1\% & 28.6\% & 59.3\% & 40.7\% & 633 \\
+DLinear & 6.6\% & 52.2\% & 41.2\% & 58.8\% & 788 \\
+GradientBoosting & 4.2\% & 4.0\% & 91.9\% & 8.1\% & 11 \\
+CatBoost & 4.0\% & 9.1\% & 86.9\% & 13.1\% & 224 \\
+Theta & 2.3\% & 2.2\% & 95.5\% & 4.5\% & 36 \\
+SeasonalNaive & 20.2\% & 39.7\% & 40.0\% & 60.0\% & 1042 \\
+NBEATS & 13.9\% & 10.3\% & 75.8\% & 24.2\% & 507 \\
+Lasso & 1.4\% & 4.8\% & 93.9\% & 6.1\% & 90 \\
+GARCH & 1.7\% & 6.2\% & 92.1\% & 7.9\% & 126 \\
+LightGBM & 3.7\% & 6.3\% & 90.0\% & 10.0\% & 134 \\
+NHiTS & 7.1\% & 52.4\% & 40.4\% & 59.6\% & 805 \\
+AutoARIMA & 0.0\% & 0.0\% & 100.0\% & 0.0\% & 0 \\
+TCN & 7.7\% & 20.7\% & 71.6\% & 28.4\% & 383 \\
+TFT & 21.4\% & 38.7\% & 39.9\% & 60.1\% & 804 \\
+XGBoost & 29.1\% & 3.8\% & 67.1\% & 32.9\% & 42 \\
+ElasticNet & 3.7\% & 9.4\% & 86.9\% & 13.1\% & 175 \\
+Prophet & 2.3\% & 8.8\% & 88.9\% & 11.1\% & 77 \\
+BiLSTM & 12.1\% & 20.1\% & 67.8\% & 32.2\% & 546 \\
+ExponentialSmoothing & 26.7\% & 45.3\% & 28.0\% & 72.0\% & 904 \\
+BiGRU & 15.7\% & 27.5\% & 56.8\% & 43.2\% & 752 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Nota: Porcentajes representan la proporci\'on de d\'ias en cada posici\'on. UPRO = 3x apalancado largo, SPY = 1x largo, Cash = tasa libre de riesgo. N\'umero de trades = cambios de posici\'on.
+\end{tablenotes}
+\end{table}

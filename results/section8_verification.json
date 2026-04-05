@@ -1,0 +1,701 @@
+{
+  "section": "Section 8 - Costs & Implementation",
+  "cost_sensitivity": {
+    "LSTM_Attention": {
+      "base_return_pct": 400.0,
+      "base_return_json_pct": 400.0,
+      "base_match": true,
+      "reconstructed_return_pct": 400.0,
+      "reconstruction_match": true,
+      "plus50_return_pct": 335.0,
+      "plus50_compound_pct": 345.4,
+      "plus100_return_pct": 270.0,
+      "plus100_compound_pct": 296.8,
+      "breakeven_multiplier": 4.1,
+      "tx_pl_ratio_pct": 24.5,
+      "total_costs_dollar": 12999.0,
+      "gross_pl_dollar": 52996.0
+    },
+    "Ridge": {
+      "base_return_pct": 263.2,
+      "base_return_json_pct": 263.2,
+      "base_match": true,
+      "reconstructed_return_pct": 263.2,
+      "reconstruction_match": true,
+      "plus50_return_pct": 209.8,
+      "plus50_compound_pct": 219.3,
+      "plus100_return_pct": 156.5,
+      "plus100_compound_pct": 180.7,
+      "breakeven_multiplier": 3.5,
+      "tx_pl_ratio_pct": 28.8,
+      "total_costs_dollar": 10666.0,
+      "gross_pl_dollar": 36983.0
+    },
+    "RandomForest": {
+      "base_return_pct": 131.0,
+      "base_return_json_pct": 131.0,
+      "base_match": true,
+      "reconstructed_return_pct": 131.0,
+      "reconstruction_match": true,
+      "plus50_return_pct": 120.8,
+      "plus50_compound_pct": 121.4,
+      "plus100_return_pct": 110.6,
+      "plus100_compound_pct": 112.2,
+      "breakeven_multiplier": 7.4,
+      "tx_pl_ratio_pct": 13.5,
+      "total_costs_dollar": 2045.0,
+      "gross_pl_dollar": 15148.0
+    },
+    "CNN_LSTM": {
+      "base_return_pct": 129.0,
+      "base_return_json_pct": 129.0,
+      "base_match": true,
+      "reconstructed_return_pct": 129.0,
+      "reconstruction_match": true,
+      "plus50_return_pct": 93.4,
+      "plus50_compound_pct": 100.0,
+      "plus100_return_pct": 57.8,
+      "plus100_compound_pct": 74.6,
+      "breakeven_multiplier": 2.8,
+      "tx_pl_ratio_pct": 35.6,
+      "total_costs_dollar": 7123.0,
+      "gross_pl_dollar": 20022.0
+    }
+  },
+  "latency_impact": {
+    "model": "LSTM_Attention",
+    "method": "linear_approximation",
+    "note": "return = (correlation * gross_PL - costs) / capital",
+    "gross_pl": 52996.0,
+    "total_costs": 12999.0,
+    "base_case": {
+      "total_return_pct": 400.0,
+      "correlation": 1.0
+    },
+    "t_plus_open": {
+      "total_return_pct": 368.2,
+      "degradation_pct": -7.9,
+      "correlation": 0.94
+    },
+    "t_plus_close": {
+      "total_return_pct": 341.7,
+      "degradation_pct": -14.6,
+      "correlation": 0.89
+    }
+  },
+  "aggregate_statistics": {
+    "avg_costs_dollar": 3545.0,
+    "avg_trades": 397.0,
+    "n_models": 23,
+    "winner_tx_pl_range": {
+      "min_pct": 13.5,
+      "max_pct": 35.6,
+      "range_str": "14--36%"
+    },
+    "per_model": {
+      "Ridge": {
+        "total_costs_dollar": 10666.0,
+        "gross_pl_dollar": 36983.0,
+        "final_capital": 36317.0,
+        "n_trades": 409,
+        "tx_pl_pct": 28.8
+      },
+      "Lasso": {
+        "total_costs_dollar": 480.0,
+        "gross_pl_dollar": 4379.0,
+        "final_capital": 13898.0,
+        "n_trades": 90,
+        "tx_pl_pct": 11.0
+      },
+      "ElasticNet": {
+        "total_costs_dollar": 918.0,
+        "gross_pl_dollar": 1894.0,
+        "final_capital": 10976.0,
+        "n_trades": 175,
+        "tx_pl_pct": 48.5
+      },
+      "RandomForest": {
+        "total_costs_dollar": 2045.0,
+        "gross_pl_dollar": 15148.0,
+        "final_capital": 23103.0,
+        "n_trades": 175,
+        "tx_pl_pct": 13.5
+      },
+      "GradientBoosting": {
+        "total_costs_dollar": 378.0,
+        "gross_pl_dollar": 7061.0,
+        "final_capital": 16683.0,
+        "n_trades": 11,
+        "tx_pl_pct": 5.4
+      },
+      "XGBoost": {
+        "total_costs_dollar": 1817.0,
+        "gross_pl_dollar": 3167.0,
+        "final_capital": 11350.0,
+        "n_trades": 42,
+        "tx_pl_pct": 57.4
+      },
+      "LightGBM": {
+        "total_costs_dollar": 876.0,
+        "gross_pl_dollar": 3588.0,
+        "final_capital": 12712.0,
+        "n_trades": 134,
+        "tx_pl_pct": 24.4
+      },
+      "CatBoost": {
+        "total_costs_dollar": 1426.0,
+        "gross_pl_dollar": 6169.0,
+        "final_capital": 14743.0,
+        "n_trades": 224,
+        "tx_pl_pct": 23.1
+      },
+      "AutoARIMA": {
+        "total_costs_dollar": 0.0,
+        "gross_pl_dollar": 1827.0,
+        "final_capital": 11827.0,
+        "n_trades": 0,
+        "tx_pl_pct": 0.0
+      },
+      "ExponentialSmoothing": {
+        "total_costs_dollar": 5924.0,
+        "gross_pl_dollar": 4473.0,
+        "final_capital": 8549.0,
+        "n_trades": 904,
+        "tx_pl_pct": 132.4
+      },
+      "Theta": {
+        "total_costs_dollar": 491.0,
+        "gross_pl_dollar": 4954.0,
+        "final_capital": 14462.0,
+        "n_trades": 36,
+        "tx_pl_pct": 9.9
+      },
+      "SeasonalNaive": {
+        "total_costs_dollar": 8370.0,
+        "gross_pl_dollar": 12816.0,
+        "final_capital": 14446.0,
+        "n_trades": 1042,
+        "tx_pl_pct": 65.3
+      },
+      "Prophet": {
+        "total_costs_dollar": 456.0,
+        "gross_pl_dollar": 1221.0,
+        "final_capital": 10765.0,
+        "n_trades": 77,
+        "tx_pl_pct": 37.4
+      },
+      "GARCH": {
+        "total_costs_dollar": 613.0,
+        "gross_pl_dollar": 3337.0,
+        "final_capital": 12725.0,
+        "n_trades": 126,
+        "tx_pl_pct": 18.4
+      },
+      "DLinear": {
+        "total_costs_dollar": 4790.0,
+        "gross_pl_dollar": 11584.0,
+        "final_capital": 16795.0,
+        "n_trades": 788,
+        "tx_pl_pct": 41.3
+      },
+      "NBEATS": {
+        "total_costs_dollar": 4381.0,
+        "gross_pl_dollar": 8824.0,
+        "final_capital": 14444.0,
+        "n_trades": 507,
+        "tx_pl_pct": 49.6
+      },
+      "NHiTS": {
+        "total_costs_dollar": 3831.0,
+        "gross_pl_dollar": 6043.0,
+        "final_capital": 12212.0,
+        "n_trades": 805,
+        "tx_pl_pct": 63.4
+      },
+      "TCN": {
+        "total_costs_dollar": 2066.0,
+        "gross_pl_dollar": 3876.0,
+        "final_capital": 11809.0,
+        "n_trades": 383,
+        "tx_pl_pct": 53.3
+      },
+      "TFT": {
+        "total_costs_dollar": 6094.0,
+        "gross_pl_dollar": 7571.0,
+        "final_capital": 11477.0,
+        "n_trades": 804,
+        "tx_pl_pct": 80.5
+      },
+      "CNN_LSTM": {
+        "total_costs_dollar": 7123.0,
+        "gross_pl_dollar": 20022.0,
+        "final_capital": 22899.0,
+        "n_trades": 633,
+        "tx_pl_pct": 35.6
+      },
+      "LSTM_Attention": {
+        "total_costs_dollar": 12999.0,
+        "gross_pl_dollar": 52996.0,
+        "final_capital": 49998.0,
+        "n_trades": 465,
+        "tx_pl_pct": 24.5
+      },
+      "BiLSTM": {
+        "total_costs_dollar": 3004.0,
+        "gross_pl_dollar": 3625.0,
+        "final_capital": 10620.0,
+        "n_trades": 546,
+        "tx_pl_pct": 82.9
+      },
+      "BiGRU": {
+        "total_costs_dollar": 2793.0,
+        "gross_pl_dollar": -436.0,
+        "final_capital": 6771.0,
+        "n_trades": 752,
+        "tx_pl_pct": null
+      }
+    }
+  },
+  "cost_breakdown_verification": {
+    "Ridge": {
+      "decomposition_match": true,
+      "computed_total_costs": 10666.0,
+      "json_total_costs": 10666.0,
+      "costs_match": true,
+      "expense_sum": 0.010539285714285716,
+      "trading_sum": 0.1665,
+      "vol_drag_sum": 0.08100000000000002
+    },
+    "Lasso": {
+      "decomposition_match": true,
+      "computed_total_costs": 480.0,
+      "json_total_costs": 480.0,
+      "costs_match": true,
+      "expense_sum": 0.0008714285714285715,
+      "trading_sum": 0.0276,
+      "vol_drag_sum": 0.0054
+    },
+    "ElasticNet": {
+      "decomposition_match": true,
+      "computed_total_costs": 918.0,
+      "json_total_costs": 918.0,
+      "costs_match": true,
+      "expense_sum": 0.0021690476190476195,
+      "trading_sum": 0.06340000000000001,
+      "vol_drag_sum": 0.0144
+    },
+    "RandomForest": {
+      "decomposition_match": true,
+      "computed_total_costs": 2045.0,
+      "json_total_costs": 2045.0,
+      "costs_match": true,
+      "expense_sum": 0.0032412698412698417,
+      "trading_sum": 0.06160000000000001,
+      "vol_drag_sum": 0.0204
+    },
+    "GradientBoosting": {
+      "decomposition_match": true,
+      "computed_total_costs": 378.0,
+      "json_total_costs": 378.0,
+      "costs_match": true,
+      "expense_sum": 0.002135714285714286,
+      "trading_sum": 0.004200000000000001,
+      "vol_drag_sum": 0.0162
+    },
+    "XGBoost": {
+      "decomposition_match": true,
+      "computed_total_costs": 1817.0,
+      "json_total_costs": 1817.0,
+      "costs_match": true,
+      "expense_sum": 0.01382857142857143,
+      "trading_sum": 0.0212,
+      "vol_drag_sum": 0.11339999999999999
+    },
+    "LightGBM": {
+      "decomposition_match": true,
+      "computed_total_costs": 876.0,
+      "json_total_costs": 876.0,
+      "costs_match": true,
+      "expense_sum": 0.0020261904761904766,
+      "trading_sum": 0.0504,
+      "vol_drag_sum": 0.0144
+    },
+    "CatBoost": {
+      "decomposition_match": true,
+      "computed_total_costs": 1426.0,
+      "json_total_costs": 1426.0,
+      "costs_match": true,
+      "expense_sum": 0.0022992063492063494,
+      "trading_sum": 0.0746,
+      "vol_drag_sum": 0.015600000000000001
+    },
+    "AutoARIMA": {
+      "decomposition_match": true,
+      "computed_total_costs": 0.0,
+      "json_total_costs": 0.0,
+      "costs_match": true,
+      "expense_sum": 0.0,
+      "trading_sum": 0.0,
+      "vol_drag_sum": 0.0
+    },
+    "ExponentialSmoothing": {
+      "decomposition_match": true,
+      "computed_total_costs": 5924.0,
+      "json_total_costs": 5924.0,
+      "costs_match": true,
+      "expense_sum": 0.014670238095238097,
+      "trading_sum": 0.4072,
+      "vol_drag_sum": 0.1044
+    },
+    "Theta": {
+      "decomposition_match": true,
+      "computed_total_costs": 491.0,
+      "json_total_costs": 491.0,
+      "costs_match": true,
+      "expense_sum": 0.001186904761904762,
+      "trading_sum": 0.0233,
+      "vol_drag_sum": 0.009000000000000001
+    },
+    "SeasonalNaive": {
+      "decomposition_match": true,
+      "computed_total_costs": 8370.0,
+      "json_total_costs": 8370.0,
+      "costs_match": true,
+      "expense_sum": 0.011343650793650795,
+      "trading_sum": 0.3668,
+      "vol_drag_sum": 0.07890000000000001
+    },
+    "Prophet": {
+      "decomposition_match": true,
+      "computed_total_costs": 456.0,
+      "json_total_costs": 456.0,
+      "costs_match": true,
+      "expense_sum": 0.0014904761904761905,
+      "trading_sum": 0.031000000000000003,
+      "vol_drag_sum": 0.009000000000000001
+    },
+    "GARCH": {
+      "decomposition_match": true,
+      "computed_total_costs": 613.0,
+      "json_total_costs": 613.0,
+      "costs_match": true,
+      "expense_sum": 0.0010837301587301588,
+      "trading_sum": 0.039400000000000004,
+      "vol_drag_sum": 0.0066
+    },
+    "DLinear": {
+      "decomposition_match": true,
+      "computed_total_costs": 4790.0,
+      "json_total_costs": 4790.0,
+      "costs_match": true,
+      "expense_sum": 0.005530555555555556,
+      "trading_sum": 0.21990000000000004,
+      "vol_drag_sum": 0.025800000000000003
+    },
+    "NBEATS": {
+      "decomposition_match": true,
+      "computed_total_costs": 4381.0,
+      "json_total_costs": 4381.0,
+      "costs_match": true,
+      "expense_sum": 0.007014682539682541,
+      "trading_sum": 0.20380000000000004,
+      "vol_drag_sum": 0.0543
+    },
+    "NHiTS": {
+      "decomposition_match": true,
+      "computed_total_costs": 3831.0,
+      "json_total_costs": 3831.0,
+      "costs_match": true,
+      "expense_sum": 0.0057940476190476205,
+      "trading_sum": 0.2392,
+      "vol_drag_sum": 0.0279
+    },
+    "TCN": {
+      "decomposition_match": true,
+      "computed_total_costs": 2066.0,
+      "json_total_costs": 2066.0,
+      "costs_match": true,
+      "expense_sum": 0.004571825396825397,
+      "trading_sum": 0.1267,
+      "vol_drag_sum": 0.030000000000000002
+    },
+    "TFT": {
+      "decomposition_match": true,
+      "computed_total_costs": 6094.0,
+      "json_total_costs": 6094.0,
+      "costs_match": true,
+      "expense_sum": 0.011871428571428571,
+      "trading_sum": 0.3305,
+      "vol_drag_sum": 0.08370000000000001
+    },
+    "CNN_LSTM": {
+      "decomposition_match": true,
+      "computed_total_costs": 7123.0,
+      "json_total_costs": 7123.0,
+      "costs_match": true,
+      "expense_sum": 0.006998015873015875,
+      "trading_sum": 0.21730000000000002,
+      "vol_drag_sum": 0.0471
+    },
+    "LSTM_Attention": {
+      "decomposition_match": true,
+      "computed_total_costs": 12999.0,
+      "json_total_costs": 12999.0,
+      "costs_match": true,
+      "expense_sum": 0.00725952380952381,
+      "trading_sum": 0.1773,
+      "vol_drag_sum": 0.047700000000000006
+    },
+    "BiLSTM": {
+      "decomposition_match": true,
+      "computed_total_costs": 3004.0,
+      "json_total_costs": 3004.0,
+      "costs_match": true,
+      "expense_sum": 0.0066376984126984145,
+      "trading_sum": 0.1951,
+      "vol_drag_sum": 0.0474
+    },
+    "BiGRU": {
+      "decomposition_match": true,
+      "computed_total_costs": 2793.0,
+      "json_total_costs": 2793.0,
+      "costs_match": true,
+      "expense_sum": 0.008645238095238096,
+      "trading_sum": 0.2752,
+      "vol_drag_sum": 0.061200000000000004
+    }
+  },
+  "paper_claims": {
+    "LSTM_Att_base_return": {
+      "paper": "+400%",
+      "computed": "+400%",
+      "match": true
+    },
+    "LSTM_Att_plus50": {
+      "paper": "+335%",
+      "computed": "+335%",
+      "match": true
+    },
+    "LSTM_Att_plus100": {
+      "paper": "+270%",
+      "computed": "+270%",
+      "match": true
+    },
+    "LSTM_Att_breakeven": {
+      "paper": "4.1x",
+      "computed": "4.1x",
+      "match": true
+    },
+    "LSTM_Att_tx_pl": {
+      "paper": "24.5%",
+      "computed": "24.5%",
+      "match": true
+    },
+    "Ridge_base_return": {
+      "paper": "+263%",
+      "computed": "+263%",
+      "match": true
+    },
+    "Ridge_plus50": {
+      "paper": "+210%",
+      "computed": "+210%",
+      "match": true
+    },
+    "Ridge_plus100": {
+      "paper": "+157%",
+      "computed": "+156%",
+      "match": true
+    },
+    "Ridge_breakeven": {
+      "paper": "3.5x",
+      "computed": "3.5x",
+      "match": true
+    },
+    "Ridge_tx_pl": {
+      "paper": "28.8%",
+      "computed": "28.8%",
+      "match": true
+    },
+    "RF_base_return": {
+      "paper": "+131%",
+      "computed": "+131%",
+      "match": true
+    },
+    "RF_plus50": {
+      "paper": "+121%",
+      "computed": "+121%",
+      "match": true
+    },
+    "RF_plus100": {
+      "paper": "+111%",
+      "computed": "+111%",
+      "match": true
+    },
+    "RF_breakeven": {
+      "paper": "7.4x",
+      "computed": "7.4x",
+      "match": true
+    },
+    "RF_tx_pl": {
+      "paper": "13.5%",
+      "computed": "13.5%",
+      "match": true
+    },
+    "CNN_base_return": {
+      "paper": "+129%",
+      "computed": "+129%",
+      "match": true
+    },
+    "CNN_plus50": {
+      "paper": "+93%",
+      "computed": "+93%",
+      "match": true
+    },
+    "CNN_plus100": {
+      "paper": "+58%",
+      "computed": "+58%",
+      "match": true
+    },
+    "CNN_breakeven": {
+      "paper": "2.8x",
+      "computed": "2.8x",
+      "match": true
+    },
+    "CNN_tx_pl": {
+      "paper": "35.6%",
+      "computed": "35.6%",
+      "match": true
+    },
+    "avg_costs": {
+      "paper": "$3,545",
+      "computed": "$3,545",
+      "match": true
+    },
+    "winner_cost_range": {
+      "paper": "14--36%",
+      "computed": "14--36%",
+      "match": true
+    },
+    "LSTM_Att_costs_dollar": {
+      "paper": "$12,999",
+      "computed": "$12,999",
+      "match": true
+    },
+    "LSTM_Att_trades": {
+      "paper": "465 trades",
+      "computed": "465 trades",
+      "match": true
+    },
+    "LSTM_Att_gross_return": {
+      "paper": "$62,996",
+      "computed": "$62,996",
+      "match": true
+    },
+    "GB_trades": {
+      "paper": "11 trades",
+      "computed": "11 trades",
+      "match": true
+    },
+    "GB_costs": {
+      "paper": "$378",
+      "computed": "$378",
+      "match": true
+    },
+    "SN_trades": {
+      "paper": "1,042 trades",
+      "computed": "1,042 trades",
+      "match": true
+    },
+    "SN_costs": {
+      "paper": "$8,370",
+      "computed": "$8,370",
+      "match": true
+    },
+    "ES_trades": {
+      "paper": "904 trades",
+      "computed": "904 trades",
+      "match": true
+    },
+    "ES_return": {
+      "paper": "-14.5%",
+      "computed": "-14.5%",
+      "match": true
+    },
+    "GB_return": {
+      "paper": "+67%",
+      "computed": "+67%",
+      "match": true
+    },
+    "SN_return": {
+      "paper": "+45%",
+      "computed": "+44%",
+      "match": true
+    },
+    "turnover_r2": {
+      "paper": "R^2 = 0.02",
+      "computed": "R^2 = 0.00",
+      "match": "True"
+    },
+    "latency_t_open_return": {
+      "paper": "+369%",
+      "computed": "+368%",
+      "match": true
+    },
+    "latency_t_open_degradation": {
+      "paper": "~-7.8%",
+      "computed": "-7.9%",
+      "match": true
+    },
+    "latency_t_open_corr": {
+      "paper": "0.94",
+      "computed": "0.94",
+      "match": true
+    },
+    "latency_t_close_return": {
+      "paper": "+336%",
+      "computed": "+342%",
+      "match": true
+    },
+    "latency_t_close_degradation": {
+      "paper": "~-15.9%",
+      "computed": "-14.6%",
+      "match": true
+    },
+    "latency_t_close_corr": {
+      "paper": "0.89",
+      "computed": "0.89",
+      "match": true
+    },
+    "vol_drag_annual": {
+      "paper": "~7.5%",
+      "computed": "7.6%",
+      "match": true
+    },
+    "spy_bh_return": {
+      "paper": "+102%",
+      "computed": "+102.2%",
+      "match": true
+    },
+    "summary_latency_degradation": {
+      "paper": "-8%",
+      "computed": "-8%",
+      "match": true
+    },
+    "GB_pct_cash": {
+      "paper": "92%",
+      "computed": "92%",
+      "match": true
+    },
+    "RF_pct_cash": {
+      "paper": "78%",
+      "computed": "78%",
+      "match": true
+    }
+  },
+  "summary": {
+    "total_claims": 45,
+    "verified_ok": 45,
+    "mismatches": 0,
+    "all_match": true
+  }
+}

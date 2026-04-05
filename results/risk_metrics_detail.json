@@ -1,0 +1,262 @@
+{
+  "SPY_BH": {
+    "ratios": {
+      "sharpe": 0.6629861173005531,
+      "sortino": 0.9531906389672024,
+      "calmar": 0.5763526495474852,
+      "annual_return_pct": 14.616634253558903,
+      "annual_vol_pct": 17.144313880904388,
+      "total_return_pct": 102.24498180538282
+    },
+    "var_cvar": {
+      "var_95_daily_pct": -1.6674218396012501,
+      "cvar_95_daily_pct": -2.4730493357849515,
+      "var_99_daily_pct": -2.94791401531804,
+      "cvar_99_daily_pct": -3.8451959065255115,
+      "worst_day_pct": -5.85429476430037
+    },
+    "var_cvar_30d": {
+      "var_95_pct": -7.801990977327315,
+      "cvar_95_pct": -10.818871616129544,
+      "n_windows": 1272
+    },
+    "var_cvar_90d": {
+      "var_95_pct": -10.773450810985413,
+      "cvar_95_pct": -13.827145185381559,
+      "n_windows": 1212
+    },
+    "drawdown": {
+      "max_dd_pct": -25.360574407066466,
+      "trough_date": "2022-10-11",
+      "peak_date": "2021-12-31",
+      "duration_trading_days": 195,
+      "recovery_trading_days": 318,
+      "recovery_date": "2024-01-18"
+    },
+    "tracking": {
+      "beta": 1.0,
+      "tracking_error_annual_pct": 0.0,
+      "information_ratio": null,
+      "r_squared": 1.0,
+      "correlation": 1.0
+    },
+    "capture": {
+      "upside_capture_pct": 100.0,
+      "downside_capture_pct": 100.0,
+      "capture_ratio": 1.0,
+      "avg_position": 1.0,
+      "pct_long_on_up_days": 100.0,
+      "pct_long_on_down_days": 100.0,
+      "n_up_days": 710,
+      "n_down_days": 589
+    }
+  },
+  "LSTM_Attention": {
+    "ratios": {
+      "sharpe": 1.3271268183896578,
+      "sortino": 2.630834638829773,
+      "calmar": 1.7877743132246708,
+      "annual_return_pct": 36.579297307069794,
+      "annual_vol_pct": 25.113730417742115,
+      "total_return_pct": 399.9784362916704
+    },
+    "var_cvar": {
+      "var_95_daily_pct": -1.653193181522103,
+      "cvar_95_daily_pct": -2.9178210420467527,
+      "var_99_daily_pct": -3.906606262985099,
+      "cvar_99_daily_pct": -5.346717526648543,
+      "worst_day_pct": -8.81023235400177
+    },
+    "var_cvar_30d": {
+      "var_95_pct": -5.911087600136102,
+      "cvar_95_pct": -10.20104327079793,
+      "n_windows": 1272
+    },
+    "var_cvar_90d": {
+      "var_95_pct": -3.3324234976246965,
+      "cvar_95_pct": -6.114760423594145,
+      "n_windows": 1212
+    },
+    "drawdown": {
+      "max_dd_pct": -20.460802594870287,
+      "trough_date": "2025-04-07",
+      "peak_date": "2025-02-18",
+      "duration_trading_days": 34,
+      "recovery_trading_days": 1,
+      "recovery_date": "2025-04-08"
+    },
+    "tracking": {
+      "beta": 0.9689471724133016,
+      "tracking_error_annual_pct": 18.849392940709876,
+      "information_ratio": 1.0108699841986148,
+      "r_squared": 0.4375402008487902,
+      "correlation": 0.6614682160533416
+    },
+    "capture": {
+      "upside_capture_pct": 90.158385678418,
+      "downside_capture_pct": 67.09665366164587,
+      "capture_ratio": 1.3437091234544651,
+      "avg_position": 0.6933128362797848,
+      "pct_long_on_up_days": 46.19718309859155,
+      "pct_long_on_down_days": 43.463497453310694,
+      "n_up_days": 710,
+      "n_down_days": 589
+    }
+  },
+  "Ridge": {
+    "ratios": {
+      "sharpe": 0.8811513817931617,
+      "sortino": 1.2909270637077768,
+      "calmar": 0.8935132049352126,
+      "annual_return_pct": 28.378213951148656,
+      "annual_vol_pct": 28.51725856700863,
+      "total_return_pct": 263.1683673544709
+    },
+    "var_cvar": {
+      "var_95_daily_pct": -1.9781202918635985,
+      "cvar_95_daily_pct": -4.369498259783015,
+      "var_99_daily_pct": -5.087860756898989,
+      "cvar_99_daily_pct": -8.859407445067655,
+      "worst_day_pct": -17.6322096897265
+    },
+    "var_cvar_30d": {
+      "var_95_pct": -10.850849998156193,
+      "cvar_95_pct": -19.395327352826737,
+      "n_windows": 1272
+    },
+    "var_cvar_90d": {
+      "var_95_pct": -13.362958582243694,
+      "cvar_95_pct": -21.474381498913278,
+      "n_windows": 1212
+    },
+    "drawdown": {
+      "max_dd_pct": -31.76026251700032,
+      "trough_date": "2022-03-07",
+      "peak_date": "2021-09-14",
+      "duration_trading_days": 120,
+      "recovery_trading_days": 49,
+      "recovery_date": "2022-05-16"
+    },
+    "tracking": {
+      "beta": 1.0313238856890634,
+      "tracking_error_annual_pct": 22.38923708019399,
+      "information_ratio": 0.6244965538459428,
+      "r_squared": 0.38442783350886645,
+      "correlation": 0.6200224459718103
+    },
+    "capture": {
+      "upside_capture_pct": 99.79066289404976,
+      "downside_capture_pct": 84.02814356769902,
+      "capture_ratio": 1.1875861902584024,
+      "avg_position": 0.792467332820907,
+      "pct_long_on_up_days": 39.859154929577464,
+      "pct_long_on_down_days": 35.144312393887944,
+      "n_up_days": 710,
+      "n_down_days": 589
+    }
+  },
+  "RandomForest": {
+    "ratios": {
+      "sharpe": 0.6664498905804943,
+      "sortino": 1.3799003489803392,
+      "calmar": 1.196217804071496,
+      "annual_return_pct": 17.6088719106966,
+      "annual_vol_pct": 21.545025295620814,
+      "total_return_pct": 131.02602798730297
+    },
+    "var_cvar": {
+      "var_95_daily_pct": -0.7090037087504928,
+      "cvar_95_daily_pct": -2.0427079459188735,
+      "var_99_daily_pct": -2.7031403838130927,
+      "cvar_99_daily_pct": -5.164028852376612,
+      "worst_day_pct": -12.13500373190024
+    },
+    "var_cvar_30d": {
+      "var_95_pct": -3.859765935890442,
+      "cvar_95_pct": -5.610177480879533,
+      "n_windows": 1272
+    },
+    "var_cvar_90d": {
+      "var_95_pct": -0.42592415927571,
+      "cvar_95_pct": -2.7149127880187365,
+      "n_windows": 1212
+    },
+    "drawdown": {
+      "max_dd_pct": -14.720456300485013,
+      "trough_date": "2022-05-19",
+      "peak_date": "2022-04-01",
+      "duration_trading_days": 33,
+      "recovery_trading_days": 23,
+      "recovery_date": "2022-06-23"
+    },
+    "tracking": {
+      "beta": 0.6390986788976111,
+      "tracking_error_annual_pct": 19.563037326323457,
+      "information_ratio": 0.16624236626111813,
+      "r_squared": 0.2586318709056569,
+      "correlation": 0.5085586209137123
+    },
+    "capture": {
+      "upside_capture_pct": 45.66251546332122,
+      "downside_capture_pct": 32.79050037296866,
+      "capture_ratio": 1.3925531768025048,
+      "avg_position": 0.3259031514219831,
+      "pct_long_on_up_days": 22.535211267605636,
+      "pct_long_on_down_days": 21.731748726655347,
+      "n_up_days": 710,
+      "n_down_days": 589
+    }
+  },
+  "CNN_LSTM": {
+    "ratios": {
+      "sharpe": 0.5990334383114008,
+      "sortino": 1.161450737757552,
+      "calmar": 0.4884933098911792,
+      "annual_return_pct": 17.407482685226473,
+      "annual_vol_pct": 23.633556359154092,
+      "total_return_pct": 128.99092677218786
+    },
+    "var_cvar": {
+      "var_95_daily_pct": -1.4402663969356682,
+      "cvar_95_daily_pct": -2.725974399613166,
+      "var_99_daily_pct": -3.4177578511429085,
+      "cvar_99_daily_pct": -5.184386841678896,
+      "worst_day_pct": -11.174276730732332
+    },
+    "var_cvar_30d": {
+      "var_95_pct": -8.929031304668948,
+      "cvar_95_pct": -14.796679843319321,
+      "n_windows": 1272
+    },
+    "var_cvar_90d": {
+      "var_95_pct": -15.806100965533718,
+      "cvar_95_pct": -22.603329317263306,
+      "n_windows": 1212
+    },
+    "drawdown": {
+      "max_dd_pct": -35.635048285726384,
+      "trough_date": "2022-07-15",
+      "peak_date": "2022-03-24",
+      "duration_trading_days": 77,
+      "recovery_trading_days": 543,
+      "recovery_date": "2024-09-12"
+    },
+    "tracking": {
+      "beta": 0.779889349268231,
+      "tracking_error_annual_pct": 19.857334129721117,
+      "information_ratio": 0.17928389333415184,
+      "r_squared": 0.32007226228878377,
+      "correlation": 0.5657492927868172
+    },
+    "capture": {
+      "upside_capture_pct": 70.44946429805944,
+      "downside_capture_pct": 61.442847008771736,
+      "capture_ratio": 1.1465852858022985,
+      "avg_position": 0.6479631053036126,
+      "pct_long_on_up_days": 39.718309859154935,
+      "pct_long_on_down_days": 41.935483870967744,
+      "n_up_days": 710,
+      "n_down_days": 589
+    }
+  }
+}

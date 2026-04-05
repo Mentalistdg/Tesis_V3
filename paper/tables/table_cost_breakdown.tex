@@ -1,0 +1,41 @@
+\begin{table}[htbp]
+\centering
+\caption{Impacto de Costos de Transacci\'on por Modelo}
+\label{tab:cost_breakdown}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Capital Final} & \textbf{P\&L Bruto} & \textbf{Tx Costs} & \textbf{Tx/P\&L} & \textbf{Trades} \\
+\midrule
+LSTM\_Attention & \$49,998 & \textcolor{ForestGreen}{\$52,996} & \$12,999 & 24.5\% & 465 \\
+Ridge & \$36,317 & \textcolor{ForestGreen}{\$36,983} & \$10,666 & 28.8\% & 409 \\
+RandomForest & \$23,103 & \textcolor{ForestGreen}{\$15,148} & \$2,045 & 13.5\% & 175 \\
+CNN\_LSTM & \$22,899 & \textcolor{ForestGreen}{\$20,022} & \$7,123 & 35.6\% & 633 \\
+DLinear & \$16,795 & \textcolor{ForestGreen}{\$11,584} & \$4,790 & 41.3\% & 788 \\
+GradientBoosting & \$16,683 & \textcolor{ForestGreen}{\$7,061} & \$378 & 5.4\% & 11 \\
+CatBoost & \$14,743 & \textcolor{ForestGreen}{\$6,169} & \$1,426 & 23.1\% & 224 \\
+Theta & \$14,462 & \textcolor{ForestGreen}{\$4,954} & \$491 & 9.9\% & 36 \\
+SeasonalNaive & \$14,446 & \textcolor{ForestGreen}{\$12,816} & \$8,370 & 65.3\% & 1042 \\
+NBEATS & \$14,444 & \textcolor{ForestGreen}{\$8,824} & \$4,381 & 49.6\% & 507 \\
+Lasso & \$13,898 & \textcolor{ForestGreen}{\$4,379} & \$480 & 11.0\% & 90 \\
+GARCH & \$12,725 & \textcolor{ForestGreen}{\$3,337} & \$613 & 18.4\% & 126 \\
+LightGBM & \$12,712 & \textcolor{ForestGreen}{\$3,588} & \$876 & 24.4\% & 134 \\
+NHiTS & \$12,212 & \textcolor{ForestGreen}{\$6,043} & \$3,831 & 63.4\% & 805 \\
+AutoARIMA & \$11,827 & \textcolor{ForestGreen}{\$1,827} & \$0 & 0.0\% & 0 \\
+TCN & \$11,809 & \textcolor{ForestGreen}{\$3,876} & \$2,066 & 53.3\% & 383 \\
+TFT & \$11,477 & \textcolor{ForestGreen}{\$7,571} & \$6,094 & 80.5\% & 804 \\
+XGBoost & \$11,350 & \textcolor{ForestGreen}{\$3,167} & \$1,817 & 57.4\% & 42 \\
+ElasticNet & \$10,976 & \textcolor{ForestGreen}{\$1,894} & \$918 & 48.5\% & 175 \\
+Prophet & \$10,765 & \textcolor{ForestGreen}{\$1,221} & \$456 & 37.4\% & 77 \\
+BiLSTM & \$10,620 & \textcolor{ForestGreen}{\$3,625} & \$3,004 & 82.9\% & 546 \\
+ExponentialSmoothing & \$8,549 & \textcolor{ForestGreen}{\$4,473} & \$5,924 & 132.4\% & 904 \\
+BiGRU & \$6,771 & \textcolor{BrickRed}{\$-436} & \$2,793 & -- & 752 \\
+\midrule
+\textit{Promedio} & -- & -- & \$3,545 & -- & 397 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Nota: Capital inicial = \$10,000. Tx Costs incluye bid-ask spreads (UPRO: 10 bps, SPY: 4 bps), expense ratios y volatility drag. Tx/P\&L = proporci\'on de costos respecto a ganancias brutas.
+\end{tablenotes}
+\end{table}

@@ -1,0 +1,142 @@
+% =============================================================================
+% SECCION: RESULTADOS EMPIRICOS (EXPANDIDA)
+% =============================================================================
+
+\section{Resultados Emp\'iricos}
+\label{sec:empirical_results}
+
+En esta secci\'on se presentan los resultados del backtesting de los 23 modelos durante el per\'iodo de prueba (Octubre 2020 - Diciembre 2025, 1,302 d\'ias de trading).
+
+\subsection{Resumen de Rendimiento}
+\label{subsec:performance_summary}
+
+\subsubsection{Tabla Principal de Rendimiento}
+
+La Tabla \ref{tab:model_performance} presenta las m\'etricas de rendimiento completas para los 23 modelos evaluados.
+
+\input{tables/table_model_performance}
+
+\subsubsection{Hallazgos Principales}
+
+Cuatro de veintitr\'es modelos\footnote{AutoARIMA se incluye en el recuento de 23 modelos. Sin embargo, el filtro de calidad de se\~nal lo mantiene en efectivo el 100\% del tiempo (sus predicciones carecen de variaci\'on suficiente), por lo que su retorno refleja \'unicamente la tasa libre de riesgo, sin evidencia de capacidad predictiva genuina.} superan al \textit{benchmark} SPY Buy \& Hold (+102\%): LSTM+Attention (+400\%), Ridge (+263\%), RandomForest (+131\%) y CNN-LSTM (+129\%). Las arquitecturas de \textit{deep learning} con mecanismos de atenci\'on---LSTM+Attention y CNN-LSTM---obtienen los mejores rendimientos tanto en t\'erminos absolutos como ajustados por riesgo, lo que sugiere que estas arquitecturas capturan dependencias temporales en los retornos del S\&P~500 que los modelos m\'as simples no explotan.
+
+La variabilidad entre modelos es significativa: los retornos totales abarcan un rango de 432 puntos porcentuales, desde el +400\% de LSTM+Attention hasta el $-$32\% de BiGRU. No obstante, 16 de 23 modelos logran un \textit{Sharpe ratio} positivo, lo que indica que la mayor\'ia de los modelos genera cierto alfa, aunque no siempre suficiente para superar al \textit{benchmark} pasivo.
+
+\subsubsection{Tabla Resumen Ejecutivo}
+
+\input{tables/table_executive_summary}
+
+\subsection{An\'alisis por Familia de Modelos}
+\label{subsec:family_analysis}
+
+\subsubsection{Comparaci\'on por Categor\'ia}
+
+\input{tables/table_category_comparison}
+
+\subsubsection{Interpretaci\'on por Categor\'ia}
+
+Dentro del \textbf{ML cl\'asico}, Ridge destaca con un retorno del +263\% y un Sharpe de 0.88, posicion\'andose como el segundo mejor modelo del estudio. Lasso (+39\%) y ElasticNet (+10\%), en cambio, subperforman de manera significativa, lo que sugiere que la regularizaci\'on $L_1$---que fuerza coeficientes a cero---es demasiado agresiva para este problema, eliminando predictores que contienen se\~nal \'util. La penalizaci\'on $L_2$ de Ridge, que contrae los coeficientes sin eliminarlos, resulta m\'as adecuada para un espacio de 536 caracter\'isticas donde la se\~nal est\'a distribuida entre m\'ultiples predictores.
+
+En la categor\'ia de \textbf{\textit{gradient boosting}}, GradientBoosting lidera con un retorno del +67\% y un Sharpe de 0.62, seguido por CatBoost (+47\%) y XGBoost (+14\%). Ninguno de los tres supera al \textit{benchmark}, lo que indica que los umbrales din\'amicos del Meta-KNN resultan menos efectivos para modelos basados en \'arboles cuyas predicciones presentan baja variabilidad---GradientBoosting, por ejemplo, genera solo 16 predicciones \'unicas y permanece filtrado el 86\% del tiempo. No obstante, GradientBoosting ofrece el mejor balance riesgo-retorno dentro de esta familia, con el menor \textit{drawdown} m\'aximo del estudio (8.3\%).
+
+Los modelos de \textbf{\textit{deep learning} implementados en Darts} exhiben un rendimiento inferior al esperado dada su complejidad arquitectural. DLinear obtiene el mejor resultado de la subcategor\'ia con +68\%, seguido por NBEATS (+44\%) y NHiTS (+22\%). TFT (+15\%), pese a incorporar atenci\'on temporal, no traduce su complejidad arquitectural en rendimiento pr\'actico---un resultado consistente con la observaci\'on de \citet{zeng2023} sobre la superioridad de modelos simples en ciertos contextos de pron\'ostico.
+
+En contraste, las \textbf{arquitecturas h\'ibridas y de atenci\'on implementadas en PyTorch} dominan el ranking general. El modelo LSTM\_Attention alcanza un retorno del +400\% con un Sharpe de 1.33 y un \textit{drawdown} m\'aximo del 20.5\%, mientras que CNN-LSTM obtiene +129\% con un Sharpe de 0.60 y un \textit{drawdown} del 35.6\%. BiLSTM (+6\%) y BiGRU ($-$32\%), si bien bidireccionales, logran rendimientos marcadamente inferiores, lo que sugiere que el mecanismo de atenci\'on---m\'as que la bidireccionalidad---es el componente arquitectural determinante.
+
+Finalmente, las \textbf{series temporales cl\'asicas} presentan un rendimiento modesto en general. Theta (+45\%) y SeasonalNaive (+45\%) lideran la categor\'ia, mientras que Prophet (+8\%) y ExponentialSmoothing ($-$15\%) cierran el grupo. Este \'ultimo registra uno de los dos retornos negativos del estudio (junto con BiGRU), confirmando que los modelos univariados carecen de la informaci\'on necesaria para generar alfa consistente en este contexto.
+
+\subsection{Curvas de Equity}
+\label{subsec:equity_curves}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/equity_curves_top5.pdf}
+\caption{Curvas de Equity: Top 5 Modelos vs SPY Buy \& Hold. Per\'iodo: Oct 2020 - Dic 2025. Capital inicial: \$10,000.}
+\label{fig:equity_curves}
+\end{figure}
+
+Las curvas de equity revelan patrones diferenciados entre los modelos l\'ideres. El modelo LSTM\_Attention muestra el crecimiento m\'as consistente con una trayectoria ascendente suave incluso durante episodios de estr\'es, alcanzando un \textit{drawdown} m\'aximo del 20.5\%. Ridge ocupa la segunda posici\'on con buena estabilidad, seguido por RandomForest (14.7\% de \textit{drawdown}, el menor del grupo) y CNN-LSTM. Los cuatro modelos ganadores superan al SPY durante la totalidad del per\'iodo evaluado.
+
+\subsection{Distribuci\'on de Posiciones}
+\label{subsec:position_distribution}
+
+\input{tables/table_position_distribution}
+
+\subsubsection{Patrones de Posicionamiento}
+
+Los patrones de posicionamiento revelan filosof\'ias de inversi\'on radicalmente distintas entre modelos. En un extremo, ExponentialSmoothing (72\% del tiempo en posici\'on larga) y TFT (60\%) mantienen exposici\'on casi permanente al mercado. En el extremo opuesto, AutoARIMA permanece en efectivo el 100\% del tiempo (filtrado por calidad de se\~nal) y GradientBoosting el 92\%. El modelo LSTM\_Attention, cuya distribuci\'on---12.2\% en UPRO, 32.7\% en SPY y 55.1\% en efectivo---refleja una estrategia selectiva que combina exposici\'on apalancada en momentos de alta convicci\'on con posiciones moderadas en SPY. Esto sugiere que el \'exito del modelo proviene no solo de identificar los momentos \'optimos para apalancamiento, sino tambi\'en de mantener exposici\'on parcial al mercado cuando la se\~nal es moderadamente positiva.
+
+\subsection{An\'alisis de Trades}
+\label{subsec:trade_analysis}
+
+\subsubsection{Estad\'isticas de Trading}
+
+\begin{table}[htbp]
+\centering
+\caption{Estad\'isticas de Trading por Modelo (Top 5)}
+\label{tab:trading_stats}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{N Trades} & \textbf{Win Rate} & \textbf{Avg Win} & \textbf{Avg Loss} & \textbf{Profit Factor} \\
+\midrule
+LSTM\_Attention & 465 & 53.8\% & +1.5\% & $-$1.2\% & 1.52 \\
+Ridge & 409 & 56.0\% & +1.9\% & $-$1.8\% & 1.36 \\
+RandomForest & 175 & 53.1\% & +1.6\% & $-$1.2\% & 1.51 \\
+CNN\_LSTM & 633 & 51.4\% & +1.4\% & $-$1.1\% & 1.31 \\
+DLinear & 788 & 53.6\% & +0.9\% & $-$0.9\% & 1.16 \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: N Trades = cambios de posici\'on. Win Rate, Avg Win, Avg Loss y Profit Factor calculados sobre d\'ias activos (posici\'on $\neq$ 0). Profit Factor = $\sum$retornos positivos / $|\sum$retornos negativos$|$.}}
+\end{table}
+
+\subsubsection{Distribuci\'on de P\&L Diario}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/pnl_distribution_lstm_attention.pdf}
+\caption{Distribuci\'on de retornos diarios en exceso sobre la tasa libre de riesgo: Modelo LSTM+Attention. Histograma calculado sobre los d\'ias activos (posici\'on $\neq$ 0). Verde = d\'ias ganadores, Rojo = d\'ias perdedores. L\'inea vertical en 0\%.}
+\label{fig:pnl_distribution}
+\end{figure}
+
+La distribuci\'on del modelo l\'ider revela una asimetr\'ia positiva, con una cola derecha m\'as extendida que la izquierda. Los d\'ias ganadores se concentran en el rango de +0.5\% a +2\%, mientras que las p\'erdidas presentan un l\'imite natural impuesto por el posicionamiento conservador de la estrategia: al permanecer en efectivo el 55\% del tiempo, la exposici\'on al riesgo se acota autom\'aticamente.
+
+\subsection{Comparaci\'on con Benchmarks Adicionales}
+\label{subsec:additional_benchmarks}
+
+\begin{table}[htbp]
+\centering
+\caption{Modelos Ganadores vs M\'ultiples Benchmarks}
+\label{tab:benchmarks}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Estrategia} & \textbf{Ret. Total} & \textbf{Sharpe} & \textbf{Max DD} & \textbf{Calmar} \\
+\midrule
+LSTM\_Attention & +400\% & 1.33 & $-$20.5\% & 1.79 \\
+Ridge & +263\% & 0.88 & $-$31.8\% & 0.89 \\
+RandomForest & +131\% & 0.67 & $-$14.7\% & 1.20 \\
+CNN\_LSTM & +129\% & 0.60 & $-$35.6\% & 0.49 \\
+\midrule
+SPY Buy \& Hold & +102.2\% & 0.66 & $-$25.4\% & 0.56 \\
+UPRO 3x (B\&H) & +246.4\% & 0.47 & $-$64.8\% & 0.42 \\
+60/40 Portfolio & +71.1\% & 0.68 & $-$21.1\% & 0.52 \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: UPRO 3x B\&H incluye \textit{expense ratio} (0.91\%/a\~no) y \textit{bid-ask spread}; el \textit{volatility decay} est\'a impl\'icito en la composici\'on diaria de retornos 3$\times$. 60/40 = 60\% SPY + 40\% LF98TRUU Index (Bloomberg US Aggregate Bond Total Return) con rebalanceo mensual.}}
+\end{table}
+
+La comparaci\'on con \textit{benchmarks} alternativos refuerza la solidez de los resultados. La retenci\'on pasiva de UPRO 3x genera un retorno del +246\%, superior al +102\% de SPY gracias al apalancamiento, pero a costa de un \textit{drawdown} m\'aximo del 64.8\% y un \textit{volatility decay} que erosiona 54 puntos porcentuales respecto al retorno te\'orico de 3$\times$ SPY (+300\%). Frente a este \textit{benchmark} apalancado, el modelo LSTM\_Attention supera ampliamente en retorno (+400\% vs +246\%) con un \textit{drawdown} tres veces menor ($-$20.5\% vs $-$64.8\%) y un Sharpe casi tres veces mayor (1.33 vs 0.47), demostrando que la selecci\'on temporal de la exposici\'on apalancada genera un perfil de riesgo-retorno cualitativamente superior a la retenci\'on pasiva del ETF 3x. Los cuatro modelos ganadores superan tanto al portafolio conservador 60/40 como a SPY en retorno y en Sharpe, y LSTM\_Attention supera incluso a UPRO 3x en ambas m\'etricas.
+
+\subsection{Aplicaci\'on Interactiva}
+\label{subsec:interactive_app}
+
+Se desarroll\'o una aplicaci\'on web interactiva para facilitar la exploraci\'on detallada de los resultados, disponible bajo solicitud al autor. La aplicaci\'on permite:
+\begin{itemize}
+    \item Visualizar curvas de equity din\'amicas
+    \item Analizar trades individuales
+    \item Comparar m\'ultiples modelos simult\'aneamente
+    \item Explorar rendimiento por r\'egimen de mercado
+    \item Ajustar par\'ametros de costo para sensibilidad
+\end{itemize}

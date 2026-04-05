@@ -1,28 +1,22 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   Home,
-  GitCompare,
   Search,
   List,
   AlertTriangle,
   Thermometer,
   DollarSign,
-  Database,
-  Target
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import logoImg from '../assets/logo.png';
 
 const navItems = [
-  { path: '/signals', label: 'Signals', icon: Target },
   { path: '/overview', label: 'Overview', icon: Home },
-  { path: '/compare', label: 'Compare', icon: GitCompare },
   { path: '/detail', label: 'Detail', icon: Search },
   { path: '/trades', label: 'Trades', icon: List },
   { path: '/risk', label: 'Risk', icon: AlertTriangle },
-  { path: '/regime', label: 'Regime', icon: Thermometer },
   { path: '/costs', label: 'Costs', icon: DollarSign },
-  { path: '/data', label: 'Data', icon: Database },
+  { path: '/regime', label: 'Regime', icon: Thermometer },
 ];
 
 export default function Layout() {

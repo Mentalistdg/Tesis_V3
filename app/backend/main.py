@@ -1,31 +1,28 @@
 # -*- coding: utf-8 -*-
 """
 ================================================================================
-BACKEND - Strategy Visualizer App
+BACKEND - CRONOS Strategy Visualizer (LONG-ONLY)
 ================================================================================
-FastAPI backend for the ML Strategy Visualization Application.
+FastAPI backend serving pre-computed JSON data for the CRONOS dashboard.
 
 Endpoints:
-- /api/models - List all models with summary metrics
-- /api/models/{name} - Get detailed data for a specific model
-- /api/models/{name}/metrics - Get metrics (optionally filtered by date range)
-- /api/market - Get market data
-- /api/signals - Get current signals from all models
-- /api/regimes - Get regime analysis data
-- /api/compare - Compare multiple models
+- /api/models                       - List all models with summary metrics
+- /api/models/{name}                - Get detailed daily data for a model
+- /api/models/{name}/metrics        - Get metrics (optionally filtered by date range)
+- /api/models/{name}/trades         - Get trade log for a model
+- /api/models/{name}/daily-log      - Get daily decision log for a model
+- /api/market                       - Get SPY market data
+- /api/regimes                      - Get regime analysis data
 
 ================================================================================
 """
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from typing import List, Optional
-from datetime import date
+from typing import Optional
 import json
 import os
 import numpy as np
-from pydantic import BaseModel
 
 # Paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -79,6 +76,7 @@ def calculate_metrics_for_period(data: dict, start_date: str, end_date: str) -> 
     strategy_returns = np.array(data['strategy_returns'][start_idx:end_idx+1])
     market_returns = np.array(data['market_returns'][start_idx:end_idx+1])
     positions = np.array(data['positions'][start_idx:end_idx+1])
+    risk_free = np.array(data.get('risk_free', [0]*len(data['dates']))[start_idx:end_idx+1])
 
     if len(strategy_returns) == 0:
         return None
@@ -90,8 +88,10 @@ def calculate_metrics_for_period(data: dict, start_date: str, end_date: str) -> 
     n_days = len(strategy_returns)
     years = n_days / 252
     strategy_annual = float((1 + strategy_total) ** (1/years) - 1) if years > 0 else 0
+    annual_vol = float(np.std(strategy_returns) * np.sqrt(252))
+    rf_annual = float(np.mean(risk_free) * 252)
 
-    sharpe = float(np.mean(strategy_returns) / np.std(strategy_returns) * np.sqrt(252)) if np.std(strategy_returns) > 0 else 0
+    sharpe = float((strategy_annual - rf_annual) / annual_vol) if annual_vol > 0 else 0
 
     # Drawdown
     equity_curve = np.cumprod(1 + strategy_returns)
@@ -208,15 +208,95 @@ async def get_model_trades(model_name: str):
 
 @app.get("/api/models/{model_name}/daily-log")
 async def get_model_daily_log(model_name: str):
-    """Get daily log for a specific model (one row per trading day)."""
+    """Get daily log for a specific model (one row per trading day).
+    Constructs daily_log from the parallel arrays in daily_data.json."""
     try:
         daily_data = load_json("daily_data.json")
         if model_name not in daily_data:
             raise HTTPException(status_code=404, detail=f"Model not found: {model_name}")
+
+        model = daily_data[model_name]
+
+        # If daily_log is pre-computed, use it
+        if model.get('daily_log'):
+            return {
+                "model": model_name,
+                "daily_log": model['daily_log'],
+                "warmup_used": model.get('warmup_used', False)
+            }
+
+        # Otherwise, construct from parallel arrays
+        dates = model.get('dates', [])
+        predictions = model.get('predictions', [])
+        percentiles = model.get('percentiles', [])
+        positions = model.get('positions', [])
+        strategy_returns = model.get('strategy_returns', [])
+        market_returns = model.get('market_returns', [])
+        equity_curve = model.get('equity_curve', [])
+        drawdown = model.get('drawdown', [])
+        regimes = model.get('regimes', [])
+        daily_costs = model.get('daily_costs', [])
+
+        # Compute regimes from market returns if not present
+        if not regimes and market_returns:
+            mkt = np.array(market_returns, dtype=float)
+            window = 60
+            regimes = []
+            for i in range(len(mkt)):
+                if i < window:
+                    regimes.append('unknown')
+                    continue
+                w = mkt[i-window:i]
+                cum = float(np.prod(1 + w) - 1)
+                vol = float(np.std(w) * np.sqrt(252))
+                if cum > 0.10 and vol < 0.20:
+                    regimes.append('bull')
+                elif cum < -0.10:
+                    regimes.append('bear')
+                elif vol > 0.25:
+                    regimes.append('high_vol')
+                else:
+                    regimes.append('sideways')
+
+        n = len(dates)
+        daily_log = []
+        high_water_mark = 1.0
+
+        for i in range(n):
+            eq = equity_curve[i] if i < len(equity_curve) else 1.0
+            if eq > high_water_mark:
+                high_water_mark = eq
+
+            pos = positions[i] if i < len(positions) else 0
+            prev_pos = positions[i - 1] if i > 0 and i - 1 < len(positions) else pos
+            mkt_ret = market_returns[i] if i < len(market_returns) else 0
+            strat_ret = strategy_returns[i] if i < len(strategy_returns) else 0
+
+            # Direction correct: strategy return > 0 when market moved, or both zero
+            direction_correct = (strat_ret > 0) if (mkt_ret != 0) else True
+
+            daily_log.append({
+                "date": dates[i],
+                "day_num": i + 1,
+                "prediction": predictions[i] if i < len(predictions) else 0,
+                "percentile": percentiles[i] if i < len(percentiles) else 0,
+                "position_base": pos,
+                "position_final": pos,
+                "strategy_return": strat_ret,
+                "market_return": mkt_ret,
+                "equity": eq,
+                "drawdown": drawdown[i] if i < len(drawdown) else 0,
+                "high_water_mark": high_water_mark,
+                "trading_cost": daily_costs[i] if i < len(daily_costs) else 0,
+                "regime": regimes[i] if i < len(regimes) and regimes else "",
+                "position_changed": pos != prev_pos,
+                "direction_correct": direction_correct,
+            })
+
         return {
             "model": model_name,
-            "daily_log": daily_data[model_name].get('daily_log', []),
-            "warmup_used": daily_data[model_name].get('warmup_used', False)
+            "daily_log": daily_log,
+            "warmup_used": False
         }
     except HTTPException:
         raise
@@ -230,78 +310,6 @@ async def get_market_data():
     try:
         market_data = load_json("market_data.json")
         return market_data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/signals")
-async def get_signals():
-    """Get current signals from all models (LONG-ONLY strategy)."""
-    try:
-        daily_data = load_json("daily_data.json")
-        summary = load_json("models_summary.json")
-
-        signals = []
-        for model_name, data in daily_data.items():
-            if len(data['positions']) > 0:
-                current_position = data['positions'][-1]
-                prev_position = data['positions'][-2] if len(data['positions']) > 1 else current_position
-                change = current_position - prev_position
-
-                # LONG-ONLY signals: 0 (CASH), 1 (SPY), 3 (UPRO)
-                if current_position == 3:
-                    signal = 'UPRO_3X'
-                    instrument = 'UPRO'
-                elif current_position == 1:
-                    signal = 'SPY_1X'
-                    instrument = 'SPY'
-                else:
-                    signal = 'CASH'
-                    instrument = 'CASH'
-
-                # Get last prediction and percentile from daily_log if available
-                last_prediction = None
-                last_percentile = None
-                if 'daily_log' in data and len(data['daily_log']) > 0:
-                    last_day = data['daily_log'][-1]
-                    last_prediction = last_day.get('prediction')
-                    last_percentile = last_day.get('percentile')
-
-                signals.append({
-                    'model': model_name,
-                    'category': data['category'],
-                    'position': current_position,
-                    'signal': signal,
-                    'instrument': instrument,
-                    'change': change,
-                    'date': data['dates'][-1],
-                    'prediction': last_prediction,
-                    'percentile': last_percentile,
-                })
-
-        # Sort by position descending
-        signals = sorted(signals, key=lambda x: x['position'], reverse=True)
-
-        # Calculate consensus for LONG-ONLY
-        positions = [s['position'] for s in signals]
-        consensus_position = np.mean(positions)
-        upro_count = sum(1 for p in positions if p == 3)
-        spy_count = sum(1 for p in positions if p == 1)
-        cash_count = sum(1 for p in positions if p == 0)
-
-        return {
-            'date': signals[0]['date'] if signals else None,
-            'strategy': summary.get('strategy', 'LONG-ONLY'),
-            'consensus': {
-                'position': float(consensus_position),
-                'upro_count': upro_count,
-                'spy_count': spy_count,
-                'cash_count': cash_count,
-                'total_models': len(signals),
-                'recommended': 'UPRO' if upro_count > len(signals)/2 else ('SPY' if spy_count > cash_count else 'CASH')
-            },
-            'signals': signals
-        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -350,70 +358,6 @@ async def get_regimes():
                 'dates': market_data['dates'],
                 'regimes': regimes
             }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/strategy")
-async def get_strategy():
-    """Get current strategy configuration."""
-    try:
-        summary = load_json("models_summary.json")
-        return {
-            'strategy': summary.get('strategy', 'LONG-ONLY'),
-            'config': summary.get('config', {}),
-            'test_period': summary.get('test_period', {}),
-            'benchmark': summary.get('benchmark', {}),
-            'models_beating_spy': summary.get('models_beating_spy', 0),
-            'total_models': summary.get('total_models', 0),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/compare")
-async def compare_models(
-    models: str = Query(..., description="Comma-separated model names"),
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None)
-):
-    """Compare multiple models side by side."""
-    try:
-        daily_data = load_json("daily_data.json")
-        model_list = [m.strip() for m in models.split(',')]
-
-        comparison = []
-        for model_name in model_list:
-            if model_name not in daily_data and model_name != 'BuyHold':
-                continue
-
-            if model_name == 'BuyHold':
-                market_data = load_json("market_data.json")
-                comparison.append({
-                    'model': 'Buy & Hold',
-                    'category': 'Benchmark',
-                    'metrics': market_data['metrics'],
-                    'equity_curve': market_data['equity_curve'],
-                    'drawdown': market_data['drawdown']
-                })
-            else:
-                data = daily_data[model_name]
-
-                if start_date and end_date:
-                    metrics = calculate_metrics_for_period(data, start_date, end_date)
-                else:
-                    metrics = data['metrics']
-
-                comparison.append({
-                    'model': model_name,
-                    'category': data['category'],
-                    'metrics': metrics,
-                    'equity_curve': data['equity_curve'],
-                    'drawdown': data['drawdown'],
-                    'dates': data['dates']
-                })
-
-        return {'models': comparison}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

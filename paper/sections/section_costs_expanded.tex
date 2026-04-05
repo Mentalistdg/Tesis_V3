@@ -1,0 +1,190 @@
+% =============================================================================
+% SECCION: ANALISIS DE COSTOS DE TRANSACCION
+% =============================================================================
+
+\section{An\'alisis de Costos de Transacci\'on}
+\label{sec:costs}
+
+% ---------------------------------------------------------------------------
+% 8.1  COSTOS EN ESTRATEGIAS ACTIVAS
+% ---------------------------------------------------------------------------
+
+\subsection{Costos de Transacci\'on en Estrategias Activas}
+\label{subsec:costs_intro}
+
+Una cr\'itica recurrente a las estrategias de \textit{trading} activo es que los costos de transacci\'on erosionan---y con frecuencia eliminan---la rentabilidad que muestran en simulaciones hist\'oricas. Estudios cl\'asicos como los de \citet{barber2000} documentan que los inversores individuales que operan con mayor frecuencia obtienen retornos netos significativamente inferiores, y trabajos m\'as recientes en el \'ambito de \textit{machine learning} aplicado a finanzas confirman que modelos con alta capacidad predictiva en entornos sin fricciones pueden volverse no rentables una vez que se incorporan costos realistas de ejecuci\'on. Esta evidencia motiva un an\'alisis detallado del impacto de los costos sobre los resultados presentados en las secciones anteriores.
+
+En el caso de este estudio, el modelo de costos incorpora tres componentes---\textit{bid-ask spread}, \textit{expense ratio} y \textit{volatility drag}---calibrados con par\'ametros que, como se demostrar\'a m\'as adelante, sobreestiman sistem\'aticamente las condiciones reales de mercado. A pesar de esta penalizaci\'on conservadora, cuatro de los 23 modelos evaluados generan retornos netos superiores al \textit{benchmark} SPY \textit{Buy \& Hold} (+102\%), con LSTM\_Attention alcanzando un retorno neto del +400\% tras absorber \$12,999 en costos sobre un capital inicial de \$10,000. El costo promedio de los 23 modelos asciende a \$3,545, equivalente al 35.5\% del capital inicial, lo que confirma que la incorporaci\'on de costos no es trivial y que los modelos que sobreviven a esta carga lo hacen gracias a la calidad de sus se\~nales de entrada y no a una subestimaci\'on de fricciones.
+
+Las subsecciones siguientes detallan la estructura del modelo de costos, su validaci\'on contra datos de mercado, y una serie de an\'alisis de sensibilidad dise\~nados para evaluar la robustez de los resultados bajo supuestos de costos m\'as adversos.
+
+% ---------------------------------------------------------------------------
+% 8.2  TIPOS DE COSTOS Y CALCULO
+% ---------------------------------------------------------------------------
+
+\subsection{Estructura del Modelo de Costos}
+\label{subsec:cost_model}
+
+El retorno neto diario de cada modelo se calcula a partir de tres componentes de costo que se descuentan del retorno bruto de la posici\'on. El retorno bruto depende de la posici\'on asignada por el sistema de se\~nales y se define como $r_{\text{bruto}} = r_f + p \cdot (r_{\text{mkt}} - r_f)$, donde $p \in \{0, 1, 3\}$ representa la posici\'on (CASH, SPY o UPRO, respectivamente), $r_f$ la tasa libre de riesgo diaria y $r_{\text{mkt}}$ el retorno del mercado. El retorno neto se obtiene descontando los tres costos aplicables:
+
+\begin{equation}
+r_{\text{neto}} = r_{\text{bruto}} - c_{\text{expense}} - c_{\text{trading}} - c_{\text{drag}}
+\label{eq:net_return}
+\end{equation}
+
+\subsubsection{\textit{Expense Ratio}}
+
+Cada ETF cobra un costo operativo anual que se prorratea diariamente. Para UPRO, el \textit{expense ratio} es de 0.91\% anual, lo que equivale a $0.91 / 252 \approx 0.36$ puntos base por d\'ia de tenencia. Para SPY, el \textit{expense ratio} es de 0.09\% anual ($\approx 0.04$ bps/d\'ia), y para la posici\'on en efectivo no aplica ning\'un costo. Este componente se acumula de forma lineal con el tiempo de permanencia en cada instrumento.
+
+\subsubsection{\textit{Bid-Ask Spread}}
+
+El costo de ejecuci\'on por cruzar el \textit{spread} se aplica \'unicamente cuando se produce un cambio de posici\'on. Al pasar de un instrumento a otro, el modelo cobra el \textit{spread} de salida del instrumento anterior m\'as el \textit{spread} de entrada del nuevo instrumento. La Tabla~\ref{tab:tx_costs_detail} resume los par\'ametros por instrumento.
+
+\begin{table}[htbp]
+\centering
+\caption{Par\'ametros de Costo por Instrumento}
+\label{tab:tx_costs_detail}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Instrumento} & \textbf{Bid-Ask} & \textbf{Expense Ratio} & \textbf{Round-Trip} \\
+\midrule
+UPRO (3x Long) & 5 bps & 0.91\%/a\~no & 10 bps \\
+SPY (1x Long) & 2 bps & 0.09\%/a\~no & 4 bps \\
+Cash & 0 bps & 0\% & 0 bps \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: Round-trip = bid-ask de entrada + bid-ask de salida. Expense ratio aplicado diariamente como ratio anual / 252.}}
+\end{table}
+
+\subsubsection{\textit{Volatility Drag}}
+
+Los ETFs apalancados que replican un m\'ultiplo diario del \'indice subyacente est\'an sujetos a una erosi\'on sistem\'atica del valor conocida como \textit{volatility drag} o \textit{beta slippage}. Este fen\'omeno surge del hecho matem\'atico de que la composici\'on diaria de retornos apalancados no es equivalente al apalancamiento del retorno acumulado, y la divergencia crece con la volatilidad del subyacente. Para un factor de apalancamiento $L$ y una volatilidad diaria $\sigma$, la aproximaci\'on de primer orden del \textit{drag} diario es
+
+\begin{equation}
+c_{\text{drag}} \approx \frac{1}{2}(L^2 - L)\,\sigma^2
+\label{eq:vol_drag}
+\end{equation}
+
+Para UPRO con $L = 3$ y una volatilidad diaria fija de $\sigma = 1\%$, el \textit{drag} diario resulta $\frac{1}{2}(9 - 3)(0.01)^2 = 0.03\%$ por d\'ia, lo que equivale a aproximadamente 7.5\% anual. Este costo se aplica exclusivamente a los d\'ias en que el modelo mantiene posici\'on en UPRO ($p = 3$) y constituye el componente de costo m\'as significativo para los modelos que utilizan la posici\'on apalancada con mayor frecuencia.
+
+Es importante se\~nalar que el \textit{volatility drag} modelado de esta manera representa una penalizaci\'on conservadora para las estrategias, dado que el UPRO \textit{Buy \& Hold} utilizado como \textit{benchmark} en la Secci\'on~\ref{sec:empirical_results} no incorpora este costo adicional---su \textit{expense ratio} de 0.91\% ya cubre internamente los gastos de mantenimiento de la exposici\'on apalancada. Esta asimetr\'ia deliberada favorece al \textit{benchmark} y dificulta que las estrategias lo superen, lo que refuerza la significancia de los modelos que logran hacerlo.
+
+% ---------------------------------------------------------------------------
+% 8.3  TABLA RESUMEN DE COSTOS
+% ---------------------------------------------------------------------------
+
+\subsection{Desglose de Costos por Modelo}
+\label{subsec:cost_breakdown}
+
+La Tabla~\ref{tab:cost_breakdown} presenta el desglose completo de costos para los 23 modelos, ordenados por capital final descendente. La columna Tx/P\&L indica la proporci\'on de los costos totales respecto al \textit{P\&L} bruto generado por cada modelo, lo que permite evaluar la eficiencia con la que cada estrategia convierte rendimiento bruto en rendimiento neto.
+
+\input{tables/table_cost_breakdown}
+
+Los cuatro modelos que superan al \textit{benchmark} exhiben ratios Tx/P\&L que oscilan entre 13.5\% (RandomForest) y 35.6\% (CNN\_LSTM), lo que indica que entre dos tercios y siete octavos de su rendimiento bruto sobrevive a los costos de transacci\'on. En el extremo opuesto, modelos como ExponentialSmoothing presentan un ratio Tx/P\&L de 132.4\%, lo que significa que los costos superan al \textit{P\&L} bruto y destruyen valor neto---este modelo acumula \$5,924 en costos sobre 904 \textit{trades} contra un \textit{P\&L} bruto de apenas \$4,473, resultando en una p\'erdida neta del $-$14.5\%. GradientBoosting representa el caso contrario en t\'erminos de eficiencia, ya que con solo 11 operaciones y \$378 en costos logra un retorno del +67\%, aunque su baja actividad se debe al filtro de calidad de se\~nal que lo mantiene en efectivo el 92\% del tiempo.
+
+El modelo promedio incurre \$3,545 en costos de transacci\'on, equivalente al 35.5\% del capital inicial de \$10,000. Esta cifra no es despreciable y subraya la importancia de modelar costos en cualquier evaluaci\'on de estrategias activas. Sin embargo, la dispersi\'on entre modelos es amplia---desde \$0 (AutoARIMA, que permanece 100\% en efectivo) hasta \$12,999 (LSTM\_Attention)---lo que refleja la diversidad de perfiles de \textit{trading} entre las 23 especificaciones evaluadas.
+
+% ---------------------------------------------------------------------------
+% 8.4  VALIDACION CON MERCADO REAL
+% ---------------------------------------------------------------------------
+
+\subsection{Validaci\'on Emp\'irica de los Par\'ametros de Costo}
+\label{subsec:cost_validation}
+
+Para verificar que los par\'ametros del modelo de costos reflejan condiciones de mercado reales, se contrastan los valores empleados con los datos reportados por los emisores de los ETFs correspondientes\footnote{ProShares UPRO: \url{https://www.proshares.com/our-etfs/leveraged-and-inverse/upro}. Consultado en marzo 2026.}\textsuperscript{,}\footnote{State Street SPY: \url{https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy}. Consultado en marzo 2026.}. La Tabla~\ref{tab:cost_validation} presenta esta comparaci\'on.
+
+\begin{table}[htbp]
+\centering
+\caption{Validaci\'on de Par\'ametros de Costo: Estudio vs.\ Mercado Real}
+\label{tab:cost_validation}
+\small
+\begin{tabular}{@{}llllr@{}}
+\toprule
+\textbf{Par\'ametro} & \textbf{Este estudio} & \textbf{Mercado real} & \textbf{Fuente} & \textbf{Ratio} \\
+\midrule
+Expense ratio UPRO & 0.91\%/a\~no & 0.89\%/a\~no & ProShares\textsuperscript{a} & 1.02$\times$ \\
+Expense ratio SPY & 0.09\%/a\~no & 0.0945\%/a\~no & State Street\textsuperscript{b} & 0.95$\times$ \\
+Bid-ask UPRO & 5 bps & 2 bps & ProShares\textsuperscript{a} (mediana 30d) & 2.50$\times$ \\
+Bid-ask SPY & 2 bps & $\approx$0 bps & State Street\textsuperscript{b} (mediana 30d) & $>$2.5$\times$ \\
+$\sigma$ diaria (vol drag) & 1.00\% fijo & 0.95--1.26\% & S\&P 500 hist\'orico & $\sim$1.0$\times$ \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: \textsuperscript{a}ProShares reporta un expense ratio de 0.89\% bajo un fee waiver contractual vigente hasta septiembre 2026. \textsuperscript{b}State Street reporta un gross expense ratio de 0.0945\% y una mediana de bid-ask spread de 0.00\% a 30 d\'ias. Datos consultados en marzo 2026 desde las p\'aginas oficiales de los emisores.}}
+\end{table}
+
+Los \textit{expense ratios} empleados resultan pr\'acticamente id\'enticos a los valores de mercado, con diferencias inferiores a 2 puntos base que no alteran materialmente los resultados. En el caso de UPRO, ProShares reporta un \textit{expense ratio} de 0.89\% bajo un \textit{fee waiver} contractual vigente hasta septiembre de 2026, de modo que el valor de 0.91\% utilizado en este estudio constituye una estimaci\'on ligeramente superior al vigente que no depende de exenciones temporales.
+
+La comparaci\'on resulta particularmente relevante en el caso de los \textit{bid-ask spreads}, donde se evidencia que los valores empleados sobreestiman los costos reales de manera sustancial. La mediana de \textit{spread} a 30 d\'ias reportada por ProShares para UPRO es de 2 puntos base, mientras que State Street reporta una mediana de 0 puntos base para SPY---reflejo de la liquidez excepcional del ETF m\'as negociado del mundo. Este estudio utiliza 5 y 2 puntos base respectivamente, aproximadamente 2.5 veces superiores a los valores observados en mercado. Esta sobreestimaci\'on implica que los retornos netos reportados incorporan una penalizaci\'on por costos de ejecuci\'on significativamente mayor a la que enfrentar\'ia un operador real, lo que refuerza la robustez de los hallazgos.
+
+En cuanto al \textit{volatility drag}, el modelo emplea una volatilidad diaria fija de 1\%, consistente con la volatilidad anualizada hist\'orica del S\&P 500 de aproximadamente 15--20\% ($\sigma_{\text{diaria}} \approx 0.95$--$1.26\%$). Si bien una implementaci\'on con volatilidad din\'amica capturar\'ia con mayor precisi\'on las fluctuaciones intra-per\'iodo, la aproximaci\'on fija representa un valor medio razonable dentro del rango hist\'orico observado.
+
+En conjunto, los par\'ametros de costo empleados sobreestiman sistem\'aticamente los costos reales de implementaci\'on. Las estrategias que resultan rentables bajo estos supuestos lo ser\'ian a\'un m\'as bajo condiciones de mercado actuales, lo que elimina la posibilidad de que la rentabilidad observada dependa de supuestos optimistas sobre fricciones de ejecuci\'on.
+
+% ---------------------------------------------------------------------------
+% 8.5  RELACION RENTABILIDAD-TURNOVER
+% ---------------------------------------------------------------------------
+
+\subsection{Relaci\'on Rentabilidad-Turnover}
+\label{subsec:turnover_return}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/turnover_vs_return.pdf}
+\caption{Relaci\'on entre \textit{turnover} (n\'umero de \textit{trades}) y retorno neto. Cada punto representa un modelo. L\'inea punteada: regresi\'on lineal ($R^2 = 0.02$).}
+\label{fig:turnover_return}
+\end{figure}
+
+Un argumento habitual contra las estrategias activas sostiene que una mayor frecuencia de operaci\'on se traduce mec\'anicamente en mayores costos y, por tanto, en menores retornos netos. La Figura~\ref{fig:turnover_return} eval\'ua emp\'iricamente esta hip\'otesis y la evidencia no la respalda en este caso, ya que el coeficiente de determinaci\'on entre \textit{turnover} y retorno neto es pr\'acticamente nulo ($R^2 = 0.02$).
+
+LSTM\_Attention combina un \textit{turnover} moderado de 465 \textit{trades} con el mayor retorno del estudio (+400\%), mientras que GradientBoosting obtiene +67\% con apenas 11 operaciones. En el otro extremo, SeasonalNaive ejecuta 1,042 \textit{trades} para obtener un modesto +45\%, y ExponentialSmoothing acumula 904 operaciones con un resultado negativo ($-$14.5\%). Esta dispersi\'on confirma que la calidad de las se\~nales de entrada es considerablemente m\'as determinante que la frecuencia de \textit{trading} en s\'i misma, dado que un modelo que opera con menor frecuencia pero con precisi\'on condicional elevada puede superar consistentemente a modelos que operan m\'as a menudo con menor capacidad de discriminaci\'on.
+
+% ---------------------------------------------------------------------------
+% 8.6  SENSIBILIDAD DE COSTOS
+% ---------------------------------------------------------------------------
+
+\subsection{An\'alisis de Sensibilidad}
+\label{subsec:cost_sensitivity}
+
+Para evaluar la robustez de los resultados frente a posibles subestimaciones en el modelo de costos, se recalculan los retornos netos bajo dos escenarios adversos---costos incrementados en un 50\% y en un 100\% respecto al escenario base---y se estima el multiplicador de \textit{break-even}, definido como el factor por el cual deber\'ian multiplicarse los costos totales para que la estrategia pierda dinero. La Tabla~\ref{tab:cost_sensitivity} resume estos resultados para los cuatro modelos ganadores.
+
+\begin{table}[htbp]
+\centering
+\caption{Sensibilidad del Retorno a Costos de Transacci\'on}
+\label{tab:cost_sensitivity}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Ret.\ Base} & \textbf{+50\% Costos} & \textbf{+100\% Costos} & \textbf{Break-even} & \textbf{Tx/P\&L} \\
+\midrule
+LSTM\_Attention & +400\% & +335\% & +270\% & 4.1$\times$ & 24.5\% \\
+Ridge & +263\% & +210\% & +157\% & 3.5$\times$ & 28.8\% \\
+RandomForest & +131\% & +121\% & +111\% & 7.4$\times$ & 13.5\% \\
+CNN\_LSTM & +129\% & +93\% & +58\% & 2.8$\times$ & 35.6\% \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: Aproximaci\'on lineal donde el retorno ajustado $\approx$ (P\&L bruto $-$ costos $\times$ multiplicador) / capital inicial. Break-even = P\&L bruto / costos totales, es decir, el multiplicador m\'aximo de costos antes de que la estrategia genere p\'erdidas. Tx/P\&L = costos totales como porcentaje del P\&L bruto.}}
+\end{table}
+
+Los cuatro modelos l\'ideres mantienen rentabilidad positiva incluso bajo el escenario de costos duplicados. Con costos al doble del escenario base, LSTM\_Attention a\'un genera un retorno del +270\%---m\'as del doble del \textit{benchmark} SPY (+102\%)---y Ridge mantiene +157\%. El punto de \textit{break-even} de LSTM\_Attention se sit\'ua en 4.1$\times$ los costos actuales, lo que significa que los costos deber\'ian m\'as que cuadruplicarse antes de que la estrategia deje de ser rentable, proporcionando un colch\'on sustancial frente a cualquier subestimaci\'on en el modelo.
+
+RandomForest exhibe la mayor robustez a costos con un \textit{break-even} de 7.4$\times$, resultado directo de su baja proporci\'on Tx/P\&L (13.5\%) derivada de un posicionamiento conservador que lo mantiene en efectivo el 78\% del tiempo y concentra la exposici\'on en d\'ias de alta convicci\'on. CNN\_LSTM, en cambio, resulta m\'as sensible a incrementos de costos dado que con costos duplicados su retorno cae a +58\%, reflejo de su proporci\'on Tx/P\&L del 35.6\%---la m\'as alta entre los ganadores. No obstante, incluso en este escenario extremo, CNN\_LSTM genera un retorno positivo que supera a la mitad de los modelos en escenario base.
+
+Cabe reiterar que, como se document\'o en la Secci\'on~\ref{subsec:cost_validation}, los par\'ametros de costo del escenario base ya sobreestiman las condiciones reales de mercado en aproximadamente 2.5$\times$ para los \textit{bid-ask spreads}, de modo que el escenario ``+100\% costos'' equivale en la pr\'actica a multiplicar por cinco los costos de ejecuci\'on observados en mercado.
+
+% ---------------------------------------------------------------------------
+% 8.7  COSTOS NO CONSIDERADOS
+% ---------------------------------------------------------------------------
+
+\subsection{Costos No Considerados}
+\label{subsec:costs_not_modeled}
+
+El modelo de costos implementado captura las fricciones m\'as relevantes para una estrategia \textit{Long-Only} basada en ETFs, pero existen costos adicionales que una implementaci\'on real deber\'ia contemplar y que no se incluyen en esta simulaci\'on.
+
+El \textit{slippage}---la diferencia entre el precio esperado al momento de generar la se\~nal y el precio efectivamente ejecutado---puede incrementar los costos de ejecuci\'on, particularmente para \'ordenes de tama\~no institucional. Sin embargo, dado que SPY y UPRO se encuentran entre los ETFs con mayor volumen de negociaci\'on en el mundo, con vol\'umenes diarios promedio de \$35 mil millones y \$800 millones respectivamente, el \textit{market impact}\footnote{El \textit{market impact} se refiere al efecto que la propia orden de compra o venta tiene sobre el precio del instrumento. Para instrumentos con alta liquidez como SPY, este efecto es pr\'acticamente imperceptible para \'ordenes menores a una fracci\'on del volumen diario promedio.} resulta insignificante para capitales inferiores a varias decenas de millones de d\'olares.
+
+Los impuestos sobre ganancias de capital representan otro costo no modelado cuya magnitud depende de la jurisdicci\'on fiscal del inversionista y de la estructura legal utilizada para operar. En Estados Unidos, las ganancias a corto plazo (posiciones mantenidas menos de un a\~no) tributan como ingreso ordinario, lo que puede reducir significativamente el retorno neto despu\'es de impuestos. No obstante, este costo afecta de manera sim\'etrica a todas las estrategias activas y al UPRO \textit{Buy \& Hold}, por lo que las comparaciones relativas entre modelos y \textit{benchmarks} se mantienen v\'alidas.
+
+Finalmente, los costos de infraestructura---servidores, datos de mercado, desarrollo y mantenimiento del sistema de se\~nales---constituyen costos fijos que no escalan con el tama\~no de las posiciones y que resultan amortizables a medida que crece el capital bajo gesti\'on. Estos costos, si bien relevantes para una implementaci\'on operativa, no alteran la evaluaci\'on comparativa de los modelos presentada en este estudio.

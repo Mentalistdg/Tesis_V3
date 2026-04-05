@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\caption{Rendimiento Promedio por Categor\'ia de Modelo}
+\label{tab:category_comparison}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Categor\'ia} & \textbf{N} & \textbf{Ret. Prom.} & \textbf{Sharpe Prom.} & \textbf{DD Prom.} & \textbf{Mejor Modelo} \\
+\midrule
+RNN & 4 & \textcolor{ForestGreen}{125.7\%} & 0.347 & 42.3\% & LSTM\_Attention \\
+ML & 5 & \textcolor{ForestGreen}{102.0\%} & 0.461 & 22.7\% & Ridge \\
+DeepLearning & 5 & \textcolor{ForestGreen}{33.5\%} & 0.125 & 37.2\% & DLinear \\
+GradientBoosting & 3 & \textcolor{ForestGreen}{29.4\%} & 0.104 & 32.8\% & CatBoost \\
+TimeSeries & 4 & \textcolor{ForestGreen}{23.2\%} & 0.216 & 26.3\% & Theta \\
+Specialized & 2 & \textcolor{ForestGreen}{17.4\%} & -0.016 & 16.8\% & GARCH \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Nota: N = n\'umero de modelos en la categor\'ia. ML = Machine Learning cl\'asico, GradientBoosting = XGBoost/LightGBM/CatBoost, DeepLearning = redes Darts, RNN = LSTM/GRU, TimeSeries = ARIMA/ETS/Theta.
+\end{tablenotes}
+\end{table}

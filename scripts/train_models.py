@@ -17,7 +17,7 @@ CHECKPOINT SYSTEM:
 ANTI-LEAKAGE MEASURES:
 1. Split temporal estricto (sin shuffle)
 2. Preprocessing fit SOLO en train
-3. TimeSeriesSplit con purge gap para CV
+3. TimeSeriesSplit para CV (5 folds)
 4. Validacion de no-solapamiento temporal
 5. Forward fill only para imputacion (no backward fill)
 
@@ -52,6 +52,7 @@ import logging
 import pickle
 import gc
 import shutil
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -237,7 +238,7 @@ CONFIG = {
     # Darts config
     'input_chunk_length': 30,
     'output_chunk_length': 1,
-    'n_epochs': 50,
+    'n_epochs': 100,
     'batch_size': 32,
 }
 
@@ -473,17 +474,20 @@ def get_train_predictions_darts(model, target_series, input_chunk_length,
             # Extraer valores
             train_preds = hist_forecasts.values().flatten()
 
-            # Rellenar el inicio con la media para tener longitud completa
+            # Rellenar para tener longitud completa
             n_target = len(target_series)
             n_preds = len(train_preds)
 
             if n_preds < n_target:
-                # Crear array completo
-                full_preds = np.zeros(n_target)
-                # Los primeros valores (antes del start_point) usan la media
-                full_preds[:n_target - n_preds] = np.mean(train_preds)
-                # El resto son las predicciones reales
-                full_preds[n_target - n_preds:] = train_preds
+                if stride > 1 and n_preds > 10:
+                    # Interpolar linealmente entre puntos de stride
+                    pred_indices = np.linspace(start_point, n_target - 1, n_preds)
+                    all_indices = np.arange(n_target)
+                    full_preds = np.interp(all_indices, pred_indices, train_preds)
+                else:
+                    full_preds = np.zeros(n_target)
+                    full_preds[:n_target - n_preds] = np.mean(train_preds)
+                    full_preds[n_target - n_preds:] = train_preds
                 return full_preds
             else:
                 return train_preds[:n_target]
@@ -756,35 +760,31 @@ if DARTS_AVAILABLE:
     temp_df = target_series_full.to_dataframe().ffill().fillna(0)
     target_series_full = TimeSeries.from_dataframe(temp_df.reset_index(), 'date', target_col, freq='B')
 
-    # Seleccionar top features para covariables
-    correlations = X_train.apply(lambda x: x.corr(y_train)).abs().sort_values(ascending=False)
-    correlations = correlations.dropna()
-    top_features = correlations.head(50).index.tolist()
-
-    print(f"  + Top {len(top_features)} features seleccionados para Darts DL")
+    # Usar TODAS las features (igualdad de condiciones con sklearn/PyTorch)
+    darts_feature_cols = feature_cols
+    print(f"  + {len(darts_feature_cols)} features para Darts DL (dataset completo)")
 
     # Crear series de covariables
-    cov_train_df = train_df_clean[['date'] + top_features].copy()
-    cov_full_df = df_clean[['date'] + top_features].copy()
+    cov_train_df = train_df_clean[['date'] + darts_feature_cols].copy()
+    cov_full_df = df_clean[['date'] + darts_feature_cols].copy()
 
-    # Imputar NaN
-    for col in top_features:
-        cov_train_df[col] = cov_train_df[col].ffill().fillna(0)
-        cov_full_df[col] = cov_full_df[col].ffill().fillna(0)
+    # Imputar NaN con forward fill (respeta causalidad temporal)
+    cov_train_df[darts_feature_cols] = cov_train_df[darts_feature_cols].ffill().fillna(0)
+    cov_full_df[darts_feature_cols] = cov_full_df[darts_feature_cols].ffill().fillna(0)
 
     covariates_train = TimeSeries.from_dataframe(
-        cov_train_df, 'date', top_features, fill_missing_dates=True, freq='B'
+        cov_train_df, 'date', darts_feature_cols, fill_missing_dates=True, freq='B'
     )
     covariates_full = TimeSeries.from_dataframe(
-        cov_full_df, 'date', top_features, fill_missing_dates=True, freq='B'
+        cov_full_df, 'date', darts_feature_cols, fill_missing_dates=True, freq='B'
     )
 
-    # Rellenar NaN
+    # Rellenar NaN que puedan haberse creado por fill_missing_dates
     cov_train_temp = covariates_train.to_dataframe().ffill().fillna(0)
-    covariates_train = TimeSeries.from_dataframe(cov_train_temp.reset_index(), 'date', top_features, freq='B')
+    covariates_train = TimeSeries.from_dataframe(cov_train_temp.reset_index(), 'date', darts_feature_cols, freq='B')
 
     cov_full_temp = covariates_full.to_dataframe().ffill().fillna(0)
-    covariates_full = TimeSeries.from_dataframe(cov_full_temp.reset_index(), 'date', top_features, freq='B')
+    covariates_full = TimeSeries.from_dataframe(cov_full_temp.reset_index(), 'date', darts_feature_cols, freq='B')
 
     # Escalar para Deep Learning
     scaler_target = Scaler()
@@ -835,17 +835,18 @@ sklearn_configs = {
         'params': {'regressor__alpha': [1e-7, 1e-6, 1e-5, 1e-4, 1e-3]}
     },
     'ElasticNet': {
-        'model': ElasticNet(random_state=CONFIG['random_state'], max_iter=5000),
+        'model': ElasticNet(random_state=CONFIG['random_state'], max_iter=50000, tol=1e-3, selection='random'),
         # Alpha pequeño para datos financieros con retornos ~0.001
-        'params': {'regressor__alpha': [1e-7, 1e-6, 1e-5, 1e-4, 1e-3], 'regressor__l1_ratio': [0.3, 0.5, 0.7, 0.9]}
+        # max_iter=50000 + tol=1e-3 + selection='random' para convergencia con 360+ features
+        'params': {'regressor__alpha': [1e-6, 1e-5, 1e-4, 1e-3], 'regressor__l1_ratio': [0.3, 0.5, 0.7, 0.9]}
     },
     'RandomForest': {
         'model': RandomForestRegressor(random_state=CONFIG['random_state'], n_jobs=-1),
-        'params': {'regressor__n_estimators': [100, 200], 'regressor__max_depth': [10, 20]}
+        'params': {'regressor__n_estimators': [100, 200, 500], 'regressor__max_depth': [10, 20, 50, None]}
     },
     'GradientBoosting': {
         'model': GradientBoostingRegressor(random_state=CONFIG['random_state']),
-        'params': {'regressor__n_estimators': [100, 200], 'regressor__learning_rate': [0.01, 0.05], 'regressor__max_depth': [3, 5]}
+        'params': {'regressor__n_estimators': [100, 200, 500], 'regressor__learning_rate': [0.01, 0.05, 0.1], 'regressor__max_depth': [3, 5, 10, 15], 'regressor__subsample': [0.8, 1.0]}
     }
 }
 
@@ -858,7 +859,7 @@ if XGBOOST_AVAILABLE:
 if LIGHTGBM_AVAILABLE:
     sklearn_configs['LightGBM'] = {
         'model': lgb.LGBMRegressor(random_state=CONFIG['random_state'], n_jobs=-1, verbosity=-1),
-        'params': {'regressor__n_estimators': [100, 200], 'regressor__learning_rate': [0.01, 0.05], 'regressor__num_leaves': [31, 50]}
+        'params': {'regressor__n_estimators': [100, 200, 500], 'regressor__learning_rate': [0.01, 0.05, 0.1], 'regressor__num_leaves': [31, 63, 127]}
     }
 
 # CatBoost se entrena por separado debido a incompatibilidad con sklearn GridSearchCV
@@ -880,6 +881,7 @@ for name, config in sklearn_configs.items():
         )
 
         grid_search.fit(X_train, y_train)
+
         best_model = grid_search.best_estimator_
 
         # Predicciones en TRAIN (para Z-Score calibration)
@@ -917,7 +919,18 @@ for name, config in sklearn_configs.items():
               f"R2: {metrics['r2']:.4f} | Time: {training_time:.1f}s")
 
     except Exception as e:
-        print(f"    [ERROR] {str(e)}")
+        print(f"    [ERROR] {name}: {str(e)} — saltando")
+        gc.collect()
+
+# Preprocesar datos para CatBoost y PyTorch custom
+# (fuera del try/if para que PyTorch siempre tenga datos escalados)
+imputer = SimpleImputer(strategy='median')
+scaler = StandardScaler()
+
+X_train_imp = imputer.fit_transform(X_train)
+X_train_scaled = scaler.fit_transform(X_train_imp)
+X_test_imp = imputer.transform(X_test)
+X_test_scaled = scaler.transform(X_test_imp)
 
 # Entrenar CatBoost por separado (no compatible con sklearn GridSearchCV)
 if CATBOOST_AVAILABLE:
@@ -925,14 +938,6 @@ if CATBOOST_AVAILABLE:
     start_time = time.time()
 
     try:
-        # Preprocesar manualmente
-        imputer = SimpleImputer(strategy='median')
-        scaler = StandardScaler()
-
-        X_train_imp = imputer.fit_transform(X_train)
-        X_train_scaled = scaler.fit_transform(X_train_imp)
-        X_test_imp = imputer.transform(X_test)
-        X_test_scaled = scaler.transform(X_test_imp)
 
         # Entrenar CatBoost directamente
         model = CatBoostRegressor(
@@ -1223,7 +1228,8 @@ if GARCH_AVAILABLE:
 
         # Predicciones rolling para test
         test_predictions = []
-        train_predictions = model_fit.conditional_volatility / 100  # Rescalar
+        # Fix: conditional_mean = y - resid (arch library doesn't expose it directly)
+        train_predictions = (returns_train - model_fit.resid) / 100  # Rescalar
 
         # Para test, hacer predicciones one-step-ahead
         all_returns = np.concatenate([returns_train, y_test.values * 100])
@@ -1284,24 +1290,38 @@ if DARTS_AVAILABLE:
     batch_size = CONFIG['batch_size']
 
     # Configuracion para PyTorch Lightning (suprimir output)
-    pl_trainer_kwargs = {
-        'accelerator': 'auto',
-        'enable_progress_bar': False,
-        'enable_model_summary': False,
-    }
+    from pytorch_lightning.callbacks import EarlyStopping as PLEarlyStopping
+
+    def get_pl_trainer_kwargs():
+        """Crea nuevos pl_trainer_kwargs para cada modelo (callbacks no se pueden reusar)."""
+        return {
+            'accelerator': 'auto',
+            'enable_progress_bar': False,
+            'enable_model_summary': False,
+            'gradient_clip_val': 1.0,
+            'callbacks': [PLEarlyStopping(monitor='train_loss', patience=5, mode='min', verbose=False)],
+        }
+
+    pl_trainer_kwargs = get_pl_trainer_kwargs()
+
+    # Stride para train predictions: 5 = prediccion cada 5 dias (5x mas rapido)
+    TRAIN_PRED_STRIDE = 5
 
     # DLinear
     if DLINEAR_AVAILABLE:
         print(f"\n  Entrenando: DLinear")
         start_time = time.time()
         try:
+            # DLinear: usar output_chunk_length=21 para evitar auto-regresion larga
+            # Con output_chunk=1, predecir 1302 pasos auto-regresa 1302 veces → error se acumula exponencialmente
+            # Con output_chunk=21, predice 21 pasos directamente sin auto-regresion
             model = DLinearModel(
                 input_chunk_length=input_chunk,
-                output_chunk_length=output_chunk,
+                output_chunk_length=21,
                 n_epochs=n_epochs,
                 batch_size=batch_size,
                 random_state=CONFIG['random_state'],
-                pl_trainer_kwargs=pl_trainer_kwargs,
+                pl_trainer_kwargs=get_pl_trainer_kwargs(),
                 force_reset=True
             )
             model.fit(target_train_scaled, past_covariates=covariates_train_scaled, verbose=False)
@@ -1319,7 +1339,7 @@ if DARTS_AVAILABLE:
                 model, target_train_scaled, input_chunk,
                 past_covariates=covariates_train_scaled,
                 scaler=scaler_target,
-                stride=1  # Prediccion para cada dia (sin interpolacion)
+                stride=TRAIN_PRED_STRIDE
             )
 
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
@@ -1333,7 +1353,7 @@ if DARTS_AVAILABLE:
                 'model_path': model_path,
                 'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
                 'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
-                'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
+                'config': {'input_chunk': input_chunk, 'output_chunk': 21, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
@@ -1354,11 +1374,11 @@ if DARTS_AVAILABLE:
         try:
             model = NBEATSModel(
                 input_chunk_length=input_chunk,
-                output_chunk_length=output_chunk,
+                output_chunk_length=21,
                 n_epochs=n_epochs,
                 batch_size=batch_size,
                 random_state=CONFIG['random_state'],
-                pl_trainer_kwargs=pl_trainer_kwargs,
+                pl_trainer_kwargs=get_pl_trainer_kwargs(),
                 force_reset=True
             )
             model.fit(target_train_scaled, past_covariates=covariates_train_scaled, verbose=False)
@@ -1376,7 +1396,7 @@ if DARTS_AVAILABLE:
                 model, target_train_scaled, input_chunk,
                 past_covariates=covariates_train_scaled,
                 scaler=scaler_target,
-                stride=1  # Prediccion para cada dia
+                stride=TRAIN_PRED_STRIDE
             )
 
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
@@ -1390,7 +1410,7 @@ if DARTS_AVAILABLE:
                 'model_path': model_path,
                 'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
                 'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
-                'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
+                'config': {'input_chunk': input_chunk, 'output_chunk': 21, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
@@ -1411,11 +1431,11 @@ if DARTS_AVAILABLE:
         try:
             model = NHiTSModel(
                 input_chunk_length=input_chunk,
-                output_chunk_length=output_chunk,
+                output_chunk_length=21,
                 n_epochs=n_epochs,
                 batch_size=batch_size,
                 random_state=CONFIG['random_state'],
-                pl_trainer_kwargs=pl_trainer_kwargs,
+                pl_trainer_kwargs=get_pl_trainer_kwargs(),
                 force_reset=True
             )
             model.fit(target_train_scaled, past_covariates=covariates_train_scaled, verbose=False)
@@ -1433,7 +1453,7 @@ if DARTS_AVAILABLE:
                 model, target_train_scaled, input_chunk,
                 past_covariates=covariates_train_scaled,
                 scaler=scaler_target,
-                stride=1  # Prediccion para cada dia
+                stride=TRAIN_PRED_STRIDE
             )
 
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
@@ -1447,7 +1467,7 @@ if DARTS_AVAILABLE:
                 'model_path': model_path,
                 'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
                 'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
-                'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
+                'config': {'input_chunk': input_chunk, 'output_chunk': 21, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
@@ -1468,11 +1488,11 @@ if DARTS_AVAILABLE:
         try:
             model = TCNModel(
                 input_chunk_length=input_chunk,
-                output_chunk_length=output_chunk,
+                output_chunk_length=21,
                 n_epochs=n_epochs,
                 batch_size=batch_size,
                 random_state=CONFIG['random_state'],
-                pl_trainer_kwargs=pl_trainer_kwargs,
+                pl_trainer_kwargs=get_pl_trainer_kwargs(),
                 force_reset=True
             )
             model.fit(target_train_scaled, past_covariates=covariates_train_scaled, verbose=False)
@@ -1490,7 +1510,7 @@ if DARTS_AVAILABLE:
                 model, target_train_scaled, input_chunk,
                 past_covariates=covariates_train_scaled,
                 scaler=scaler_target,
-                stride=1  # Prediccion para cada dia
+                stride=TRAIN_PRED_STRIDE
             )
 
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
@@ -1504,7 +1524,7 @@ if DARTS_AVAILABLE:
                 'model_path': model_path,
                 'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
                 'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
-                'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
+                'config': {'input_chunk': input_chunk, 'output_chunk': 21, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
@@ -1525,11 +1545,11 @@ if DARTS_AVAILABLE:
         try:
             model = TFTModel(
                 input_chunk_length=input_chunk,
-                output_chunk_length=output_chunk,
+                output_chunk_length=21,
                 n_epochs=n_epochs,
                 batch_size=batch_size,
                 random_state=CONFIG['random_state'],
-                pl_trainer_kwargs=pl_trainer_kwargs,
+                pl_trainer_kwargs=get_pl_trainer_kwargs(),
                 force_reset=True,
                 add_relative_index=True
             )
@@ -1548,7 +1568,7 @@ if DARTS_AVAILABLE:
                 model, target_train_scaled, input_chunk,
                 past_covariates=covariates_train_scaled,
                 scaler=scaler_target,
-                stride=1  # Prediccion para cada dia
+                stride=TRAIN_PRED_STRIDE
             )
 
             metrics = evaluate_basic_metrics(y_test.values[:len(test_predictions)], test_predictions)
@@ -1562,7 +1582,7 @@ if DARTS_AVAILABLE:
                 'model_path': model_path,
                 'train_predictions': train_predictions.tolist() if hasattr(train_predictions, 'tolist') else list(train_predictions),
                 'test_predictions': test_predictions.tolist() if hasattr(test_predictions, 'tolist') else list(test_predictions),
-                'config': {'input_chunk': input_chunk, 'epochs': n_epochs},
+                'config': {'input_chunk': input_chunk, 'output_chunk': 21, 'epochs': n_epochs},
                 'metrics': metrics,
                 'training_time': training_time,
                 'model_type': 'darts_dl',
@@ -1614,8 +1634,15 @@ if PYTORCH_AVAILABLE:
     # Usar features escalados
     X_train_np = X_train_scaled
     X_test_np = X_test_scaled
-    y_train_np = y_train.values
-    y_test_np = y_test.values
+
+    # CRITICAL FIX: Escalar target para PyTorch
+    # Features estan StandardScaler'd (mean=0, std=1) pero y_train raw (~0.001)
+    # MSE loss en valores tan pequeños produce gradientes minusculos → modelo aprende a predecir ~0
+    y_scaler_pytorch = StandardScaler()
+    y_train_np = y_scaler_pytorch.fit_transform(y_train.values.reshape(-1, 1)).flatten()
+    y_test_np = y_test.values  # NO escalar test (se usa solo para evaluacion)
+    print(f"  Target escalado para PyTorch: mean={y_scaler_pytorch.mean_[0]:.6f}, std={y_scaler_pytorch.scale_[0]:.6f}")
+    print(f"  y_train_np escalado: mean={y_train_np.mean():.4f}, std={y_train_np.std():.4f}")
 
     lookback = CONFIG['input_chunk_length']
 
@@ -1679,15 +1706,18 @@ if PYTORCH_AVAILABLE:
     print(f"\n  Entrenando: CNN-LSTM (Hibrido)")
     start_time = time.time()
     try:
-        model_cnnlstm = CNNLSTM(n_features, lookback, hidden_dim=64, n_filters=64).to(device)
+        model_cnnlstm = CNNLSTM(n_features, lookback, hidden_dim=128, n_filters=128).to(device)
         criterion = nn.MSELoss()
-        optimizer = torch.optim.Adam(model_cnnlstm.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(model_cnnlstm.parameters(), lr=0.0005, weight_decay=1e-5)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5)
 
         # Training loop
         train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
         train_loader = DataLoader(train_dataset, batch_size=CONFIG['batch_size'], shuffle=False)
 
         model_cnnlstm.train()
+        best_loss = float('inf')
+        patience_counter = 0
         for epoch in range(CONFIG['n_epochs']):
             epoch_loss = 0
             for batch_X, batch_y in train_loader:
@@ -1695,20 +1725,32 @@ if PYTORCH_AVAILABLE:
                 outputs = model_cnnlstm(batch_X)
                 loss = criterion(outputs, batch_y)
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model_cnnlstm.parameters(), max_norm=1.0)
                 optimizer.step()
                 epoch_loss += loss.item()
+            scheduler.step(epoch_loss)
+            if epoch_loss < best_loss:
+                best_loss = epoch_loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= 10:
+                    print(f"    Early stopping at epoch {epoch}")
+                    break
 
-        # Predicciones
+        # Predicciones (inverse_transform para volver a escala original)
         model_cnnlstm.eval()
         with torch.no_grad():
-            test_predictions = model_cnnlstm(X_test_tensor).cpu().numpy().flatten()
-            train_predictions_cnnlstm = model_cnnlstm(X_train_tensor).cpu().numpy().flatten()
+            test_predictions_raw = model_cnnlstm(X_test_tensor).cpu().numpy().flatten()
+            train_predictions_raw = model_cnnlstm(X_train_tensor).cpu().numpy().flatten()
+            test_predictions = y_scaler_pytorch.inverse_transform(test_predictions_raw.reshape(-1, 1)).flatten()
+            train_predictions_cnnlstm = y_scaler_pytorch.inverse_transform(train_predictions_raw.reshape(-1, 1)).flatten()
 
         metrics = evaluate_basic_metrics(y_test_seq[:len(test_predictions)], test_predictions)
         training_time = time.time() - start_time
 
         # === CHECKPOINT: Guardar modelo PyTorch a disco ===
-        model_config = {'n_features': n_features, 'lookback': lookback, 'hidden_dim': 64, 'n_filters': 64}
+        model_config = {'n_features': n_features, 'lookback': lookback, 'hidden_dim': 128, 'n_filters': 128}
         model_path = save_pytorch_model(model_cnnlstm, 'CNN_LSTM', model_config)
         print(f"    [CHECKPOINT] Guardado: {model_path}")
 
@@ -1716,7 +1758,7 @@ if PYTORCH_AVAILABLE:
             'model_path': model_path,
             'train_predictions': train_predictions_cnnlstm.tolist(),
             'test_predictions': test_predictions.tolist(),
-            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 64, 'n_filters': 64},
+            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 128, 'n_filters': 128},
             'metrics': metrics,
             'training_time': training_time,
             'model_type': 'pytorch_hybrid',
@@ -1782,12 +1824,15 @@ if PYTORCH_AVAILABLE:
     print(f"\n  Entrenando: LSTM+Attention (Luong Style)")
     start_time = time.time()
     try:
-        model_attention = LSTMAttention(n_features, hidden_dim=64).to(device)
+        model_attention = LSTMAttention(n_features, hidden_dim=128).to(device)
         criterion = nn.MSELoss()
-        optimizer = torch.optim.Adam(model_attention.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(model_attention.parameters(), lr=0.0005, weight_decay=1e-5)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5)
 
         # Training loop
         model_attention.train()
+        best_loss = float('inf')
+        patience_counter = 0
         for epoch in range(CONFIG['n_epochs']):
             epoch_loss = 0
             for batch_X, batch_y in train_loader:
@@ -1795,20 +1840,32 @@ if PYTORCH_AVAILABLE:
                 outputs = model_attention(batch_X)
                 loss = criterion(outputs, batch_y)
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model_attention.parameters(), max_norm=1.0)
                 optimizer.step()
                 epoch_loss += loss.item()
+            scheduler.step(epoch_loss)
+            if epoch_loss < best_loss:
+                best_loss = epoch_loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= 10:
+                    print(f"    Early stopping at epoch {epoch}")
+                    break
 
-        # Predicciones
+        # Predicciones (inverse_transform para volver a escala original)
         model_attention.eval()
         with torch.no_grad():
-            test_predictions = model_attention(X_test_tensor).cpu().numpy().flatten()
-            train_predictions_attn = model_attention(X_train_tensor).cpu().numpy().flatten()
+            test_predictions_raw = model_attention(X_test_tensor).cpu().numpy().flatten()
+            train_predictions_raw = model_attention(X_train_tensor).cpu().numpy().flatten()
+            test_predictions = y_scaler_pytorch.inverse_transform(test_predictions_raw.reshape(-1, 1)).flatten()
+            train_predictions_attn = y_scaler_pytorch.inverse_transform(train_predictions_raw.reshape(-1, 1)).flatten()
 
         metrics = evaluate_basic_metrics(y_test_seq[:len(test_predictions)], test_predictions)
         training_time = time.time() - start_time
 
         # === CHECKPOINT: Guardar modelo PyTorch a disco ===
-        model_config = {'n_features': n_features, 'hidden_dim': 64, 'attention': 'Luong'}
+        model_config = {'n_features': n_features, 'hidden_dim': 128, 'attention': 'Luong'}
         model_path = save_pytorch_model(model_attention, 'LSTM_Attention', model_config)
         print(f"    [CHECKPOINT] Guardado: {model_path}")
 
@@ -1816,7 +1873,7 @@ if PYTORCH_AVAILABLE:
             'model_path': model_path,
             'train_predictions': train_predictions_attn.tolist(),
             'test_predictions': test_predictions.tolist(),
-            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 64, 'attention': 'Luong'},
+            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 128, 'attention': 'Luong'},
             'metrics': metrics,
             'training_time': training_time,
             'model_type': 'pytorch_attention',
@@ -1862,12 +1919,15 @@ if PYTORCH_AVAILABLE:
     print(f"\n  Entrenando: Bi-LSTM (Bidirectional LSTM)")
     start_time = time.time()
     try:
-        model_bilstm = BiLSTM(n_features, hidden_dim=64, n_layers=2, dropout=0.1).to(device)
+        model_bilstm = BiLSTM(n_features, hidden_dim=128, n_layers=2, dropout=0.1).to(device)
         criterion = nn.MSELoss()
-        optimizer = torch.optim.Adam(model_bilstm.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(model_bilstm.parameters(), lr=0.0005, weight_decay=1e-5)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5)
 
         # Training loop
         model_bilstm.train()
+        best_loss = float('inf')
+        patience_counter = 0
         for epoch in range(CONFIG['n_epochs']):
             epoch_loss = 0
             for batch_X, batch_y in train_loader:
@@ -1875,20 +1935,32 @@ if PYTORCH_AVAILABLE:
                 outputs = model_bilstm(batch_X)
                 loss = criterion(outputs, batch_y)
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model_bilstm.parameters(), max_norm=1.0)
                 optimizer.step()
                 epoch_loss += loss.item()
+            scheduler.step(epoch_loss)
+            if epoch_loss < best_loss:
+                best_loss = epoch_loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= 10:
+                    print(f"    Early stopping at epoch {epoch}")
+                    break
 
-        # Predicciones
+        # Predicciones (inverse_transform para volver a escala original)
         model_bilstm.eval()
         with torch.no_grad():
-            test_predictions = model_bilstm(X_test_tensor).cpu().numpy().flatten()
-            train_predictions_bilstm = model_bilstm(X_train_tensor).cpu().numpy().flatten()
+            test_predictions_raw = model_bilstm(X_test_tensor).cpu().numpy().flatten()
+            train_predictions_raw = model_bilstm(X_train_tensor).cpu().numpy().flatten()
+            test_predictions = y_scaler_pytorch.inverse_transform(test_predictions_raw.reshape(-1, 1)).flatten()
+            train_predictions_bilstm = y_scaler_pytorch.inverse_transform(train_predictions_raw.reshape(-1, 1)).flatten()
 
         metrics = evaluate_basic_metrics(y_test_seq[:len(test_predictions)], test_predictions)
         training_time = time.time() - start_time
 
         # === CHECKPOINT: Guardar modelo PyTorch a disco ===
-        model_config = {'n_features': n_features, 'hidden_dim': 64, 'n_layers': 2, 'bidirectional': True}
+        model_config = {'n_features': n_features, 'hidden_dim': 128, 'n_layers': 2, 'bidirectional': True}
         model_path = save_pytorch_model(model_bilstm, 'BiLSTM', model_config)
         print(f"    [CHECKPOINT] Guardado: {model_path}")
 
@@ -1896,7 +1968,7 @@ if PYTORCH_AVAILABLE:
             'model_path': model_path,
             'train_predictions': train_predictions_bilstm.tolist(),
             'test_predictions': test_predictions.tolist(),
-            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 64, 'bidirectional': True},
+            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 128, 'bidirectional': True},
             'metrics': metrics,
             'training_time': training_time,
             'model_type': 'pytorch_bilstm',
@@ -1942,12 +2014,15 @@ if PYTORCH_AVAILABLE:
     print(f"\n  Entrenando: Bi-GRU (Bidirectional GRU)")
     start_time = time.time()
     try:
-        model_bigru = BiGRU(n_features, hidden_dim=64, n_layers=2, dropout=0.1).to(device)
+        model_bigru = BiGRU(n_features, hidden_dim=128, n_layers=2, dropout=0.1).to(device)
         criterion = nn.MSELoss()
-        optimizer = torch.optim.Adam(model_bigru.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(model_bigru.parameters(), lr=0.0005, weight_decay=1e-5)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5)
 
         # Training loop
         model_bigru.train()
+        best_loss = float('inf')
+        patience_counter = 0
         for epoch in range(CONFIG['n_epochs']):
             epoch_loss = 0
             for batch_X, batch_y in train_loader:
@@ -1955,20 +2030,32 @@ if PYTORCH_AVAILABLE:
                 outputs = model_bigru(batch_X)
                 loss = criterion(outputs, batch_y)
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model_bigru.parameters(), max_norm=1.0)
                 optimizer.step()
                 epoch_loss += loss.item()
+            scheduler.step(epoch_loss)
+            if epoch_loss < best_loss:
+                best_loss = epoch_loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= 10:
+                    print(f"    Early stopping at epoch {epoch}")
+                    break
 
-        # Predicciones
+        # Predicciones (inverse_transform para volver a escala original)
         model_bigru.eval()
         with torch.no_grad():
-            test_predictions = model_bigru(X_test_tensor).cpu().numpy().flatten()
-            train_predictions_bigru = model_bigru(X_train_tensor).cpu().numpy().flatten()
+            test_predictions_raw = model_bigru(X_test_tensor).cpu().numpy().flatten()
+            train_predictions_raw = model_bigru(X_train_tensor).cpu().numpy().flatten()
+            test_predictions = y_scaler_pytorch.inverse_transform(test_predictions_raw.reshape(-1, 1)).flatten()
+            train_predictions_bigru = y_scaler_pytorch.inverse_transform(train_predictions_raw.reshape(-1, 1)).flatten()
 
         metrics = evaluate_basic_metrics(y_test_seq[:len(test_predictions)], test_predictions)
         training_time = time.time() - start_time
 
         # === CHECKPOINT: Guardar modelo PyTorch a disco ===
-        model_config = {'n_features': n_features, 'hidden_dim': 64, 'n_layers': 2, 'bidirectional': True}
+        model_config = {'n_features': n_features, 'hidden_dim': 128, 'n_layers': 2, 'bidirectional': True}
         model_path = save_pytorch_model(model_bigru, 'BiGRU', model_config)
         print(f"    [CHECKPOINT] Guardado: {model_path}")
 
@@ -1976,7 +2063,7 @@ if PYTORCH_AVAILABLE:
             'model_path': model_path,
             'train_predictions': train_predictions_bigru.tolist(),
             'test_predictions': test_predictions.tolist(),
-            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 64, 'bidirectional': True},
+            'config': {'lookback': lookback, 'epochs': CONFIG['n_epochs'], 'hidden_dim': 128, 'bidirectional': True},
             'metrics': metrics,
             'training_time': training_time,
             'model_type': 'pytorch_bigru',
@@ -1991,6 +2078,54 @@ if PYTORCH_AVAILABLE:
         print(f"    RMSE: {metrics['rmse']:.6f} | Dir.Acc: {metrics['directional_accuracy']:.1%} | Time: {training_time:.1f}s")
     except Exception as e:
         print(f"    [ERROR] {str(e)}")
+
+# =============================================================================
+# QUALITY VALIDATION - Validate all model predictions
+# =============================================================================
+def validate_predictions(name, test_pred, train_pred, y_test_vals):
+    """Quality gate post-entrenamiento."""
+    warnings_list = []
+    test_pred = np.array(test_pred, dtype=float)
+
+    # Colapsado
+    if len(np.unique(np.round(test_pred, 6))) < 10:
+        warnings_list.append("COLAPSADO")
+
+    # NaN/Inf
+    if np.isnan(test_pred).any() or np.isinf(test_pred).any():
+        warnings_list.append("NaN/Inf")
+
+    # Escala
+    y_std = np.std(y_test_vals)
+    ratio = np.std(test_pred) / y_std if y_std > 0 else 0
+    if ratio > 5.0:
+        warnings_list.append(f"SOBREESCALADO({ratio:.1f}x)")
+    elif ratio < 0.01:
+        warnings_list.append(f"CONSTANTE(ratio={ratio:.4f})")
+
+    # Correlacion negativa
+    if len(test_pred) > 10 and len(y_test_vals) >= len(test_pred):
+        corr = np.corrcoef(y_test_vals[:len(test_pred)], test_pred)[0, 1]
+        if not np.isnan(corr) and corr < -0.03:
+            warnings_list.append(f"INVERTIDO(corr={corr:.3f})")
+
+    for w in warnings_list:
+        print(f"    [QC WARNING] {name}: {w}")
+
+    return warnings_list
+
+print("\n" + "="*80)
+print("QUALITY VALIDATION - Verificando predicciones de todos los modelos")
+print("="*80)
+
+y_test_values = y_test.values
+for model_name, model_data in artifacts['models'].items():
+    test_pred = model_data.get('test_predictions', [])
+    train_pred = model_data.get('train_predictions', [])
+    qc_warnings = validate_predictions(model_name, test_pred, train_pred, y_test_values)
+    artifacts['models'][model_name]['qc_warnings'] = qc_warnings
+    if not qc_warnings:
+        print(f"  [OK] {model_name}: Sin problemas detectados")
 
 # =============================================================================
 # PASO 7: GUARDAR ARTEFACTOS (Metadata + Paths)

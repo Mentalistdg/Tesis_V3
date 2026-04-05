@@ -4,26 +4,16 @@
       "q_long_extreme": 20,
       "q_long_moderate": 30
     },
-    "expected_sharpe": 1.2670283013146475,
-    "expected_return": 2.0634966898500458,
-    "expected_max_dd": -0.17672625972957817,
-    "bootstrap": {
-      "sharpe_mean": 1.206496451941759,
-      "sharpe_median": 1.2070012390692937,
-      "sharpe_ci_lower": 0.36963985536958305,
-      "sharpe_ci_upper": 2.057293984323308,
-      "sharpe_prob_positive": 0.9968,
-      "return_mean": 2.3012280950157376,
-      "return_ci_lower": 0.51164721392379,
-      "return_ci_upper": 5.428114409384974
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.8811513817931617,
+    "expected_return": 2.6316836735447087,
+    "expected_max_dd": -0.3176026251700032,
     "characteristics": {
-      "directional_accuracy": 0.5207373271889401,
-      "pred_mean": 0.029320183047615918,
-      "pred_std": 0.04902279804922755,
-      "p10": -0.048437952237359916,
-      "p90": 0.07769258752557191,
-      "pct_positive": 71.42857142857143
+      "directional_accuracy": 0.46810146041506534,
+      "pred_std": 0.013618576559105955,
+      "n_unique_preds": 1269,
+      "pct_signal_days": 100.0
     }
   },
   "Lasso": {
@@ -31,593 +21,373 @@
       "q_long_extreme": 5,
       "q_long_moderate": 40
     },
-    "expected_sharpe": 0.3235580674753748,
-    "expected_return": 0.5553097921769443,
-    "expected_max_dd": -0.18239449914659356,
-    "bootstrap": {
-      "sharpe_mean": 0.3958734851736204,
-      "sharpe_median": 0.401647309357579,
-      "sharpe_ci_lower": -0.46904132720714914,
-      "sharpe_ci_upper": 1.2603323279189675,
-      "sharpe_prob_positive": 0.8108,
-      "return_mean": 0.685558064852093,
-      "return_ci_lower": -0.29610031392491587,
-      "return_ci_upper": 2.3797960190543592
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.20175709646166975,
+    "expected_return": 0.3898415224452687,
+    "expected_max_dd": -0.19259412526881936,
     "characteristics": {
-      "directional_accuracy": 0.5053763440860215,
-      "pred_mean": 0.00015778810495182285,
-      "pred_std": 0.0009048624180494484,
-      "p10": -0.0005155734105646015,
-      "p90": 0.0009651356869094541,
-      "pct_positive": 58.21812596006144
+      "directional_accuracy": 0.5026902382782475,
+      "pred_std": 0.0008969712147717802,
+      "n_unique_preds": 923,
+      "pct_signal_days": 16.448885472713297
     }
   },
   "ElasticNet": {
     "params": {
-      "q_long_extreme": 5,
-      "q_long_moderate": 40
+      "q_long_extreme": 10,
+      "q_long_moderate": 60
     },
-    "expected_sharpe": 0.329919906406157,
-    "expected_return": 0.5647751692072336,
-    "expected_max_dd": -0.1693534722837243,
-    "bootstrap": {
-      "sharpe_mean": 0.38983927872539637,
-      "sharpe_median": 0.3877453450011101,
-      "sharpe_ci_lower": -0.4814997695273985,
-      "sharpe_ci_upper": 1.258685188273898,
-      "sharpe_prob_positive": 0.812,
-      "return_mean": 0.6801002655281143,
-      "return_ci_lower": -0.30205044830788375,
-      "return_ci_upper": 2.3738289923115046
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": -0.06788348777315326,
+    "expected_return": 0.09762993925709496,
+    "expected_max_dd": -0.3963263708561363,
     "characteristics": {
-      "directional_accuracy": 0.5046082949308756,
-      "pred_mean": 0.0001562074549256467,
-      "pred_std": 0.0010390112505747463,
-      "p10": -0.0006198074934963212,
-      "p90": 0.0010821649781092946,
-      "pct_positive": 56.29800307219662
+      "directional_accuracy": 0.49269792467332824,
+      "pred_std": 0.0012744844250897032,
+      "n_unique_preds": 1008,
+      "pct_signal_days": 27.51729438893159
     }
   },
   "RandomForest": {
     "params": {
       "q_long_extreme": 5,
-      "q_long_moderate": 50
+      "q_long_moderate": 40
     },
-    "expected_sharpe": 0.368192424884916,
-    "expected_return": 0.6019016712115828,
-    "expected_max_dd": -0.17083102441670447,
-    "bootstrap": {
-      "sharpe_mean": 0.43382839861030553,
-      "sharpe_median": 0.429462006057828,
-      "sharpe_ci_lower": -0.4441033190633294,
-      "sharpe_ci_upper": 1.3165178964784237,
-      "sharpe_prob_positive": 0.8298,
-      "return_mean": 0.7246091845754506,
-      "return_ci_lower": -0.26681349186445236,
-      "return_ci_upper": 2.477175046040217
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.6664498905804943,
+    "expected_return": 1.3102602798730296,
+    "expected_max_dd": -0.14720456300485013,
     "characteristics": {
-      "directional_accuracy": 0.46774193548387094,
-      "pred_mean": -0.007998917854076203,
-      "pred_std": 0.003064378526102702,
-      "p10": -0.011527975236893605,
-      "p90": -0.005588192483413502,
-      "pct_positive": 4.838709677419355
+      "directional_accuracy": 0.45887778631821674,
+      "pred_std": 0.003299198949237025,
+      "n_unique_preds": 1064,
+      "pct_signal_days": 53.1129900076864
     }
   },
   "GradientBoosting": {
     "params": {
-      "q_long_extreme": 15,
-      "q_long_moderate": 60
+      "q_long_extreme": 5,
+      "q_long_moderate": 20
     },
-    "expected_sharpe": 0.35193485261841545,
-    "expected_return": 0.765741223229137,
-    "expected_max_dd": -0.23136892838672662,
-    "bootstrap": {
-      "sharpe_mean": 0.45012388799441067,
-      "sharpe_median": 0.443124689491133,
-      "sharpe_ci_lower": -0.3976167018004351,
-      "sharpe_ci_upper": 1.3177544971573831,
-      "sharpe_prob_positive": 0.846,
-      "return_mean": 1.0468417578534321,
-      "return_ci_lower": -0.3762081743238148,
-      "return_ci_upper": 4.063939996840848
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.6220726403240724,
+    "expected_return": 0.6682883447659123,
+    "expected_max_dd": -0.0831007347454555,
     "characteristics": {
-      "directional_accuracy": 0.46774193548387094,
-      "pred_mean": -0.0004317649828370538,
-      "pred_std": 0.0006240890791681272,
-      "p10": -0.0009943079332428,
-      "p90": -0.0003995444209268247,
-      "pct_positive": 8.678955453149001
+      "directional_accuracy": 0.45810914681014603,
+      "pred_std": 0.0010947216581217983,
+      "n_unique_preds": 16,
+      "pct_signal_days": 13.681783243658725
     }
   },
   "XGBoost": {
     "params": {
-      "q_long_extreme": 15,
+      "q_long_extreme": 5,
       "q_long_moderate": 20
     },
-    "expected_sharpe": 0.037485098441321175,
-    "expected_return": 0.2299700908848028,
-    "expected_max_dd": -0.24442550200093435,
-    "bootstrap": {
-      "sharpe_mean": 0.15316747851853962,
-      "sharpe_median": 0.14303880020935902,
-      "sharpe_ci_lower": -0.6699393204617285,
-      "sharpe_ci_upper": 1.023025417700219,
-      "sharpe_prob_positive": 0.6278,
-      "return_mean": 0.39811964746136963,
-      "return_ci_lower": -0.5263091830541576,
-      "return_ci_upper": 2.279960740844176
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": -0.024001231295409438,
+    "expected_return": 0.1350483772325377,
+    "expected_max_dd": -0.4310941899778533,
     "characteristics": {
-      "directional_accuracy": 0.5360983102918587,
-      "pred_mean": 0.00014867799631702628,
-      "pred_std": 0.00028997258970139947,
-      "p10": 0.00017956017109099776,
-      "p90": 0.00017956017109099776,
-      "pct_positive": 97.84946236559139
+      "directional_accuracy": 0.5434281322059954,
+      "pred_std": 0.0024104924156862105,
+      "n_unique_preds": 26,
+      "pct_signal_days": 37.97079169869331
     }
   },
   "LightGBM": {
     "params": {
-      "q_long_extreme": 20,
-      "q_long_moderate": 60
+      "q_long_extreme": 5,
+      "q_long_moderate": 20
     },
-    "expected_sharpe": 0.45210324261540663,
-    "expected_return": 0.8524757327364285,
-    "expected_max_dd": -0.18989120307591345,
-    "bootstrap": {
-      "sharpe_mean": 0.5232373078268371,
-      "sharpe_median": 0.5258538967558852,
-      "sharpe_ci_lower": -0.34759829163738265,
-      "sharpe_ci_upper": 1.3922796954470245,
-      "sharpe_prob_positive": 0.8736,
-      "return_mean": 1.0689899648096883,
-      "return_ci_lower": -0.288734846754966,
-      "return_ci_upper": 3.6904688350822146
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.10574397195939497,
+    "expected_return": 0.2711968783950802,
+    "expected_max_dd": -0.24278037200995456,
     "characteristics": {
-      "directional_accuracy": 0.46774193548387094,
-      "pred_mean": -0.0011164856679162882,
-      "pred_std": 0.001648739542101654,
-      "p10": -0.002570298173509778,
-      "p90": 0.0008815395055274025,
-      "pct_positive": 16.973886328725037
+      "directional_accuracy": 0.45426594926979247,
+      "pred_std": 0.001508497212404839,
+      "n_unique_preds": 965,
+      "pct_signal_days": 47.96310530361261
     }
   },
   "CatBoost": {
     "params": {
-      "q_long_extreme": 15,
-      "q_long_moderate": 30
+      "q_long_extreme": 5,
+      "q_long_moderate": 20
     },
-    "expected_sharpe": 0.25995961620694263,
-    "expected_return": 0.47277806916968745,
-    "expected_max_dd": -0.19714882100016506,
-    "bootstrap": {
-      "sharpe_mean": 0.3320055786529834,
-      "sharpe_median": 0.3306663161116198,
-      "sharpe_ci_lower": -0.5468185842768469,
-      "sharpe_ci_upper": 1.2008599480212936,
-      "sharpe_prob_positive": 0.7736,
-      "return_mean": 0.5887195263447621,
-      "return_ci_lower": -0.3410939783506833,
-      "return_ci_upper": 2.149545250956246
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.231518855089179,
+    "expected_return": 0.47429022021604017,
+    "expected_max_dd": -0.3090960414176348,
     "characteristics": {
-      "directional_accuracy": 0.4685099846390169,
-      "pred_mean": -0.0013393515763361976,
-      "pred_std": 0.001712445793287915,
-      "p10": -0.003076465884356706,
-      "p90": 0.0005651348957187702,
-      "pct_positive": 17.20430107526882
+      "directional_accuracy": 0.4650269023827825,
+      "pred_std": 0.0018246752510950083,
+      "n_unique_preds": 1143,
+      "pct_signal_days": 56.11068408916219
     }
   },
   "AutoARIMA": {
     "params": {
-      "q_long_extreme": 5,
-      "q_long_moderate": 20
+      "q_long_extreme": 10,
+      "q_long_moderate": 30
     },
-    "expected_sharpe": -0.2520600781220898,
-    "expected_return": 0.17493486477982145,
-    "expected_max_dd": -0.006675798216641406,
-    "bootstrap": {
-      "sharpe_mean": -0.32605021317550675,
-      "sharpe_median": -0.34087129846870334,
-      "sharpe_ci_lower": -0.8689257428916222,
-      "sharpe_ci_upper": 0.0,
-      "sharpe_prob_positive": 0.0048,
-      "return_mean": 0.17482485982219456,
-      "return_ci_lower": 0.1554517464813178,
-      "return_ci_upper": 0.18798145601161043
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.3866745441262352,
+    "expected_return": 0.1826786823817521,
+    "expected_max_dd": -0.0,
     "characteristics": {
-      "directional_accuracy": 0.49615975422427033,
-      "pred_mean": -5.420700175916292e-07,
-      "pred_std": 3.854928448974002e-05,
-      "p10": -3.2887329573297627e-24,
-      "p90": 1.9074959624733117e-24,
-      "pct_positive": 49.92319508448541
+      "directional_accuracy": 0.4973097617217525,
+      "pred_std": 3.8565564345386667e-05,
+      "n_unique_preds": 38,
+      "pct_signal_days": 0.0
     }
   },
   "ExponentialSmoothing": {
     "params": {
-      "q_long_extreme": 25,
-      "q_long_moderate": 50
+      "q_long_extreme": 30,
+      "q_long_moderate": 60
     },
-    "expected_sharpe": -0.10616339885800366,
-    "expected_return": 0.1070326897932874,
-    "expected_max_dd": -0.18113403553179314,
-    "bootstrap": {
-      "sharpe_mean": -0.023061039524569744,
-      "sharpe_median": -0.036132483497045495,
-      "sharpe_ci_lower": -0.87466892958539,
-      "sharpe_ci_upper": 0.8921980384971027,
-      "sharpe_prob_positive": 0.4634,
-      "return_mean": 0.15525829847462752,
-      "return_ci_lower": -0.3573739453379021,
-      "return_ci_upper": 0.9012372675036695
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": -0.2334670981650491,
+    "expected_return": -0.14505829590279906,
+    "expected_max_dd": -0.5958209787325247,
     "characteristics": {
-      "directional_accuracy": 0.532258064516129,
-      "pred_mean": 0.0006061017164376857,
-      "pred_std": 0.0005918321909744168,
-      "p10": 1.0416120908787629e-05,
-      "p90": 0.001453541714700421,
-      "pct_positive": 91.321044546851
+      "directional_accuracy": 0.5126825518831668,
+      "pred_std": 0.001072522569492181,
+      "n_unique_preds": 1247,
+      "pct_signal_days": 100.0
     }
   },
   "Theta": {
     "params": {
-      "q_long_extreme": 5,
-      "q_long_moderate": 20
+      "q_long_extreme": 15,
+      "q_long_moderate": 60
     },
-    "expected_sharpe": 0.3797008758362783,
-    "expected_return": 0.4615341466609886,
-    "expected_max_dd": -0.15804094712947328,
-    "bootstrap": {
-      "sharpe_mean": 0.4053778726405449,
-      "sharpe_median": 0.4095905362269632,
-      "sharpe_ci_lower": -0.4726921408877224,
-      "sharpe_ci_upper": 1.272398543442185,
-      "sharpe_prob_positive": 0.8252,
-      "return_mean": 0.5016404101510606,
-      "return_ci_lower": -0.13761010296281015,
-      "return_ci_upper": 1.438300916809363
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.5629611554163103,
+    "expected_return": 0.44623206198839416,
+    "expected_max_dd": -0.12661251335397236,
     "characteristics": {
-      "directional_accuracy": 0.5391705069124424,
-      "pred_mean": 0.000953659329524862,
-      "pred_std": 0.00025028687461060216,
-      "p10": 0.0007312917502238878,
-      "p90": 0.001330423453674677,
-      "pct_positive": 100.0
+      "directional_accuracy": 0.5457340507302075,
+      "pred_std": 0.0002493259474873681,
+      "n_unique_preds": 272,
+      "pct_signal_days": 4.688700999231361
     }
   },
   "Prophet": {
     "params": {
-      "q_long_extreme": 5,
-      "q_long_moderate": 40
+      "q_long_extreme": 15,
+      "q_long_moderate": 60
     },
-    "expected_sharpe": 0.5584229457874683,
-    "expected_return": 0.7139908061463349,
-    "expected_max_dd": -0.18786452196160913,
-    "bootstrap": {
-      "sharpe_mean": 0.588059533179656,
-      "sharpe_median": 0.5890062630412052,
-      "sharpe_ci_lower": -0.28690500988439765,
-      "sharpe_ci_upper": 1.4350819826019743,
-      "sharpe_prob_positive": 0.9108,
-      "return_mean": 0.7986468377955825,
-      "return_ci_lower": -0.07747534548091838,
-      "return_ci_upper": 2.1506149759311683
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": -0.23444421080432704,
+    "expected_return": 0.07647388455375137,
+    "expected_max_dd": -0.11732451448039787,
     "characteristics": {
-      "directional_accuracy": 0.5261136712749616,
-      "pred_mean": 0.0006379066283704146,
-      "pred_std": 0.0009224252245522974,
-      "p10": -0.0006808737717556345,
-      "p90": 0.0017790992681069014,
-      "pct_positive": 74.57757296466974
+      "directional_accuracy": 0.5303612605687933,
+      "pred_std": 0.0009225653997181226,
+      "n_unique_preds": 1067,
+      "pct_signal_days": 16.679477325134513
     }
   },
   "SeasonalNaive": {
     "params": {
       "q_long_extreme": 5,
-      "q_long_moderate": 40
+      "q_long_moderate": 60
     },
-    "expected_sharpe": -0.12286398387424381,
-    "expected_return": 0.042408341674134986,
-    "expected_max_dd": -0.35292213838017306,
-    "bootstrap": {
-      "sharpe_mean": -0.02012231398547638,
-      "sharpe_median": -0.018930253071793107,
-      "sharpe_ci_lower": -0.8552112170060647,
-      "sharpe_ci_upper": 0.8421610836189721,
-      "sharpe_prob_positive": 0.481,
-      "return_mean": 0.15042008617757982,
-      "return_ci_lower": -0.565288910879885,
-      "return_ci_upper": 1.500414498081396
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.1497139671148399,
+    "expected_return": 0.44462208680888304,
+    "expected_max_dd": -0.329072211805369,
     "characteristics": {
-      "directional_accuracy": 0.521505376344086,
-      "pred_mean": 0.003552103885222094,
-      "pred_std": 0.013315465291092064,
-      "p10": -0.0142258377528861,
-      "p90": 0.0177231251355083,
-      "pct_positive": 59.98463901689708
+      "directional_accuracy": 0.5234435049961568,
+      "pred_std": 0.01331565866342005,
+      "n_unique_preds": 5,
+      "pct_signal_days": 100.0
     }
   },
   "GARCH": {
     "params": {
-      "q_long_extreme": 15,
-      "q_long_moderate": 20
+      "q_long_extreme": 5,
+      "q_long_moderate": 30
     },
-    "expected_sharpe": 0.09690024387211335,
-    "expected_return": 0.26201483561553474,
-    "expected_max_dd": -0.20150018406307682,
-    "bootstrap": {
-      "sharpe_mean": 0.15559647797507534,
-      "sharpe_median": 0.13810005006717707,
-      "sharpe_ci_lower": -0.672536464245884,
-      "sharpe_ci_upper": 1.035464441168985,
-      "sharpe_prob_positive": 0.6314,
-      "return_mean": 0.31435342287241747,
-      "return_ci_lower": -0.32451678700161196,
-      "return_ci_upper": 1.3300014614464049
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.20172500527424167,
+    "expected_return": 0.2724695065929166,
+    "expected_max_dd": -0.21804837962372603,
     "characteristics": {
-      "directional_accuracy": 0.5368663594470046,
-      "pred_mean": 0.0008181318267713295,
-      "pred_std": 0.0007211914316392359,
-      "p10": 0.00020600179192753094,
-      "p90": 0.0017235302440340794,
-      "pct_positive": 95.16129032258065
+      "directional_accuracy": 0.5434281322059954,
+      "pred_std": 0.0007214616127911618,
+      "n_unique_preds": 932,
+      "pct_signal_days": 19.06225980015373
     }
   },
   "DLinear": {
     "params": {
-      "q_long_extreme": 10,
-      "q_long_moderate": 20
+      "q_long_extreme": 5,
+      "q_long_moderate": 60
     },
-    "expected_sharpe": 0.3802254444319103,
-    "expected_return": 0.4504410828493177,
-    "expected_max_dd": -0.18411920835056436,
-    "bootstrap": {
-      "sharpe_mean": 0.4036026797497956,
-      "sharpe_median": 0.40228751700879684,
-      "sharpe_ci_lower": -0.454476953211074,
-      "sharpe_ci_upper": 1.244874958645223,
-      "sharpe_prob_positive": 0.8176,
-      "return_mean": 0.4957207490121007,
-      "return_ci_lower": -0.10923220806857803,
-      "return_ci_upper": 1.3928888117135756
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.42558491981733726,
+    "expected_return": 0.6794619711541487,
+    "expected_max_dd": -0.33109870892470544,
     "characteristics": {
-      "directional_accuracy": 0.5368663594470046,
-      "pred_mean": 0.013229303446169169,
-      "pred_std": 0.011104091488860181,
-      "p10": 3.3280675718542785e-05,
-      "p90": 0.025880147888342617,
-      "pct_positive": 90.09216589861751
+      "directional_accuracy": 0.49269792467332824,
+      "pred_std": 0.12366592361393862,
+      "n_unique_preds": 1298,
+      "pct_signal_days": 100.0
     }
   },
   "NBEATS": {
     "params": {
-      "q_long_extreme": 5,
-      "q_long_moderate": 60
+      "q_long_extreme": 10,
+      "q_long_moderate": 20
     },
-    "expected_sharpe": 0.483964159069738,
-    "expected_return": 0.6512497778002597,
-    "expected_max_dd": -0.19051511430430354,
-    "bootstrap": {
-      "sharpe_mean": 0.5226187135862227,
-      "sharpe_median": 0.5226047818574586,
-      "sharpe_ci_lower": -0.33652702619448854,
-      "sharpe_ci_upper": 1.3637598178534756,
-      "sharpe_prob_positive": 0.8912,
-      "return_mean": 0.7432499522404391,
-      "return_ci_lower": -0.12349986081328672,
-      "return_ci_upper": 2.1076867779830795
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.18158153580204375,
+    "expected_return": 0.4443550569276935,
+    "expected_max_dd": -0.25457891985673387,
     "characteristics": {
-      "directional_accuracy": 0.45468509984639016,
-      "pred_mean": -0.0005912961362846612,
-      "pred_std": 0.00035616936875221397,
-      "p10": -0.000978531251910875,
-      "p90": -8.153964901658267e-05,
-      "pct_positive": 7.2196620583717355
+      "directional_accuracy": 0.5011529592621061,
+      "pred_std": 0.004238091716709884,
+      "n_unique_preds": 1244,
+      "pct_signal_days": 99.69254419677172
     }
   },
   "NHiTS": {
     "params": {
-      "q_long_extreme": 15,
-      "q_long_moderate": 20
+      "q_long_extreme": 5,
+      "q_long_moderate": 60
     },
-    "expected_sharpe": 0.23793977014799084,
-    "expected_return": 0.3755934240084735,
-    "expected_max_dd": -0.17636116822140813,
-    "bootstrap": {
-      "sharpe_mean": 0.29926555338144517,
-      "sharpe_median": 0.2973877520614651,
-      "sharpe_ci_lower": -0.5490271553305639,
-      "sharpe_ci_upper": 1.1624607528558908,
-      "sharpe_prob_positive": 0.7484,
-      "return_mean": 0.4437668172438629,
-      "return_ci_lower": -0.22674838368266492,
-      "return_ci_upper": 1.46260449182373
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.03753094247953464,
+    "expected_return": 0.22120957399308727,
+    "expected_max_dd": -0.4807332517555261,
     "characteristics": {
-      "directional_accuracy": 0.4539170506912442,
-      "pred_mean": -0.0026102146880345282,
-      "pred_std": 0.0014003231270964523,
-      "p10": -0.00436651373265383,
-      "p90": -0.0007471017214284794,
-      "pct_positive": 3.302611367127496
+      "directional_accuracy": 0.531129900076864,
+      "pred_std": 0.003393590299275205,
+      "n_unique_preds": 1230,
+      "pct_signal_days": 99.46195234435051
     }
   },
   "TCN": {
     "params": {
-      "q_long_extreme": 15,
-      "q_long_moderate": 60
+      "q_long_extreme": 5,
+      "q_long_moderate": 30
     },
-    "expected_sharpe": 0.3222593094444117,
-    "expected_return": 0.34828701940072704,
-    "expected_max_dd": -0.14143212680302103,
-    "bootstrap": {
-      "sharpe_mean": 0.34279433032349654,
-      "sharpe_median": 0.3456662245386889,
-      "sharpe_ci_lower": -0.47681038417841304,
-      "sharpe_ci_upper": 1.1827914504936359,
-      "sharpe_prob_positive": 0.7804,
-      "return_mean": 0.3696900369533515,
-      "return_ci_lower": -0.06314734508035418,
-      "return_ci_upper": 0.9377911286866825
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.0012628847426754,
+    "expected_return": 0.18094190477525252,
+    "expected_max_dd": -0.35044161089427517,
     "characteristics": {
-      "directional_accuracy": 0.46390168970814133,
-      "pred_mean": -0.0008147396161105055,
-      "pred_std": 0.0018202017411899454,
-      "p10": -0.0026658837493371943,
-      "p90": 0.0011310846691259206,
-      "pct_positive": 28.417818740399387
+      "directional_accuracy": 0.4619523443504996,
+      "pred_std": 0.0033818891911168085,
+      "n_unique_preds": 1211,
+      "pct_signal_days": 100.0
     }
   },
   "TFT": {
     "params": {
-      "q_long_extreme": 30,
+      "q_long_extreme": 20,
       "q_long_moderate": 60
     },
-    "expected_sharpe": 0.12776087584934953,
-    "expected_return": 0.2778847963790889,
-    "expected_max_dd": -0.1950260605126836,
-    "bootstrap": {
-      "sharpe_mean": 0.18518827800604964,
-      "sharpe_median": 0.1867761172613811,
-      "sharpe_ci_lower": -0.6847305256939292,
-      "sharpe_ci_upper": 1.0484968228633487,
-      "sharpe_prob_positive": 0.663,
-      "return_mean": 0.33369147397731247,
-      "return_ci_lower": -0.27420688622535294,
-      "return_ci_upper": 1.2391945104308228
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": -0.01992384781131298,
+    "expected_return": 0.1476727824045696,
+    "expected_max_dd": -0.4456127299118898,
     "characteristics": {
-      "directional_accuracy": 0.4646697388632873,
-      "pred_mean": -0.0016218800135060613,
-      "pred_std": 0.01177475064791829,
-      "p10": -0.014695408437259978,
-      "p90": 0.01152517438297041,
-      "pct_positive": 47.69585253456221
+      "directional_accuracy": 0.46348962336664107,
+      "pred_std": 0.03991404068833173,
+      "n_unique_preds": 1297,
+      "pct_signal_days": 100.0
     }
   },
   "CNN_LSTM": {
     "params": {
-      "q_long_extreme": 10,
-      "q_long_moderate": 20
+      "q_long_extreme": 20,
+      "q_long_moderate": 40
     },
-    "expected_sharpe": 0.11650566706890891,
-    "expected_return": 0.27556902310286047,
-    "expected_max_dd": -0.23200604207255274,
-    "bootstrap": {
-      "sharpe_mean": 0.17398183260864045,
-      "sharpe_median": 0.1612656981943928,
-      "sharpe_ci_lower": -0.6827220457534501,
-      "sharpe_ci_upper": 1.0442183958828613,
-      "sharpe_prob_positive": 0.6434,
-      "return_mean": 0.32547123931631233,
-      "return_ci_lower": -0.31520353861191347,
-      "return_ci_upper": 1.2891637048467761
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 0.5990334383114008,
+    "expected_return": 1.2899092677218786,
+    "expected_max_dd": -0.35635048285726384,
     "characteristics": {
-      "directional_accuracy": 0.4769585253456221,
-      "pred_mean": -0.0021051677507555795,
-      "pred_std": 0.0014834915093249823,
-      "p10": -0.0033561311662197112,
-      "p90": 0.0002471908926963806,
-      "pct_positive": 17.434715821812595
+      "directional_accuracy": 0.4550345887778632,
+      "pred_std": 0.010316544943477654,
+      "n_unique_preds": 1277,
+      "pct_signal_days": 100.0
     }
   },
   "LSTM_Attention": {
     "params": {
-      "q_long_extreme": 25,
-      "q_long_moderate": 30
+      "q_long_extreme": 5,
+      "q_long_moderate": 50
     },
-    "expected_sharpe": -0.20518915986592412,
-    "expected_return": 0.013031023335365433,
-    "expected_max_dd": -0.25014615935996554,
-    "bootstrap": {
-      "sharpe_mean": -0.10915567284277304,
-      "sharpe_median": -0.12241015573776848,
-      "sharpe_ci_lower": -0.9190651685712748,
-      "sharpe_ci_upper": 0.7961979361082937,
-      "sharpe_prob_positive": 0.3952,
-      "return_mean": 0.0736578459189225,
-      "return_ci_lower": -0.49121161039936845,
-      "return_ci_upper": 0.9358953290185332
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": 1.3271268183896578,
+    "expected_return": 3.999784362916704,
+    "expected_max_dd": -0.20460802594870287,
     "characteristics": {
-      "directional_accuracy": 0.4646697388632873,
-      "pred_mean": -0.010281397823339826,
-      "pred_std": 0.0070050553157114314,
-      "p10": -0.021357673965394498,
-      "p90": -0.00227791650686413,
-      "pct_positive": 3.4562211981566824
+      "directional_accuracy": 0.46963873943120676,
+      "pred_std": 0.007606662446111181,
+      "n_unique_preds": 1273,
+      "pct_signal_days": 100.0
     }
   },
   "BiLSTM": {
     "params": {
       "q_long_extreme": 5,
-      "q_long_moderate": 60
+      "q_long_moderate": 20
     },
-    "expected_sharpe": 0.021690710400580123,
-    "expected_return": 0.20011425601749733,
-    "expected_max_dd": -0.22141506537652722,
-    "bootstrap": {
-      "sharpe_mean": 0.10447042455135222,
-      "sharpe_median": 0.10357320767668597,
-      "sharpe_ci_lower": -0.7505105149115615,
-      "sharpe_ci_upper": 0.9998582570714099,
-      "sharpe_prob_positive": 0.593,
-      "return_mean": 0.28352589831990094,
-      "return_ci_lower": -0.40340096137507847,
-      "return_ci_upper": 1.4789892535937377
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": -0.08199058140168039,
+    "expected_return": 0.06200592581109299,
+    "expected_max_dd": -0.5465301137742463,
     "characteristics": {
-      "directional_accuracy": 0.478494623655914,
-      "pred_mean": -0.004885533317771902,
-      "pred_std": 0.008298476338500673,
-      "p10": -0.01580435987561941,
-      "p90": 0.004311964986845858,
-      "pct_positive": 26.804915514592935
+      "directional_accuracy": 0.46810146041506534,
+      "pred_std": 0.004538065609513019,
+      "n_unique_preds": 1243,
+      "pct_signal_days": 100.0
     }
   },
   "BiGRU": {
     "params": {
-      "q_long_extreme": 5,
-      "q_long_moderate": 30
+      "q_long_extreme": 30,
+      "q_long_moderate": 40
     },
-    "expected_sharpe": 0.5241787044325873,
-    "expected_return": 0.5217291516201168,
-    "expected_max_dd": -0.19854791793219173,
-    "bootstrap": {
-      "sharpe_mean": 0.5356745918916908,
-      "sharpe_median": 0.5412850582835033,
-      "sharpe_ci_lower": -0.31652905316125773,
-      "sharpe_ci_upper": 1.352960224810816,
-      "sharpe_prob_positive": 0.8876,
-      "return_mean": 0.5646933264824695,
-      "return_ci_lower": -0.012313273922990073,
-      "return_ci_upper": 1.399190462638829
-    },
+    "method": "meta_knn_dynamic",
+    "note": "Thresholds are DYNAMIC per day via KNN. These are the most common values for display.",
+    "expected_sharpe": -0.4571760666998933,
+    "expected_return": -0.3228770480039742,
+    "expected_max_dd": -0.5849759222485503,
     "characteristics": {
-      "directional_accuracy": 0.4608294930875576,
-      "pred_mean": -0.046850390378929414,
-      "pred_std": 0.007706815064885737,
-      "p10": -0.05676844641566277,
-      "p90": -0.03788075670599937,
-      "pct_positive": 0.0
+      "directional_accuracy": 0.5049961568024597,
+      "pred_std": 0.004455545205328223,
+      "n_unique_preds": 1242,
+      "pct_signal_days": 100.0
     }
   }
 }

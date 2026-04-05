@@ -1,24 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getModels, getModelDetail } from '../services/api';
-import type { ModelsResponse, ModelData } from '../types';
-import { DollarSign, Calculator, TrendingDown, Info } from 'lucide-react';
+import type { ModelsResponse, ModelData, Trade } from '../types';
+import { Info } from 'lucide-react';
 import { clsx } from 'clsx';
 import {
   calculateSummaryFromTrades,
   INITIAL_CAPITAL,
-  TRANSACTION_COST_BREAKDOWN
+  type CostBreakdown,
 } from '../utils/transactionCosts';
+import LoadingScreen from '../components/LoadingScreen';
+import { useTableSort } from '../hooks/useTableSort';
+import SortableHeader from '../components/SortableHeader';
+
+interface ModelCostRow {
+  model: string;
+  category: string;
+  nTrades: number;
+  grossReturn: number;
+  netReturn: number;
+  finalCapital: number;
+  costBreakdown: CostBreakdown;
+}
 
 export default function CostsPage() {
   const [modelsData, setModelsData] = useState<ModelsResponse | null>(null);
   const [modelDetails, setModelDetails] = useState<Record<string, ModelData>>({});
   const [loading, setLoading] = useState(true);
-
-  // Additional cost parameters (default 0 to match other pages)
-  const [commission, setCommission] = useState(0);
-  const [slippageBps, setSlippageBps] = useState(0);
-  const [spreadBps, setSpreadBps] = useState(0);
-  const [marginInterest, setMarginInterest] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -29,7 +36,6 @@ export default function CostsPage() {
       const data = await getModels();
       setModelsData(data);
 
-      // Load all model details for trade-based calculations
       const details: Record<string, ModelData> = {};
       await Promise.all(
         data.models.map(async (m) => {
@@ -49,243 +55,201 @@ export default function CostsPage() {
     }
   }
 
-  // Get trade-based summary for a model (consistent with Trades page)
-  function getTradeSummary(modelName: string) {
-    const detail = modelDetails[modelName];
-    if (!detail || !detail.trades || detail.trades.length === 0) {
-      return { finalCapital: INITIAL_CAPITAL, totalTxCosts: 0, netReturn: 0, grossReturn: 0 };
-    }
-    return calculateSummaryFromTrades(detail.trades, INITIAL_CAPITAL);
-  }
-
-  function calculateNetReturns(model: any) {
-    const nTrades = model.n_trades || 0;
-    const days = modelsData?.test_period.n_days || 252;
-    const initialCapital = modelsData?.config.initial_capital || INITIAL_CAPITAL;
-
-    // Get trade-based summary (consistent with Trades page)
-    const tradeSummary = getTradeSummary(model.model);
-
-    // ETF costs from trade-based calculation
-    const etfCostDollars = tradeSummary.totalTxCosts;
-    const grossReturn = tradeSummary.grossReturn;
-    const netReturnAfterEtf = tradeSummary.netReturn;
-
-    // ETF cost as % of initial capital (consistent with additional costs which are also simple %)
-    const etfCostPct = etfCostDollars / initialCapital;
-
-    // Additional broker costs (user-adjustable)
-    const slippageCost = nTrades * (slippageBps / 10000);
-    const spreadCost = nTrades * (spreadBps / 10000);
-    const commissionCost = (nTrades * commission) / initialCapital;
-
-    // Margin cost: based on time in leveraged positions (3x UPRO = 2x borrowed portion)
-    // When using 3x leverage, you're borrowing 2x (3x - 1x = 2x borrowed)
-    const pct3x = (model.pct_3x_long ?? model.pct_3x ?? 0) / 100;
-    const marginCost = pct3x * 2 * (marginInterest / 100) * (days / 252);
-
-    const additionalCosts = slippageCost + spreadCost + commissionCost + marginCost;
-    const totalCostPct = etfCostPct + additionalCosts;
-    const finalNetReturn = netReturnAfterEtf - additionalCosts;
-
-    return {
-      grossReturn,
-      netReturnAfterEtf,
-      finalNetReturn,
-      finalCapital: tradeSummary.finalCapital - (additionalCosts * initialCapital),
-      totalCostPct,
-      etfCostPct,
-      etfCostDollars,
-      additionalCosts,
-      breakdown: {
-        etf: etfCostPct,
-        slippage: slippageCost,
-        spread: spreadCost,
-        commission: commissionCost,
-        margin: marginCost
+  // Build cost rows for all models (hooks must be above early returns)
+  const modelCostsRaw: ModelCostRow[] = useMemo(() => {
+    if (!modelsData) return [];
+    return modelsData.models.map((model) => {
+      const detail = modelDetails[model.model];
+      if (!detail || !detail.trades || detail.trades.length === 0) {
+        return {
+          model: model.model,
+          category: model.category,
+          nTrades: model.n_trades,
+          grossReturn: 0,
+          netReturn: 0,
+          finalCapital: INITIAL_CAPITAL,
+          costBreakdown: { expense: 0, trading: 0, volDrag: 0, total: 0 },
+        };
       }
-    };
-  }
+      const activeTrades = detail.trades.filter((t: Trade) => Math.abs(t.entry_position) >= 0.5);
+      const summary = calculateSummaryFromTrades(detail.trades, INITIAL_CAPITAL);
+      return {
+        model: model.model,
+        category: model.category,
+        nTrades: activeTrades.length,
+        grossReturn: summary.grossReturn,
+        netReturn: summary.netReturn,
+        finalCapital: summary.finalCapital,
+        costBreakdown: summary.costBreakdown,
+      };
+    });
+  }, [modelsData, modelDetails]);
+
+  const costsAccessor = useMemo(() => ({
+    model: (r: ModelCostRow) => r.model,
+    nTrades: (r: ModelCostRow) => r.nTrades,
+    grossReturn: (r: ModelCostRow) => r.grossReturn,
+    expense: (r: ModelCostRow) => r.costBreakdown.expense,
+    trading: (r: ModelCostRow) => r.costBreakdown.trading,
+    volDrag: (r: ModelCostRow) => r.costBreakdown.volDrag,
+    totalCosts: (r: ModelCostRow) => r.costBreakdown.total,
+    netReturn: (r: ModelCostRow) => r.netReturn,
+    costImpact: (r: ModelCostRow) => (r.grossReturn - r.netReturn) * 10000,
+  }), []);
+
+  const { sortedData: modelCosts, requestSort: requestCostSort, getSortDirection: getCostSortDir } =
+    useTableSort(modelCostsRaw, 'netReturn', 'desc', costsAccessor);
 
   if (loading) {
-    return <div className="text-center py-8 text-[#737373]">Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (!modelsData) {
     return <div className="text-center py-8 text-[#c41e3a]">Failed to load data</div>;
   }
 
-  const modelCosts = modelsData.models.map(model => ({
-    model: model.model,
-    category: model.category,
-    nTrades: model.n_trades,
-    avgLeverage: model.mean_position,
-    ...calculateNetReturns(model)
-  })).sort((a, b) => b.finalNetReturn - a.finalNetReturn);
+  // Aggregate KPIs
+  const n = modelCostsRaw.length;
+  const avgTotalCost = n > 0 ? modelCostsRaw.reduce((s, m) => s + m.costBreakdown.total, 0) / n : 0;
+  const avgExpense = n > 0 ? modelCostsRaw.reduce((s, m) => s + m.costBreakdown.expense, 0) / n : 0;
+  const avgTrading = n > 0 ? modelCostsRaw.reduce((s, m) => s + m.costBreakdown.trading, 0) / n : 0;
+  const avgVolDrag = n > 0 ? modelCostsRaw.reduce((s, m) => s + m.costBreakdown.volDrag, 0) / n : 0;
+
+  const testPeriod = modelsData.test_period;
+  const startDate = testPeriod?.start ?? '';
+  const endDate = testPeriod?.end ?? '';
+
+  // Top 7 models for the visualization
+  const topModels = modelCosts.slice(0, 7);
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div>
         <h2 className="text-xl font-semibold">Transaction Cost Analysis</h2>
-      </div>
-
-      {/* ETF Bid-Ask Spreads - Base Costs (LONG-ONLY) */}
-      <div className="card border-l-4 border-[#f59e0b]">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Info className="w-5 h-5 text-[#f59e0b]" />
-            <h3 className="text-lg font-medium">Base Transaction Costs (Long-Only ETF Bid-Ask Spreads)</h3>
-          </div>
-          <span className="text-xs bg-[#f59e0b]/20 text-[#f59e0b] px-2 py-1 rounded">Long-Only Strategy</span>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {Object.entries(TRANSACTION_COST_BREAKDOWN)
-            .filter(([pos]) => ['+3x (UPRO)', '+1x (SPY)', '0 (Cash)'].includes(pos))
-            .map(([position, data]) => (
-            <div key={position} className="bg-[#1a1a1a] rounded p-3 text-center">
-              <div className="text-xs text-[#737373] uppercase mb-1">{position}</div>
-              <div className="text-lg font-semibold text-[#f59e0b]">{data.label}</div>
-              <div className="text-xs text-[#525252] mt-1">round-trip</div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 text-xs text-[#525252]">
-          Long-Only strategy uses only UPRO (3x), SPY (1x), and Cash. Each trade incurs entry (buy) + exit (sell) costs = 2× bid-ask spread.
-        </div>
-      </div>
-
-      {/* Additional Cost Parameters */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-[#737373]" />
-            <h3 className="text-lg font-medium">Additional Broker Costs (Optional)</h3>
-          </div>
-          <button
-            onClick={() => {
-              setCommission(0);
-              setSlippageBps(0);
-              setSpreadBps(0);
-              setMarginInterest(0);
-            }}
-            className="text-xs text-[#737373] hover:text-white px-2 py-1 rounded border border-[#333] hover:border-[#525252] transition-colors"
-          >
-            Reset to 0
-          </button>
-        </div>
-        <p className="text-sm text-[#525252] mb-4">
-          Adjust these parameters to simulate additional broker costs beyond ETF spreads. Set all to 0 to match other pages.
+        <p className="text-sm text-[#737373] mt-1">
+          {startDate} to {endDate} &middot; Initial capital: ${INITIAL_CAPITAL.toLocaleString()}
         </p>
+      </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm text-[#737373] mb-1">Commission per Trade ($)</label>
-            <input
-              type="number"
-              value={commission}
-              onChange={(e) => setCommission(parseFloat(e.target.value) || 0)}
-              className="w-full bg-[#1a1a1a] border border-[#222222] rounded px-3 py-2 text-sm"
-              step="0.01"
-              min="0"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-[#737373] mb-1">Slippage (bps)</label>
-            <input
-              type="number"
-              value={slippageBps}
-              onChange={(e) => setSlippageBps(parseFloat(e.target.value) || 0)}
-              className="w-full bg-[#1a1a1a] border border-[#222222] rounded px-3 py-2 text-sm"
-              step="1"
-              min="0"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-[#737373] mb-1">Spread (bps)</label>
-            <input
-              type="number"
-              value={spreadBps}
-              onChange={(e) => setSpreadBps(parseFloat(e.target.value) || 0)}
-              className="w-full bg-[#1a1a1a] border border-[#222222] rounded px-3 py-2 text-sm"
-              step="1"
-              min="0"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-[#737373] mb-1">Margin Interest (% annual)</label>
-            <input
-              type="number"
-              value={marginInterest}
-              onChange={(e) => setMarginInterest(parseFloat(e.target.value) || 0)}
-              className="w-full bg-[#1a1a1a] border border-[#222222] rounded px-3 py-2 text-sm"
-              step="0.1"
-              min="0"
-            />
-          </div>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard
+          label="Avg Total Cost"
+          dollars={avgTotalCost}
+          initial={INITIAL_CAPITAL}
+        />
+        <KpiCard
+          label="Avg Expense Ratio"
+          dollars={avgExpense}
+          initial={INITIAL_CAPITAL}
+          sub="Annual ETF fees"
+        />
+        <KpiCard
+          label="Avg Bid-Ask Spread"
+          dollars={avgTrading}
+          initial={INITIAL_CAPITAL}
+          sub="Entry + exit spreads"
+        />
+        <KpiCard
+          label="Avg Volatility Drag"
+          dollars={avgVolDrag}
+          initial={INITIAL_CAPITAL}
+          sub="3x leverage rebalancing"
+        />
+      </div>
+
+      {/* Cost Type Explanation */}
+      <div className="card border-l-4 border-[#f59e0b]">
+        <div className="flex items-center gap-2 mb-4">
+          <Info className="w-5 h-5 text-[#f59e0b]" />
+          <h3 className="text-base font-medium">Three Sources of Transaction Costs</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CostExplanation
+            title="Expense Ratio"
+            formula="annual_fee / 252 trading days"
+            details={[
+              'UPRO (3x): 0.91% / year',
+              'SPY (1x): 0.09% / year',
+              'Cash: 0%',
+            ]}
+          />
+          <CostExplanation
+            title="Bid-Ask Spread"
+            formula="(entry + exit) spread per trade"
+            details={[
+              'UPRO: 0.05% × 2 = 0.10%',
+              'SPY: 0.02% × 2 = 0.04%',
+              'Applied on position changes',
+            ]}
+          />
+          <CostExplanation
+            title="Volatility Drag"
+            formula="daily drag from 3x leverage rebalancing"
+            details={[
+              'Only applies to UPRO days',
+              'Compounds over holding period',
+              'Largest cost for leveraged positions',
+            ]}
+          />
         </div>
       </div>
 
-
-      {/* Impact Summary */}
+      {/* Cost Impact Table */}
       <div className="card">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingDown className="w-5 h-5 text-[#c41e3a]" />
-          <h3 className="text-lg font-medium">Cost Impact by Model</h3>
-        </div>
-
+        <h3 className="text-base font-medium mb-4">Cost Impact by Model</h3>
         <div className="overflow-x-auto">
           <table className="table-dark">
             <thead>
               <tr>
                 <th className="w-8">#</th>
-                <th className="w-36">Model</th>
-                <th className="w-16 text-right">Trades</th>
-                <th className="w-24 text-right">Gross Cap</th>
-                <th className="w-20 text-right">ETF Costs</th>
-                <th className="w-20 text-right">Add. Costs</th>
-                <th className="w-24 text-right">Total Costs</th>
-                <th className="w-24 text-right">Net Cap</th>
-                <th className="w-20 text-right">Net Ret</th>
+                <SortableHeader label="Model" sortKey="model" activeDirection={getCostSortDir('model')} onSort={requestCostSort} />
+                <SortableHeader label="Trades" sortKey="nTrades" activeDirection={getCostSortDir('nTrades')} onSort={requestCostSort} className="text-right" />
+                <SortableHeader label="Gross Return" sortKey="grossReturn" activeDirection={getCostSortDir('grossReturn')} onSort={requestCostSort} className="text-right" />
+                <SortableHeader label="Expense" sortKey="expense" activeDirection={getCostSortDir('expense')} onSort={requestCostSort} className="text-right" />
+                <SortableHeader label="Trading" sortKey="trading" activeDirection={getCostSortDir('trading')} onSort={requestCostSort} className="text-right" />
+                <SortableHeader label="Vol Drag" sortKey="volDrag" activeDirection={getCostSortDir('volDrag')} onSort={requestCostSort} className="text-right" />
+                <SortableHeader label="Total Costs" sortKey="totalCosts" activeDirection={getCostSortDir('totalCosts')} onSort={requestCostSort} className="text-right" />
+                <SortableHeader label="Net Return" sortKey="netReturn" activeDirection={getCostSortDir('netReturn')} onSort={requestCostSort} className="text-right" />
+                <SortableHeader label="Cost Impact" sortKey="costImpact" activeDirection={getCostSortDir('costImpact')} onSort={requestCostSort} className="text-right" />
               </tr>
             </thead>
             <tbody>
-              {modelCosts.map((model, idx) => {
-                const additionalCostsDollars = model.additionalCosts * INITIAL_CAPITAL;
-                const totalCostsDollars = model.etfCostDollars + additionalCostsDollars;
-                // Gross Capital = Net Capital + Total Costs (so Gross - Costs = Net)
-                const grossCapital = model.finalCapital + totalCostsDollars;
+              {modelCosts.map((row, idx) => {
+                const costImpactBps = (row.grossReturn - row.netReturn) * 10000;
+                const grossCapital = row.finalCapital + row.costBreakdown.total;
                 return (
-                  <tr key={model.model}>
-                    <td className="text-[#737373]">{idx + 1}</td>
-                    <td className="font-medium">{model.model}</td>
-                    <td className="text-right font-mono text-[#737373]">{model.nTrades}</td>
+                  <tr key={row.model}>
+                    <td className="text-[#525252]">{idx + 1}</td>
+                    <td className="font-medium">{row.model}</td>
+                    <td className="text-right font-mono text-[#737373]">{row.nTrades}</td>
                     <td className={clsx(
-                      "text-right font-mono",
-                      model.grossReturn >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
+                      'text-right font-mono',
+                      row.grossReturn >= 0 ? 'text-[#00c853]' : 'text-[#c41e3a]'
                     )}>
                       ${grossCapital.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </td>
                     <td className="text-right font-mono text-[#f59e0b]">
-                      -${model.etfCostDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      -${row.costBreakdown.expense.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </td>
-                    <td className="text-right font-mono text-[#c41e3a]">
-                      {additionalCostsDollars > 0 ? `-$${additionalCostsDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '$0'}
+                    <td className="text-right font-mono text-[#f59e0b]">
+                      -${row.costBreakdown.trading.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </td>
+                    <td className="text-right font-mono text-[#f59e0b]">
+                      -${row.costBreakdown.volDrag.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </td>
                     <td className="text-right font-mono text-[#f59e0b] font-medium">
-                      -${totalCostsDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      -${row.costBreakdown.total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </td>
                     <td className={clsx(
-                      "text-right font-mono font-medium",
-                      model.finalCapital >= INITIAL_CAPITAL ? "text-[#00c853]" : "text-[#c41e3a]"
+                      'text-right font-mono font-medium',
+                      row.netReturn >= 0 ? 'text-[#00c853]' : 'text-[#c41e3a]'
                     )}>
-                      ${model.finalCapital.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      {row.netReturn >= 0 ? '+' : ''}{(row.netReturn * 100).toFixed(1)}%
                     </td>
-                    <td className={clsx(
-                      "text-right font-mono",
-                      model.finalNetReturn >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
-                    )}>
-                      {(model.finalNetReturn * 100).toFixed(1)}%
+                    <td className="text-right font-mono text-[#737373]">
+                      -{costImpactBps.toFixed(0)} bps
                     </td>
                   </tr>
                 );
@@ -295,68 +259,101 @@ export default function CostsPage() {
         </div>
       </div>
 
-      {/* Cost Breakdown for Top Model */}
-      {modelCosts.length > 0 && (() => {
-        const topModel = modelCosts[0];
-        const addCostsDollars = topModel.additionalCosts * INITIAL_CAPITAL;
-        const totalCostsDollars = topModel.etfCostDollars + addCostsDollars;
-        const slippageDollars = topModel.breakdown.slippage * INITIAL_CAPITAL;
-        const spreadDollars = topModel.breakdown.spread * INITIAL_CAPITAL;
-        const commissionDollars = topModel.breakdown.commission * INITIAL_CAPITAL;
-        const marginDollars = topModel.breakdown.margin * INITIAL_CAPITAL;
+      {/* Cost Breakdown Visualization */}
+      <div className="card">
+        <h3 className="text-base font-medium mb-4">Cost Composition — Top Models</h3>
+        <p className="text-xs text-[#525252] mb-4">Proportion of each cost type relative to total costs</p>
+        <div className="space-y-3">
+          {topModels.map((row) => {
+            const total = row.costBreakdown.total || 1;
+            const expPct = (row.costBreakdown.expense / total) * 100;
+            const tradPct = (row.costBreakdown.trading / total) * 100;
+            const volPct = (row.costBreakdown.volDrag / total) * 100;
+            return (
+              <div key={row.model} className="flex items-center gap-3">
+                <div className="w-32 text-xs font-medium truncate text-right">{row.model}</div>
+                <div className="flex-1 h-5 bg-[#0a0a0a] rounded overflow-hidden flex">
+                  {expPct > 0 && (
+                    <div
+                      className="h-full bg-[#f59e0b]"
+                      style={{ width: `${expPct}%` }}
+                      title={`Expense: ${expPct.toFixed(1)}%`}
+                    />
+                  )}
+                  {tradPct > 0 && (
+                    <div
+                      className="h-full bg-[#3b82f6]"
+                      style={{ width: `${tradPct}%` }}
+                      title={`Trading: ${tradPct.toFixed(1)}%`}
+                    />
+                  )}
+                  {volPct > 0 && (
+                    <div
+                      className="h-full bg-[#c41e3a]"
+                      style={{ width: `${volPct}%` }}
+                      title={`Vol Drag: ${volPct.toFixed(1)}%`}
+                    />
+                  )}
+                </div>
+                <div className="w-24 text-right text-xs font-mono text-[#737373]">
+                  ${row.costBreakdown.total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-5 mt-4 text-xs text-[#737373]">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded-sm bg-[#f59e0b]" /> Expense Ratio
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded-sm bg-[#3b82f6]" /> Bid-Ask Spread
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded-sm bg-[#c41e3a]" /> Volatility Drag
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        return (
-          <div className="card">
-            <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="w-5 h-5 text-[#737373]" />
-              <h3 className="text-lg font-medium">
-                Cost Breakdown: {topModel.model}
-              </h3>
-            </div>
+/* ---------- Sub-components ---------- */
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="bg-[#1a1a1a] rounded p-4 border-l-2 border-[#f59e0b]">
-                <div className="text-xs text-[#737373] uppercase">ETF Bid-Ask</div>
-                <div className="text-xl font-semibold text-[#f59e0b] mt-1">
-                  -${topModel.etfCostDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                </div>
-                <div className="text-xs text-[#525252] mt-1">
-                  {topModel.nTrades} trades
-                </div>
-              </div>
-              <div className="bg-[#1a1a1a] rounded p-4">
-                <div className="text-xs text-[#737373] uppercase">Slippage</div>
-                <div className="text-xl font-semibold text-[#c41e3a] mt-1">
-                  {slippageDollars > 0 ? `-$${slippageDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '$0'}
-                </div>
-              </div>
-              <div className="bg-[#1a1a1a] rounded p-4">
-                <div className="text-xs text-[#737373] uppercase">Spread</div>
-                <div className="text-xl font-semibold text-[#c41e3a] mt-1">
-                  {spreadDollars > 0 ? `-$${spreadDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '$0'}
-                </div>
-              </div>
-              <div className="bg-[#1a1a1a] rounded p-4">
-                <div className="text-xs text-[#737373] uppercase">Commission</div>
-                <div className="text-xl font-semibold text-[#c41e3a] mt-1">
-                  {commissionDollars > 0 ? `-$${commissionDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '$0'}
-                </div>
-              </div>
-              <div className="bg-[#1a1a1a] rounded p-4">
-                <div className="text-xs text-[#737373] uppercase">Margin Interest</div>
-                <div className="text-xl font-semibold text-[#c41e3a] mt-1">
-                  {marginDollars > 0 ? `-$${marginDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '$0'}
-                </div>
-              </div>
-            </div>
+function KpiCard({ label, dollars, initial, sub }: {
+  label: string;
+  dollars: number;
+  initial: number;
+  sub?: string;
+}) {
+  const pct = (dollars / initial) * 100;
+  return (
+    <div className="metric-card">
+      <div className="metric-label">{label}</div>
+      <div className="text-xl font-semibold mt-2 text-[#f59e0b]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+        ${dollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+      </div>
+      <div className="text-xs text-[#525252] mt-1">
+        {pct.toFixed(2)}% of capital{sub ? ` · ${sub}` : ''}
+      </div>
+    </div>
+  );
+}
 
-            <div className="mt-4 p-3 bg-[#1a1a1a] rounded text-sm text-[#737373]">
-              With {topModel.nTrades} trades, total costs: <span className="text-[#f59e0b] font-medium">-${totalCostsDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
-              {' '}(ETF: ${topModel.etfCostDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })} + Additional: ${addCostsDollars.toLocaleString('en-US', { maximumFractionDigits: 0 })})
-            </div>
-          </div>
-        );
-      })()}
+function CostExplanation({ title, formula, details }: {
+  title: string;
+  formula: string;
+  details: string[];
+}) {
+  return (
+    <div className="bg-[#0d0d0d] rounded p-4">
+      <div className="text-sm font-medium text-[#f5f5f5] mb-1">{title}</div>
+      <div className="text-xs text-[#f59e0b] font-mono mb-2">{formula}</div>
+      <ul className="space-y-1">
+        {details.map((d, i) => (
+          <li key={i} className="text-xs text-[#737373]">{d}</li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import type {
   ModelsResponse,
   ModelData,
   MarketData,
-  SignalsData,
   RegimeData,
   ModelMetrics
 } from '../types';
@@ -124,17 +123,6 @@ export async function getMarketData(): Promise<MarketData> {
   return response.data;
 }
 
-// Signals
-export async function getSignals(): Promise<SignalsData> {
-  const cacheKey = 'signals';
-  const cached = getCached<SignalsData>(cacheKey);
-  if (cached) return cached;
-
-  const response = await api.get('/api/signals');
-  setCache(cacheKey, response.data);
-  return response.data;
-}
-
 // Regimes
 export async function getRegimes(): Promise<RegimeData> {
   const cacheKey = 'regimes';
@@ -143,21 +131,6 @@ export async function getRegimes(): Promise<RegimeData> {
 
   const response = await api.get('/api/regimes');
   setCache(cacheKey, response.data);
-  return response.data;
-}
-
-// Compare
-export async function compareModels(
-  models: string[],
-  startDate?: string,
-  endDate?: string
-): Promise<{ models: any[] }> {
-  const params = new URLSearchParams();
-  params.append('models', models.join(','));
-  if (startDate) params.append('start_date', startDate);
-  if (endDate) params.append('end_date', endDate);
-
-  const response = await api.get(`/api/compare?${params}`);
   return response.data;
 }
 

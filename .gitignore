@@ -70,6 +70,11 @@ models/checkpoints/
 
 # Compartir profesor (duplicate folder)
 compartir_profesor/
+compartir_profesor.zip
+
+# Temporary audit scripts
+_audit_*.py
+_write_audit.py
 
 # Jupyter
 .ipynb_checkpoints/

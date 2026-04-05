@@ -6,6 +6,7 @@ import { createChart, IChartApi, ITimeScaleApi } from 'lightweight-charts';
 import { ChevronLeft, ChevronRight, Calendar, Settings, TrendingUp, AlertTriangle, DollarSign, BarChart2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { calculateSummaryFromTrades, buildNetEquityCurve, INITIAL_CAPITAL } from '../utils/transactionCosts';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function DetailPage() {
   const { modelName } = useParams();
@@ -296,7 +297,7 @@ export default function DetailPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-8 text-[#737373]">Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (!modelData) {
@@ -371,11 +372,11 @@ export default function DetailPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="text-center p-3 bg-[#0a0a0a] rounded">
             <div className="text-xs text-[#525252] mb-1">3x Long (UPRO)</div>
-            <div className="text-2xl font-bold text-[#00c853]">Top {params.q_3x ?? params.q_long_extreme ?? 10}%</div>
+            <div className="text-2xl font-bold text-[#00c853]">Top {params.q_3x ?? 10}%</div>
           </div>
           <div className="text-center p-3 bg-[#0a0a0a] rounded">
             <div className="text-xs text-[#525252] mb-1">1x Long (SPY)</div>
-            <div className="text-2xl font-bold text-[#22c55e]">Top {params.q_1x ?? params.q_long_moderate ?? 30}%</div>
+            <div className="text-2xl font-bold text-[#22c55e]">Top {params.q_1x ?? 30}%</div>
           </div>
           <div className="text-center p-3 bg-[#0a0a0a] rounded">
             <div className="text-xs text-[#525252] mb-1">Cash</div>
@@ -479,7 +480,7 @@ export default function DetailPage() {
             "metric-value",
             tradeSummary.netReturn >= 0 ? "text-[#00c853]" : "text-[#c41e3a]"
           )}>
-            {(tradeSummary.netReturn * 100).toFixed(0)}%
+            {(tradeSummary.netReturn * 100).toFixed(1)}%
           </div>
           <div className="text-xs text-[#f59e0b] mt-1">
             Tx: -${(tradeSummary.totalTxCosts ?? 0).toFixed(0)}
@@ -491,7 +492,7 @@ export default function DetailPage() {
             <TrendingUp className="w-4 h-4" />
             <span className="metric-label">Sharpe Ratio</span>
           </div>
-          <div className="metric-value text-white">{metrics.sharpe.toFixed(2)}</div>
+          <div className="metric-value text-white">{(metrics.sharpe ?? 0).toFixed(2)}</div>
           {metrics.sharpe_ci_lower !== undefined && metrics.sharpe_ci_upper !== undefined && (
             <div className="text-xs text-[#525252] mt-1">
               [{metrics.sharpe_ci_lower.toFixed(2)}, {metrics.sharpe_ci_upper.toFixed(2)}]
@@ -514,12 +515,12 @@ export default function DetailPage() {
 
         <div className="metric-card">
           <div className="metric-label">Sortino</div>
-          <div className="metric-value text-white">{metrics.sortino.toFixed(2)}</div>
+          <div className="metric-value text-white">{(metrics.sortino ?? 0).toFixed(2)}</div>
         </div>
 
         <div className="metric-card">
           <div className="metric-label">Calmar</div>
-          <div className="metric-value text-white">{metrics.calmar.toFixed(2)}</div>
+          <div className="metric-value text-white">{(metrics.calmar ?? 0).toFixed(2)}</div>
         </div>
 
         <div className="metric-card">
@@ -528,7 +529,7 @@ export default function DetailPage() {
             <span className="metric-label">Max Drawdown</span>
           </div>
           <div className="metric-value text-[#c41e3a]">
-            {(metrics.max_drawdown * 100).toFixed(1)}%
+            {((metrics.max_drawdown ?? 0) * 100).toFixed(1)}%
           </div>
         </div>
       </div>
@@ -554,8 +555,12 @@ export default function DetailPage() {
         )}
 
         <div className="metric-card">
-          <div className="metric-label">Total Trades</div>
-          <div className="metric-value text-white">{metrics.n_trades}</div>
+          <div className="metric-label">Active Trades</div>
+          <div className="metric-value text-white">
+            {modelData?.trades?.length
+              ? modelData.trades.filter(t => Math.abs(t.entry_position) >= 0.5).length
+              : metrics.n_trades}
+          </div>
         </div>
 
         <div className="metric-card">
@@ -565,26 +570,6 @@ export default function DetailPage() {
           </div>
         </div>
 
-        {metrics.orig_sharpe !== undefined && (
-          <div className="metric-card">
-            <div className="metric-label">Original Sharpe</div>
-            <div className="metric-value text-[#525252]">
-              {metrics.orig_sharpe.toFixed(2)}
-            </div>
-          </div>
-        )}
-
-        {metrics.sharpe_improvement !== undefined && (
-          <div className="metric-card">
-            <div className="metric-label">Sharpe Improvement</div>
-            <div className={clsx(
-              "metric-value",
-              metrics.sharpe_improvement > 0 ? "text-[#00c853]" : "text-[#c41e3a]"
-            )}>
-              {metrics.sharpe_improvement > 0 ? '+' : ''}{metrics.sharpe_improvement.toFixed(2)}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Position Distribution - LONG-ONLY */}
@@ -596,11 +581,11 @@ export default function DetailPage() {
         <div className="flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-[#00c853]" />
-            <span className="text-sm text-[#a3a3a3]">3x UPRO: {(metrics.pct_3x_long ?? metrics.pct_3x ?? 0).toFixed(1)}%</span>
+            <span className="text-sm text-[#a3a3a3]">3x UPRO: {(metrics.pct_3x ?? 0).toFixed(1)}%</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-[#22d3ee]" />
-            <span className="text-sm text-[#a3a3a3]">1x SPY: {(metrics.pct_1x ?? ((metrics.pct_long ?? 0) - (metrics.pct_3x_long ?? 0))).toFixed(1)}%</span>
+            <span className="text-sm text-[#a3a3a3]">1x SPY: {(metrics.pct_1x ?? 0).toFixed(1)}%</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-[#525252]" />
@@ -608,8 +593,8 @@ export default function DetailPage() {
           </div>
         </div>
         <div className="mt-4 h-8 rounded overflow-hidden flex">
-          <div style={{ width: `${metrics.pct_3x_long ?? metrics.pct_3x ?? 0}%` }} className="bg-[#00c853]" title="3x UPRO" />
-          <div style={{ width: `${metrics.pct_1x ?? ((metrics.pct_long ?? 0) - (metrics.pct_3x_long ?? 0))}%` }} className="bg-[#22d3ee]" title="1x SPY" />
+          <div style={{ width: `${metrics.pct_3x ?? 0}%` }} className="bg-[#00c853]" title="3x UPRO" />
+          <div style={{ width: `${metrics.pct_1x ?? 0}%` }} className="bg-[#22d3ee]" title="1x SPY" />
           <div style={{ width: `${metrics.pct_cash ?? 0}%` }} className="bg-[#525252]" title="Cash" />
         </div>
       </div>

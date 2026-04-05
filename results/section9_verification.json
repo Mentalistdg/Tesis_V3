@@ -1,0 +1,1041 @@
+{
+  "section": "Section 9 - Regime Analysis",
+  "total_test_days": 1301,
+  "checks": [
+    {
+      "check": "Regime 'sideways' day count",
+      "paper_value": 938,
+      "computed_value": 938,
+      "difference": 0,
+      "status": "PASS"
+    },
+    {
+      "check": "Regime 'sideways' percentage",
+      "paper_value": 72.1,
+      "computed_value": 72.0984,
+      "difference": 0.0016,
+      "status": "PASS"
+    },
+    {
+      "check": "Regime 'bull' day count",
+      "paper_value": 133,
+      "computed_value": 133,
+      "difference": 0,
+      "status": "PASS"
+    },
+    {
+      "check": "Regime 'bull' percentage",
+      "paper_value": 10.2,
+      "computed_value": 10.2229,
+      "difference": 0.0229,
+      "status": "PASS"
+    },
+    {
+      "check": "Regime 'high_vol' day count",
+      "paper_value": 121,
+      "computed_value": 121,
+      "difference": 0,
+      "status": "PASS"
+    },
+    {
+      "check": "Regime 'high_vol' percentage",
+      "paper_value": 9.3,
+      "computed_value": 9.3005,
+      "difference": 0.0005,
+      "status": "PASS"
+    },
+    {
+      "check": "Regime 'bear' day count",
+      "paper_value": 49,
+      "computed_value": 49,
+      "difference": 0,
+      "status": "PASS"
+    },
+    {
+      "check": "Regime 'bear' percentage",
+      "paper_value": 3.8,
+      "computed_value": 3.7663,
+      "difference": 0.0337,
+      "status": "PASS"
+    },
+    {
+      "check": "Regime 'unknown' day count",
+      "paper_value": 60,
+      "computed_value": 60,
+      "difference": 0,
+      "status": "PASS"
+    },
+    {
+      "check": "Regime 'unknown' percentage",
+      "paper_value": 4.6,
+      "computed_value": 4.6118,
+      "difference": 0.0118,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: CatBoost",
+      "paper_value": 5.6,
+      "computed_value": 5.5546,
+      "difference": 0.0454,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: DLinear",
+      "paper_value": 5.6,
+      "computed_value": 5.6202,
+      "difference": 0.0202,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: GradientBoosting",
+      "paper_value": 4.8,
+      "computed_value": 4.8084,
+      "difference": 0.0084,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: GARCH",
+      "paper_value": 4.2,
+      "computed_value": 4.1547,
+      "difference": 0.0453,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: SeasonalNaive",
+      "paper_value": -18.5,
+      "computed_value": -18.543,
+      "difference": 0.043,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: TFT",
+      "paper_value": -9.0,
+      "computed_value": -9.0475,
+      "difference": 0.0475,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: NBEATS",
+      "paper_value": -6.8,
+      "computed_value": -6.7529,
+      "difference": 0.0471,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: LSTM_Attention",
+      "paper_value": -3.3,
+      "computed_value": -3.2864,
+      "difference": 0.0136,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: Ridge",
+      "paper_value": -5.7,
+      "computed_value": -5.6532,
+      "difference": 0.0468,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: CNN_LSTM",
+      "paper_value": -1.1,
+      "computed_value": -1.1281,
+      "difference": 0.0281,
+      "status": "PASS"
+    },
+    {
+      "check": "Bull: RandomForest",
+      "paper_value": 2.4,
+      "computed_value": 2.442,
+      "difference": 0.042,
+      "status": "PASS"
+    },
+    {
+      "check": "Bear: BiLSTM",
+      "paper_value": 70.6,
+      "computed_value": 70.6192,
+      "difference": 0.0192,
+      "status": "PASS"
+    },
+    {
+      "check": "Bear: RandomForest",
+      "paper_value": 55.5,
+      "computed_value": 55.4972,
+      "difference": 0.0028,
+      "status": "PASS"
+    },
+    {
+      "check": "Bear: Ridge",
+      "paper_value": 55.5,
+      "computed_value": 55.5283,
+      "difference": 0.0283,
+      "status": "PASS"
+    },
+    {
+      "check": "Bear: LSTM_Attention",
+      "paper_value": 54.6,
+      "computed_value": 54.6039,
+      "difference": 0.0039,
+      "status": "PASS"
+    },
+    {
+      "check": "Bear: Theta",
+      "paper_value": 0.4,
+      "computed_value": 0.4484,
+      "difference": 0.0484,
+      "status": "PASS"
+    },
+    {
+      "check": "Bear: AutoARIMA",
+      "paper_value": 0.4,
+      "computed_value": 0.4484,
+      "difference": 0.0484,
+      "status": "PASS"
+    },
+    {
+      "check": "Bear: GARCH",
+      "paper_value": -6.3,
+      "computed_value": -6.3216,
+      "difference": 0.0216,
+      "status": "PASS"
+    },
+    {
+      "check": "Bear: models with positive returns",
+      "paper_value": 21,
+      "computed_value": 22,
+      "difference": 1,
+      "status": "FAIL"
+    },
+    {
+      "check": "HighVol: SeasonalNaive",
+      "paper_value": 37.6,
+      "computed_value": 37.5969,
+      "difference": 0.0031,
+      "status": "PASS"
+    },
+    {
+      "check": "HighVol: Ridge",
+      "paper_value": 35.9,
+      "computed_value": 35.9063,
+      "difference": 0.0063,
+      "status": "PASS"
+    },
+    {
+      "check": "HighVol: GradientBoosting",
+      "paper_value": 23.5,
+      "computed_value": 23.4988,
+      "difference": 0.0012,
+      "status": "PASS"
+    },
+    {
+      "check": "HighVol: BiLSTM",
+      "paper_value": -15.3,
+      "computed_value": -15.32,
+      "difference": 0.02,
+      "status": "PASS"
+    },
+    {
+      "check": "HighVol: ElasticNet",
+      "paper_value": -11.1,
+      "computed_value": -11.1226,
+      "difference": 0.0226,
+      "status": "PASS"
+    },
+    {
+      "check": "HighVol: BiGRU",
+      "paper_value": -7.8,
+      "computed_value": -7.809,
+      "difference": 0.009,
+      "status": "PASS"
+    },
+    {
+      "check": "HighVol: GARCH",
+      "paper_value": -1.6,
+      "computed_value": -1.6137,
+      "difference": 0.0137,
+      "status": "PASS"
+    },
+    {
+      "check": "Sideways: LSTM_Attention",
+      "paper_value": 208.5,
+      "computed_value": 208.5003,
+      "difference": 0.0003,
+      "status": "PASS"
+    },
+    {
+      "check": "Sideways: Ridge",
+      "paper_value": 78.8,
+      "computed_value": 78.7826,
+      "difference": 0.0174,
+      "status": "PASS"
+    },
+    {
+      "check": "Sideways: RandomForest",
+      "paper_value": 27.2,
+      "computed_value": 27.151,
+      "difference": 0.049,
+      "status": "PASS"
+    },
+    {
+      "check": "Sideways: BiLSTM",
+      "paper_value": -30.8,
+      "computed_value": -30.8443,
+      "difference": 0.0443,
+      "status": "PASS"
+    },
+    {
+      "check": "Sideways: BiGRU",
+      "paper_value": -30.0,
+      "computed_value": -30.0184,
+      "difference": 0.0184,
+      "status": "PASS"
+    },
+    {
+      "check": "Sideways: XGBoost",
+      "paper_value": -24.3,
+      "computed_value": -24.291,
+      "difference": 0.009,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: LSTM_Attention/bull",
+      "paper_value": -3.3,
+      "computed_value": -3.2864,
+      "difference": 0.0136,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: LSTM_Attention/bear",
+      "paper_value": 54.6,
+      "computed_value": 54.6039,
+      "difference": 0.0039,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: LSTM_Attention/sideways",
+      "paper_value": 208.5,
+      "computed_value": 208.5003,
+      "difference": 0.0003,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: LSTM_Attention/high_vol",
+      "paper_value": -3.4,
+      "computed_value": -3.3722,
+      "difference": 0.0278,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: Ridge/bull",
+      "paper_value": -5.7,
+      "computed_value": -5.6532,
+      "difference": 0.0468,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: Ridge/bear",
+      "paper_value": 55.5,
+      "computed_value": 55.5283,
+      "difference": 0.0283,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: Ridge/sideways",
+      "paper_value": 78.8,
+      "computed_value": 78.7826,
+      "difference": 0.0174,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: Ridge/high_vol",
+      "paper_value": 35.9,
+      "computed_value": 35.9063,
+      "difference": 0.0063,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: RandomForest/bull",
+      "paper_value": 2.4,
+      "computed_value": 2.442,
+      "difference": 0.042,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: RandomForest/bear",
+      "paper_value": 55.5,
+      "computed_value": 55.4972,
+      "difference": 0.0028,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: RandomForest/sideways",
+      "paper_value": 27.2,
+      "computed_value": 27.151,
+      "difference": 0.049,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: RandomForest/high_vol",
+      "paper_value": 14.0,
+      "computed_value": 13.994,
+      "difference": 0.006,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: CNN_LSTM/bull",
+      "paper_value": -1.1,
+      "computed_value": -1.1281,
+      "difference": 0.0281,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: CNN_LSTM/bear",
+      "paper_value": 44.3,
+      "computed_value": 44.3007,
+      "difference": 0.0007,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: CNN_LSTM/sideways",
+      "paper_value": 16.5,
+      "computed_value": 16.4845,
+      "difference": 0.0155,
+      "status": "PASS"
+    },
+    {
+      "check": "CrossRegime: CNN_LSTM/high_vol",
+      "paper_value": 19.2,
+      "computed_value": 19.1952,
+      "difference": 0.0048,
+      "status": "PASS"
+    },
+    {
+      "check": "LSTM_Att total return (%)",
+      "paper_value": 400.0,
+      "computed_value": 399.9784,
+      "difference": 0.0216,
+      "status": "PASS"
+    },
+    {
+      "check": "LSTM_Att max drawdown (%)",
+      "paper_value": 20.5,
+      "computed_value": 20.4608,
+      "difference": 0.0392,
+      "status": "PASS"
+    },
+    {
+      "check": "LSTM_Att Sharpe ratio",
+      "paper_value": 1.33,
+      "computed_value": 1.3271,
+      "difference": 0.0029,
+      "status": "PASS"
+    },
+    {
+      "check": "LSTM_Att pct cash (%)",
+      "paper_value": 55.0,
+      "computed_value": 55.1115,
+      "difference": 0.1115,
+      "status": "PASS"
+    },
+    {
+      "check": "LSTM_Att sideways return (%)",
+      "paper_value": 208.5,
+      "computed_value": 208.5003,
+      "difference": 0.0003,
+      "status": "PASS"
+    }
+  ],
+  "summary": {
+    "total": 63,
+    "passed": 62,
+    "failed": 1,
+    "warnings": 0
+  },
+  "regime_distribution": {
+    "computed_counts": {
+      "unknown": 60,
+      "sideways": 938,
+      "bull": 133,
+      "bear": 49,
+      "high_vol": 121
+    },
+    "computed_percentages": {
+      "unknown": 4.6,
+      "sideways": 72.1,
+      "bull": 10.2,
+      "bear": 3.8,
+      "high_vol": 9.3
+    },
+    "json_counts": {
+      "unknown": 60,
+      "sideways": 938,
+      "bull": 133,
+      "bear": 49,
+      "high_vol": 121
+    },
+    "paper_counts": {
+      "sideways": 938,
+      "bull": 133,
+      "high_vol": 121,
+      "bear": 49,
+      "unknown": 60
+    }
+  },
+  "regime_returns_all_models": {
+    "Ridge": {
+      "bull": -5.65,
+      "bear": 55.53,
+      "sideways": 78.78,
+      "high_vol": 35.91
+    },
+    "Lasso": {
+      "bull": 3.94,
+      "bear": 25.47,
+      "sideways": 15.37,
+      "high_vol": -7.68
+    },
+    "ElasticNet": {
+      "bull": 2.33,
+      "bear": 37.12,
+      "sideways": -13.5,
+      "high_vol": -11.12
+    },
+    "RandomForest": {
+      "bull": 2.44,
+      "bear": 55.5,
+      "sideways": 27.15,
+      "high_vol": 13.99
+    },
+    "GradientBoosting": {
+      "bull": 4.81,
+      "bear": 5.15,
+      "sideways": 22.51,
+      "high_vol": 23.5
+    },
+    "XGBoost": {
+      "bull": 0.25,
+      "bear": 36.73,
+      "sideways": -24.29,
+      "high_vol": 9.32
+    },
+    "LightGBM": {
+      "bull": 4.51,
+      "bear": 3.34,
+      "sideways": 18.9,
+      "high_vol": 3.23
+    },
+    "CatBoost": {
+      "bull": 5.55,
+      "bear": 23.79,
+      "sideways": 20.98,
+      "high_vol": -4.27
+    },
+    "AutoARIMA": {
+      "bull": 2.25,
+      "bear": 0.45,
+      "sideways": 13.13,
+      "high_vol": 1.73
+    },
+    "ExponentialSmoothing": {
+      "bull": -2.86,
+      "bear": 12.25,
+      "sideways": -24.02,
+      "high_vol": -2.26
+    },
+    "Theta": {
+      "bull": 2.25,
+      "bear": 0.45,
+      "sideways": 13.88,
+      "high_vol": 1.73
+    },
+    "SeasonalNaive": {
+      "bull": -18.54,
+      "bear": 23.38,
+      "sideways": 0.37,
+      "high_vol": 37.6
+    },
+    "Prophet": {
+      "bull": 0.75,
+      "bear": 0.45,
+      "sideways": 13.29,
+      "high_vol": -5.5
+    },
+    "GARCH": {
+      "bull": 4.15,
+      "bear": -6.32,
+      "sideways": 13.83,
+      "high_vol": -1.61
+    },
+    "DLinear": {
+      "bull": 5.62,
+      "bear": 26.71,
+      "sideways": 20.18,
+      "high_vol": -2.44
+    },
+    "NBEATS": {
+      "bull": -6.75,
+      "bear": 47.63,
+      "sideways": -1.46,
+      "high_vol": 10.8
+    },
+    "NHiTS": {
+      "bull": -3.98,
+      "bear": 12.23,
+      "sideways": 4.31,
+      "high_vol": 5.15
+    },
+    "TCN": {
+      "bull": 0.67,
+      "bear": 26.59,
+      "sideways": -21.2,
+      "high_vol": -4.31
+    },
+    "TFT": {
+      "bull": -9.05,
+      "bear": 39.95,
+      "sideways": -8.69,
+      "high_vol": -3.34
+    },
+    "CNN_LSTM": {
+      "bull": -1.13,
+      "bear": 44.3,
+      "sideways": 16.48,
+      "high_vol": 19.2
+    },
+    "LSTM_Attention": {
+      "bull": -3.29,
+      "bear": 54.6,
+      "sideways": 208.5,
+      "high_vol": -3.37
+    },
+    "BiLSTM": {
+      "bull": 3.13,
+      "bear": 70.62,
+      "sideways": -30.84,
+      "high_vol": -15.32
+    },
+    "BiGRU": {
+      "bull": -6.18,
+      "bear": 5.13,
+      "sideways": -30.02,
+      "high_vol": -7.81
+    }
+  },
+  "rankings_per_regime": {
+    "bull": {
+      "top_5": [
+        [
+          "DLinear",
+          5.6
+        ],
+        [
+          "CatBoost",
+          5.6
+        ],
+        [
+          "GradientBoosting",
+          4.8
+        ],
+        [
+          "LightGBM",
+          4.5
+        ],
+        [
+          "GARCH",
+          4.2
+        ]
+      ],
+      "bottom_5": [
+        [
+          "Ridge",
+          -5.7
+        ],
+        [
+          "BiGRU",
+          -6.2
+        ],
+        [
+          "NBEATS",
+          -6.8
+        ],
+        [
+          "TFT",
+          -9.0
+        ],
+        [
+          "SeasonalNaive",
+          -18.5
+        ]
+      ]
+    },
+    "bear": {
+      "top_5": [
+        [
+          "BiLSTM",
+          70.6
+        ],
+        [
+          "Ridge",
+          55.5
+        ],
+        [
+          "RandomForest",
+          55.5
+        ],
+        [
+          "LSTM_Attention",
+          54.6
+        ],
+        [
+          "NBEATS",
+          47.6
+        ]
+      ],
+      "bottom_5": [
+        [
+          "LightGBM",
+          3.3
+        ],
+        [
+          "AutoARIMA",
+          0.4
+        ],
+        [
+          "Theta",
+          0.4
+        ],
+        [
+          "Prophet",
+          0.4
+        ],
+        [
+          "GARCH",
+          -6.3
+        ]
+      ]
+    },
+    "sideways": {
+      "top_5": [
+        [
+          "LSTM_Attention",
+          208.5
+        ],
+        [
+          "Ridge",
+          78.8
+        ],
+        [
+          "RandomForest",
+          27.2
+        ],
+        [
+          "GradientBoosting",
+          22.5
+        ],
+        [
+          "CatBoost",
+          21.0
+        ]
+      ],
+      "bottom_5": [
+        [
+          "TCN",
+          -21.2
+        ],
+        [
+          "ExponentialSmoothing",
+          -24.0
+        ],
+        [
+          "XGBoost",
+          -24.3
+        ],
+        [
+          "BiGRU",
+          -30.0
+        ],
+        [
+          "BiLSTM",
+          -30.8
+        ]
+      ]
+    },
+    "high_vol": {
+      "top_5": [
+        [
+          "SeasonalNaive",
+          37.6
+        ],
+        [
+          "Ridge",
+          35.9
+        ],
+        [
+          "GradientBoosting",
+          23.5
+        ],
+        [
+          "CNN_LSTM",
+          19.2
+        ],
+        [
+          "RandomForest",
+          14.0
+        ]
+      ],
+      "bottom_5": [
+        [
+          "Prophet",
+          -5.5
+        ],
+        [
+          "Lasso",
+          -7.7
+        ],
+        [
+          "BiGRU",
+          -7.8
+        ],
+        [
+          "ElasticNet",
+          -11.1
+        ],
+        [
+          "BiLSTM",
+          -15.3
+        ]
+      ]
+    }
+  },
+  "consistency": {
+    "Ridge": {
+      "regime_returns_pct": {
+        "bull": -5.7,
+        "bear": 55.5,
+        "sideways": 78.8,
+        "high_vol": 35.9
+      },
+      "std_pct": 30.99,
+      "consistency_inv_std": 0.0323
+    },
+    "Lasso": {
+      "regime_returns_pct": {
+        "bull": 3.9,
+        "bear": 25.5,
+        "sideways": 15.4,
+        "high_vol": -7.7
+      },
+      "std_pct": 12.4,
+      "consistency_inv_std": 0.0806
+    },
+    "ElasticNet": {
+      "regime_returns_pct": {
+        "bull": 2.3,
+        "bear": 37.1,
+        "sideways": -13.5,
+        "high_vol": -11.1
+      },
+      "std_pct": 20.21,
+      "consistency_inv_std": 0.0495
+    },
+    "RandomForest": {
+      "regime_returns_pct": {
+        "bull": 2.4,
+        "bear": 55.5,
+        "sideways": 27.2,
+        "high_vol": 14.0
+      },
+      "std_pct": 19.78,
+      "consistency_inv_std": 0.0506
+    },
+    "GradientBoosting": {
+      "regime_returns_pct": {
+        "bull": 4.8,
+        "bear": 5.1,
+        "sideways": 22.5,
+        "high_vol": 23.5
+      },
+      "std_pct": 9.02,
+      "consistency_inv_std": 0.1109
+    },
+    "XGBoost": {
+      "regime_returns_pct": {
+        "bull": 0.2,
+        "bear": 36.7,
+        "sideways": -24.3,
+        "high_vol": 9.3
+      },
+      "std_pct": 21.82,
+      "consistency_inv_std": 0.0458
+    },
+    "LightGBM": {
+      "regime_returns_pct": {
+        "bull": 4.5,
+        "bear": 3.3,
+        "sideways": 18.9,
+        "high_vol": 3.2
+      },
+      "std_pct": 6.6,
+      "consistency_inv_std": 0.1515
+    },
+    "CatBoost": {
+      "regime_returns_pct": {
+        "bull": 5.6,
+        "bear": 23.8,
+        "sideways": 21.0,
+        "high_vol": -4.3
+      },
+      "std_pct": 11.46,
+      "consistency_inv_std": 0.0873
+    },
+    "AutoARIMA": {
+      "regime_returns_pct": {
+        "bull": 2.2,
+        "bear": 0.4,
+        "sideways": 13.1,
+        "high_vol": 1.7
+      },
+      "std_pct": 5.09,
+      "consistency_inv_std": 0.1965
+    },
+    "ExponentialSmoothing": {
+      "regime_returns_pct": {
+        "bull": -2.9,
+        "bear": 12.2,
+        "sideways": -24.0,
+        "high_vol": -2.3
+      },
+      "std_pct": 12.93,
+      "consistency_inv_std": 0.0773
+    },
+    "Theta": {
+      "regime_returns_pct": {
+        "bull": 2.2,
+        "bear": 0.4,
+        "sideways": 13.9,
+        "high_vol": 1.7
+      },
+      "std_pct": 5.41,
+      "consistency_inv_std": 0.1848
+    },
+    "SeasonalNaive": {
+      "regime_returns_pct": {
+        "bull": -18.5,
+        "bear": 23.4,
+        "sideways": 0.4,
+        "high_vol": 37.6
+      },
+      "std_pct": 21.48,
+      "consistency_inv_std": 0.0466
+    },
+    "Prophet": {
+      "regime_returns_pct": {
+        "bull": 0.8,
+        "bear": 0.4,
+        "sideways": 13.3,
+        "high_vol": -5.5
+      },
+      "std_pct": 6.85,
+      "consistency_inv_std": 0.1461
+    },
+    "GARCH": {
+      "regime_returns_pct": {
+        "bull": 4.2,
+        "bear": -6.3,
+        "sideways": 13.8,
+        "high_vol": -1.6
+      },
+      "std_pct": 7.51,
+      "consistency_inv_std": 0.1331
+    },
+    "DLinear": {
+      "regime_returns_pct": {
+        "bull": 5.6,
+        "bear": 26.7,
+        "sideways": 20.2,
+        "high_vol": -2.4
+      },
+      "std_pct": 11.52,
+      "consistency_inv_std": 0.0868
+    },
+    "NBEATS": {
+      "regime_returns_pct": {
+        "bull": -6.8,
+        "bear": 47.6,
+        "sideways": -1.5,
+        "high_vol": 10.8
+      },
+      "std_pct": 21.23,
+      "consistency_inv_std": 0.0471
+    },
+    "NHiTS": {
+      "regime_returns_pct": {
+        "bull": -4.0,
+        "bear": 12.2,
+        "sideways": 4.3,
+        "high_vol": 5.2
+      },
+      "std_pct": 5.75,
+      "consistency_inv_std": 0.174
+    },
+    "TCN": {
+      "regime_returns_pct": {
+        "bull": 0.7,
+        "bear": 26.6,
+        "sideways": -21.2,
+        "high_vol": -4.3
+      },
+      "std_pct": 17.14,
+      "consistency_inv_std": 0.0584
+    },
+    "TFT": {
+      "regime_returns_pct": {
+        "bull": -9.0,
+        "bear": 40.0,
+        "sideways": -8.7,
+        "high_vol": -3.3
+      },
+      "std_pct": 20.47,
+      "consistency_inv_std": 0.0489
+    },
+    "CNN_LSTM": {
+      "regime_returns_pct": {
+        "bull": -1.1,
+        "bear": 44.3,
+        "sideways": 16.5,
+        "high_vol": 19.2
+      },
+      "std_pct": 16.2,
+      "consistency_inv_std": 0.0617
+    },
+    "LSTM_Attention": {
+      "regime_returns_pct": {
+        "bull": -3.3,
+        "bear": 54.6,
+        "sideways": 208.5,
+        "high_vol": -3.4
+      },
+      "std_pct": 86.65,
+      "consistency_inv_std": 0.0115
+    },
+    "BiLSTM": {
+      "regime_returns_pct": {
+        "bull": 3.1,
+        "bear": 70.6,
+        "sideways": -30.8,
+        "high_vol": -15.3
+      },
+      "std_pct": 38.71,
+      "consistency_inv_std": 0.0258
+    },
+    "BiGRU": {
+      "regime_returns_pct": {
+        "bull": -6.2,
+        "bear": 5.1,
+        "sideways": -30.0,
+        "high_vol": -7.8
+      },
+      "std_pct": 12.73,
+      "consistency_inv_std": 0.0785
+    }
+  }
+}
