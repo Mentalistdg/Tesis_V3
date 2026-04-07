@@ -30,7 +30,6 @@ python paper/update_backend_data.py      # Step 4: Pipeline results → app/back
 
 # Optional scripts
 python scripts/demo_pipeline_prueba.py        # Anti-leakage verification
-python scripts/simulate_backtest_scenarios.py  # What-if analysis with risk filters (not used in main pipeline)
 
 # Tip: use -u for unbuffered output on long-running scripts (train_models ~105 min)
 python -u scripts/train_models.py
@@ -134,6 +133,8 @@ Browser → Nginx (port 80) → static dist/ (React SPA)
 
 **backtest_detail.pkl**: per-model pre-computed arrays (positions, percentiles, predictions, strategy_returns, gross_returns, equity_curve, drawdown, daily_costs, signal_valid, chosen_params). Used by `update_backend_data.py` to generate web app JSON without re-running Meta-KNN.
 
+**Additional results files** in `results/`: `risk_metrics_detail.json`, `statistical_validation.json`, `param_grid_search_results.csv`, and `section*_verification.json` files (used by the paper generation scripts).
+
 ### Frontend Type System
 
 All TypeScript types in `src/types/index.ts`. Key interfaces: `ModelData` (daily arrays), `Trade` (with dual-curve DD tracking: decision vs final), `ModelMetrics`, `SignalsData` (with LONG-ONLY consensus).
@@ -198,3 +199,4 @@ Previous oracle-based results (March 2026) showed 7/23 models beating SPY, but t
 - **`data/DICCIONARIO_VARIABLES.md`** documents all 92 Bloomberg input variables.
 - **`README.md`** is in Spanish and contains detailed pipeline explanations (some numbers are outdated — CLAUDE.md has current figures).
 - **`AWS_DEPLOYMENT.md`** documents the EC2 deployment (t3.micro, Ubuntu, Nginx + Uvicorn). See that file for SSH keys, IP, and server paths.
+- **`SETUP.md`** is a Spanish-language installation guide (Python 3.13, Node 22, TeX Live/MiKTeX).
