@@ -64,7 +64,20 @@ powershell.exe -ExecutionPolicy Bypass -File "C:/Users/dgonz/PycharmProjects/Tes
 
 Source: `paper/paper_triple_screen_ml.tex` (main file, `\input{sections/...}` for structure). MiKTeX returns exit code 1 for warnings — this is normal, not an error. The compile script has hardcoded absolute paths for the author's machine.
 
-**Paper sections** (in `paper/sections/`): `section_results_expanded`, `section_costs_expanded`, `section_risk_management`, `section_statistical_validation`, `section_da_paradox`, `section_regime_analysis`, `appendix_hyperparameters`, `appendix_optimal_params`.
+**Paper structure** (10 sections + appendices, all in `paper/paper_triple_screen_ml.tex` with `\input{sections/...}` and `\input{tables/...}`):
+1. Introducción
+2. Revisión de Literatura y Fundamentos Teóricos
+3. Metodología (data, features, models, Meta-KNN, backtest)
+4. Resultados Empíricos (`section_results_expanded.tex`)
+5. Paradoja del Directional Accuracy (`section_da_paradox.tex`)
+6. Gestión de Riesgo (`section_risk_management.tex`)
+7. Validación Estadística (`section_statistical_validation.tex`)
+8. Costos de Transacción (`section_costs_expanded.tex`)
+9. Aportes al Debate sobre la Eficiencia de Mercado (inline in main .tex, ~80 lines)
+10. Conclusión (inline in main .tex, ~30 lines)
++ Appendices: `appendix_hyperparameters.tex`, `appendix_optimal_params.tex`
+
+**Note:** `section_regime_analysis.tex` was removed from the paper (April 2026).
 
 ### Full Regeneration Sequence
 
@@ -136,7 +149,7 @@ Browser → Nginx (port 80) → static dist/ (React SPA)
 
 ### Frontend Type System
 
-All TypeScript types in `src/types/index.ts`. Key interfaces: `ModelData` (daily arrays), `Trade` (with dual-curve DD tracking: decision vs final), `ModelMetrics`, `SignalsData` (with LONG-ONLY consensus).
+All TypeScript types in `app/frontend/src/types/index.ts`. Key interfaces: `ModelData` (daily arrays), `Trade` (with dual-curve DD tracking: decision vs final), `ModelMetrics`, `SignalsData` (with LONG-ONLY consensus).
 
 ## Critical Constraints
 
@@ -188,13 +201,25 @@ Global seed `42` set for NumPy, PyTorch, and all sklearn models. `requirements.t
 
 Previous oracle-based results (March 2026) showed 7/23 models beating SPY, but those thresholds were optimized over the test period. The current 4 genuine winners use thresholds determined exclusively from training data.
 
+## Paper Writing Style
+
+The paper follows a specific writing fingerprint derived from the author's prior work. **Future agents MUST follow these rules when editing .tex files:**
+
+- **NO colons (`:`) in prose text.** Replace with em-dashes (`---`), commas, "a saber", "dado que", "es decir", or restructure the sentence. LaTeX commands like `\section{}` are fine.
+- **NO bullet points** in prose sections — everything in flowing paragraphs.
+- Formal impersonal voice ("se propone", "se documenta"), NOT first-person plural ("proponemos"). Exception: the personal reflection paragraph in the conclusion uses first person.
+- Technical English terms in `\textit{}` (e.g., `\textit{deep learning}`, `\textit{drawdown}`).
+- Long flowing sentences with subordinate clauses connected by em-dashes and commas.
+- Spanish body text typed WITHOUT accents (US keyboard) — accents only via LaTeX escapes (`\'o`, `\'a`, `\'e`, `\'i`, `\'u`, `\~n`).
+- APA-style citations: `\citet{}` for textual, `\citep{}` for parenthetical. Bibliography is manual `\begin{thebibliography}`, not `.bib` files.
+- **Avoid repetition across sections.** If a fact (e.g., "536 features", "4 models beat SPY") was already stated, refer to it generically ("los hallazgos documentados", "los modelos ganadores") instead of restating specific numbers.
+- **ALWAYS compile after editing .tex files** — the user expects to see the compiled PDF.
+
 ## Important Notes
 
 - **No test suite.** Validation is done via `demo_pipeline_prueba.py` (anti-leakage verification).
-- **`_archive/`** contains deprecated code and experimental scripts — gitignored, do not reference. Includes the old `optimize_model_params.py`, `final_long_only_backtest_new.py`, and all `_exp_*.py` experimental scripts.
-- **`compartir_profesor/`** is a gitignored mirror copy for sharing with the thesis advisor.
 - **`models/checkpoints/`** is gitignored. Only `trained_artifacts.pkl` (metadata + predictions) is tracked in git.
 - **`paper/`** contains the LaTeX academic paper, compiled PDF, and scripts to generate figures/tables.
+- **`paper/scripts/`** contains 6 replication scripts (`replicar_seccion4..8.py` + `replicar_todo.py`) that verify every number in the paper against pipeline data.
 - **`data/DICCIONARIO_VARIABLES.md`** documents all 92 Bloomberg input variables.
-- **`README.md`** is in Spanish and contains detailed pipeline explanations (some numbers are outdated — CLAUDE.md has current figures).
-- **`AWS_DEPLOYMENT.md`** documents the EC2 deployment (t3.micro, Ubuntu, Nginx + Uvicorn). See that file for SSH keys, IP, and server paths.
+- **`README.md`** is in Spanish and provides a comprehensive guide to the project for the professor. Both README.md and CLAUDE.md are up-to-date as of April 2026.

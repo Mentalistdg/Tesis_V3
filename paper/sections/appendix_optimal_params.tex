@@ -25,7 +25,11 @@ Se eval\'uan las 26 combinaciones v\'alidas de $(q_{\text{extreme}}, q_{\text{mo
 Para cada ventana de evaluaci\'on en el meta-dataset de entrenamiento, se calcula el \textit{Sharpe ratio} penalizado:
 
 \begin{equation}
-\text{score}(q_{\text{ext}}, q_{\text{mod}}) = \text{Sharpe}(R_{\text{net}}) - 0.5 \cdot \mathbb{1}[\text{MaxDD} > 20\%]
+\text{score}(q_{\text{ext}}, q_{\text{mod}}) =
+\begin{cases}
+\text{Sharpe}(R_{\text{net}}) - 0{,}5 & \text{si } \text{MaxDD} > 20\% \\[4pt]
+\text{Sharpe}(R_{\text{net}}) & \text{en caso contrario}
+\end{cases}
 \end{equation}
 
 \noindent La penalizaci\'on de $0{,}5$ desincentiva combinaciones que generan \textit{drawdowns} excesivos.
@@ -61,6 +65,8 @@ Adem\'as del Meta-KNN, se aplica un filtro basado en la desviaci\'on est\'andar 
 \subsection{Tabla de Par\'ametros Din\'amicos}
 \label{app:optimal_table}
 
+La Tabla~\ref{tab:optimal_params} presenta los par\'ametros din\'amicos m\'as frecuentes para cada modelo.
+
 \input{tables/table_optimal_params}
 
 \subsection{An\'alisis de Par\'ametros}
@@ -75,7 +81,7 @@ La naturaleza din\'amica del Meta-KNN implica que cada modelo utiliza m\'ultiple
 
     \item \textbf{Modelos moderadamente din\'amicos} (5--15 combinaciones): CatBoost (10), Theta (9), SeasonalNaive (7), LightGBM (7), GARCH (7). El KNN encuentra un rango limitado de configuraciones \'utiles.
 
-    \item \textbf{Modelos est\'aticos o filtrados} (<5 combinaciones o mayorialmente en Cash): RandomForest (4), XGBoost (4), NBEATS (2), NHiTS (1), GradientBoosting (1), AutoARIMA (0, 100\% filtrado). Predicciones insuficientemente variables o patr\'on dominante claro.
+    \item \textbf{Modelos est\'aticos o filtrados} (<5 combinaciones o mayoritariamente en Cash): RandomForest (4), XGBoost (4), NBEATS (2), NHiTS (1), GradientBoosting (1), AutoARIMA (0, 100\% filtrado). Predicciones insuficientemente variables o patr\'on dominante claro.
 \end{enumerate}
 
 \subsubsection{Implicaciones}

@@ -1,22 +1,22 @@
 \begin{table}[htbp]
 \centering
-\caption{Resumen Ejecutivo: Top 4 Modelos vs Benchmarks}
+\caption{Resumen Ejecutivo: Top 5 Modelos vs Benchmark}
 \label{tab:executive_summary}
-\begin{tabular}{@{}lrrr@{}}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-\textbf{Modelo} & \textbf{Ret. Total} & \textbf{Sharpe} & \textbf{Max DD} \\
+\textbf{Modelo} & \textbf{Ret. Total} & \textbf{Sharpe} & \textbf{Max DD} & \textbf{Capital Final} & \textbf{$\alpha$ vs SPY} \\
 \midrule
-LSTM\_Attention & \textbf{\textcolor{ForestGreen}{+400.0\%}} & 1.327 & 20.5\% \\
-Ridge & \textbf{\textcolor{ForestGreen}{+263.2\%}} & 0.881 & 31.8\% \\
-RandomForest & \textbf{\textcolor{ForestGreen}{+131.0\%}} & 0.666 & 14.7\% \\
-CNN\_LSTM & \textbf{\textcolor{ForestGreen}{+129.0\%}} & 0.599 & 35.6\% \\
+LSTM\_Attention & \textbf{\textcolor{ForestGreen}{400.0\%}} & 1.327 & 20.5\% & \$49,998 & \textcolor{ForestGreen}{297.7\%} \\
+Ridge & \textbf{\textcolor{ForestGreen}{263.2\%}} & 0.881 & 31.8\% & \$36,317 & \textcolor{ForestGreen}{160.9\%} \\
+RandomForest & \textbf{\textcolor{ForestGreen}{131.0\%}} & 0.666 & 14.7\% & \$23,103 & \textcolor{ForestGreen}{28.8\%} \\
+CNN\_LSTM & \textbf{\textcolor{ForestGreen}{129.0\%}} & 0.599 & 35.6\% & \$22,899 & \textcolor{ForestGreen}{26.7\%} \\
+DLinear & 67.9\% & 0.426 & 33.1\% & \$16,795 & -34.3\% \\
 \midrule
-SPY (B\&H) & +102.2\% & 0.663 & 25.4\% \\
-UPRO 3x (B\&H) & +246.4\% & 0.465 & 64.8\% \\
+SPY (B\&H) & 102.2\% & 0.663 & 25.4\% & \$20,224 & -- \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: Per\'iodo de prueba: Oct 2020 a Dic 2025 (1,302 d\'ias). Capital inicial: \$10,000. Los modelos en negrita superan a ambos \textit{benchmarks} en Sharpe.
+\item Nota: Per\'iodo de prueba: Oct 2020 a Dic 2025 (1,302 d\'ias). Capital inicial: \$10,000. $\alpha$ = exceso de retorno sobre SPY Buy \& Hold.
 \end{tablenotes}
 \end{table}

@@ -3,41 +3,39 @@
 \caption{Rendimiento de los 23 Modelos en el Per\'iodo de Prueba (Oct 2020 - Dic 2025)}
 \label{tab:model_performance}
 \small
-\begin{tabular}{@{}rlrrrr@{}}
+\begin{tabular}{@{}llrrrrrrr@{}}
 \toprule
-\textbf{Rank} & \textbf{Modelo} & \textbf{Ret. Total} & \textbf{Sharpe} & \textbf{Sortino} & \textbf{Max DD} \\
+\textbf{Rank} & \textbf{Modelo} & \textbf{Categor\'ia} & \textbf{Ret. Total} & \textbf{Ret. Anual} & \textbf{Sharpe} & \textbf{Sortino} & \textbf{Calmar} & \textbf{Max DD} \\
 \midrule
-1 & \textbf{LSTM+Attention} & \textcolor{ForestGreen}{+400.0\%} & 1.327 & 2.631 & 20.5\% \\
-2 & \textbf{Ridge} & \textcolor{ForestGreen}{+263.2\%} & 0.881 & 1.291 & 31.8\% \\
-3 & \textbf{RandomForest} & \textcolor{ForestGreen}{+131.0\%} & 0.666 & 1.380 & 14.7\% \\
-4 & \textbf{CNN-LSTM} & \textcolor{ForestGreen}{+129.0\%} & 0.599 & 1.161 & 35.6\% \\
-\cmidrule(lr){1-6}
-5 & DLinear & +67.9\% & 0.426 & 0.681 & 33.1\% \\
-6 & GradientBoosting & +66.8\% & 0.622 & 1.287 & 8.3\% \\
-7 & CatBoost & +47.4\% & 0.232 & 0.456 & 30.9\% \\
-8 & Theta & +44.6\% & 0.563 & 0.949 & 12.7\% \\
-9 & SeasonalNaive & +44.5\% & 0.150 & 0.210 & 32.9\% \\
-10 & NBEATS & +44.4\% & 0.182 & 0.319 & 25.5\% \\
-11 & Lasso & +39.0\% & 0.202 & 0.466 & 19.3\% \\
-12 & GARCH & +27.2\% & 0.202 & 0.287 & 21.8\% \\
-13 & LightGBM & +27.1\% & 0.106 & 0.145 & 24.3\% \\
-14 & NHiTS & +22.1\% & 0.038 & 0.053 & 48.1\% \\
-15 & AutoARIMA & +18.3\% & 0.387 & 0.497 & 0.0\% \\
-16 & TCN & +18.1\% & 0.001 & 0.002 & 35.0\% \\
-17 & TFT & +14.8\% & $-$0.020 & $-$0.032 & 44.6\% \\
-18 & XGBoost & +13.5\% & $-$0.024 & $-$0.034 & 43.1\% \\
-19 & ElasticNet & +9.8\% & $-$0.068 & $-$0.110 & 39.6\% \\
-20 & Prophet & +7.6\% & $-$0.234 & $-$0.311 & 11.7\% \\
-21 & BiLSTM & +6.2\% & $-$0.082 & $-$0.133 & 54.7\% \\
-22 & ExpSmoothing & \textcolor{BrickRed}{$-$14.5\%} & $-$0.233 & $-$0.311 & 59.6\% \\
-23 & BiGRU & \textcolor{BrickRed}{$-$32.3\%} & $-$0.457 & $-$0.573 & 58.5\% \\
+1 & \textbf{LSTM\_Attention} & RNN & \textcolor{ForestGreen}{400.0\%} & 36.6\% & 1.327 & 2.631 & 1.788 & 20.5\% \\
+2 & \textbf{Ridge} & ML & \textcolor{ForestGreen}{263.2\%} & 28.4\% & 0.881 & 1.291 & 0.894 & 31.8\% \\
+3 & \textbf{RandomForest} & ML & \textcolor{ForestGreen}{131.0\%} & 17.6\% & 0.666 & 1.380 & 1.196 & 14.7\% \\
+4 & \textbf{CNN\_LSTM} & RNN & \textcolor{ForestGreen}{129.0\%} & 17.4\% & 0.599 & 1.161 & 0.488 & 35.6\% \\
+5 & DLinear & DeepLearning & \textcolor{ForestGreen}{67.9\%} & 10.6\% & 0.426 & 0.681 & 0.319 & 33.1\% \\
+6 & GradientBoosting & ML & \textcolor{ForestGreen}{66.8\%} & 10.4\% & 0.622 & 1.287 & 1.254 & 8.3\% \\
+7 & CatBoost & GradientBoosting & \textcolor{ForestGreen}{47.4\%} & 7.8\% & 0.232 & 0.456 & 0.253 & 30.9\% \\
+8 & Theta & TimeSeries & \textcolor{ForestGreen}{44.6\%} & 7.4\% & 0.563 & 0.949 & 0.585 & 12.7\% \\
+9 & SeasonalNaive & TimeSeries & \textcolor{ForestGreen}{44.5\%} & 7.4\% & 0.150 & 0.210 & 0.224 & 32.9\% \\
+10 & NBEATS & DeepLearning & \textcolor{ForestGreen}{44.4\%} & 7.4\% & 0.182 & 0.319 & 0.290 & 25.5\% \\
+11 & Lasso & ML & \textcolor{ForestGreen}{39.0\%} & 6.6\% & 0.202 & 0.466 & 0.342 & 19.3\% \\
+12 & GARCH & Specialized & \textcolor{ForestGreen}{27.2\%} & 4.8\% & 0.202 & 0.287 & 0.219 & 21.8\% \\
+13 & LightGBM & GradientBoosting & \textcolor{ForestGreen}{27.1\%} & 4.8\% & 0.106 & 0.145 & 0.196 & 24.3\% \\
+14 & NHiTS & DeepLearning & \textcolor{ForestGreen}{22.1\%} & 3.9\% & 0.038 & 0.053 & 0.082 & 48.1\% \\
+15 & AutoARIMA & TimeSeries & \textcolor{ForestGreen}{18.3\%} & 3.3\% & 0.387 & 0.497 & 0.000 & 0.0\% \\
+16 & TCN & DeepLearning & \textcolor{ForestGreen}{18.1\%} & 3.3\% & 0.001 & 0.002 & 0.093 & 35.0\% \\
+17 & TFT & DeepLearning & \textcolor{ForestGreen}{14.8\%} & 2.7\% & -0.020 & -0.032 & 0.061 & 44.6\% \\
+18 & XGBoost & GradientBoosting & \textcolor{ForestGreen}{13.5\%} & 2.5\% & -0.024 & -0.034 & 0.058 & 43.1\% \\
+19 & ElasticNet & ML & \textcolor{ForestGreen}{9.8\%} & 1.8\% & -0.068 & -0.110 & 0.046 & 39.6\% \\
+20 & Prophet & Specialized & \textcolor{ForestGreen}{7.6\%} & 1.4\% & -0.234 & -0.311 & 0.123 & 11.7\% \\
+21 & BiLSTM & RNN & \textcolor{ForestGreen}{6.2\%} & 1.2\% & -0.082 & -0.133 & 0.021 & 54.7\% \\
+22 & ExponentialSmoothing & TimeSeries & \textcolor{BrickRed}{-14.5\%} & -3.0\% & -0.233 & -0.311 & -0.050 & 59.6\% \\
+23 & BiGRU & RNN & \textcolor{BrickRed}{-32.3\%} & -7.3\% & -0.457 & -0.573 & -0.124 & 58.5\% \\
 \midrule
--- & SPY (B\&H) & +102.2\% & 0.663 & 0.922 & 25.4\% \\
--- & UPRO 3x (B\&H) & +246.4\% & 0.465 & 0.669 & 64.8\% \\
+-- & SPY (B\&H) & Benchmark & 102.2\% & -- & 0.663 & -- & -- & 25.4\% \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: Los modelos en negrita superan al \textit{benchmark} SPY Buy \& Hold. UPRO 3x B\&H incluye \textit{expense ratio} (0.91\%/a\~no) y \textit{bid-ask spread}. El \textit{volatility decay} inherente a los ETF apalancados est\'a capturado por la composici\'on diaria de retornos 3$\times$.
+\item Nota: Los modelos en negrita superan al benchmark SPY Buy \& Hold. Retorno total calculado como producto de (1+r) - 1 sobre el per\'iodo completo. Sharpe ratio anualizado con tasa libre de riesgo promedio del per\'iodo.
 \end{tablenotes}
 \end{table}

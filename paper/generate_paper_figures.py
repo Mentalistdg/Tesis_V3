@@ -60,6 +60,12 @@ print(f"Timestamp: {datetime.now()}")
 # =============================================================================
 # CARGAR DATOS
 # =============================================================================
+# Fuentes (todas generadas por paper/update_backend_data.py):
+#   - models_summary.json: metricas agregadas de los 23 modelos + benchmark
+#   - daily_data.json: arrays diarios (equity, drawdown, positions, returns) por modelo
+#   - market_data.json: equity curve y retornos de SPY B&H
+#   - regime_data.json: clasificacion y rendimiento por regimen de mercado
+# =============================================================================
 print("\n[1] Cargando datos JSON...")
 
 with open(os.path.join(APP_DATA_DIR, "models_summary.json"), 'r') as f:
@@ -81,7 +87,12 @@ print(f"    Modelos cargados: {len(models)}")
 
 
 # =============================================================================
-# FIGURA 1: EQUITY CURVES TOP 5
+# FIGURA 1: EQUITY CURVES TOP 5 (equity_curves_top5.pdf)
+# =============================================================================
+# Contenido: Curvas de capital de los 5 mejores modelos + SPY B&H
+# Fuente: daily_data.json (equity_curve por modelo), market_data.json (SPY B&H)
+# Eje Y: valor del portafolio en dolares (capital inicial $10,000)
+# Eje X: fechas (Oct 2020 - Dic 2025)
 # =============================================================================
 print("\n[2] Generando figura de equity curves...")
 
@@ -125,7 +136,12 @@ print(f"    equity_curves_top5.pdf generada")
 
 
 # =============================================================================
-# FIGURA 2: DISTRIBUCION P&L LSTM_ATTENTION (modelo ganador)
+# FIGURA 2: DISTRIBUCION P&L LSTM_ATTENTION (pnl_distribution_lstm_attention.pdf)
+# =============================================================================
+# Contenido: Histograma de retornos diarios de exceso (strategy - rf) en dias activos
+# Fuente: daily_data.json (strategy_returns, positions, risk_free para LSTM_Attention)
+# Nota: Solo dias activos (posicion != 0). Dias positivos en verde, negativos en rojo
+# Estadisticas: Win Rate, Avg Win, Avg Loss mostradas en un cuadro
 # =============================================================================
 print("\n[3] Generando figura de distribucion P&L...")
 
@@ -180,7 +196,12 @@ if lstm_data:
 
 
 # =============================================================================
-# FIGURA 3: TURNOVER VS RETURN
+# FIGURA 3: TURNOVER VS RETURN (turnover_vs_return.pdf)
+# =============================================================================
+# Contenido: Scatter plot de N trades vs retorno total para los 23 modelos
+# Fuente: models_summary.json (n_trades, total_return)
+# Incluye: linea de regresion lineal con R^2, linea horizontal de SPY B&H
+# Conclusión: R^2 ~0.02 demuestra que no hay correlacion significativa
 # =============================================================================
 print("\n[4] Generando figura turnover vs return...")
 
@@ -223,7 +244,11 @@ print(f"    turnover_vs_return.pdf generada")
 
 
 # =============================================================================
-# FIGURA 4: DISTRIBUCION DE REGIMENES
+# FIGURA 4: DISTRIBUCION DE REGIMENES (regime_distribution.pdf)
+# =============================================================================
+# Contenido: (izq) Pie chart con distribucion de regimenes, (der) bar chart de rendimiento
+# Fuente: regime_data.json (regime_counts, regime_performance)
+# Regimenes: Bull, Bear, Sideways, High Vol (clasificados en ventanas de 60 dias)
 # =============================================================================
 print("\n[5] Generando figura de regimenes...")
 
@@ -268,7 +293,10 @@ print(f"    regime_distribution.pdf generada")
 
 
 # =============================================================================
-# FIGURA 5: DISTRIBUCION DE POSICIONES
+# FIGURA 5: DISTRIBUCION DE POSICIONES (position_distribution.pdf)
+# =============================================================================
+# Contenido: Stacked horizontal bar chart de % tiempo en UPRO/SPY/Cash para Top 10
+# Fuente: models_summary.json (pct_3x, pct_1x, pct_cash)
 # =============================================================================
 print("\n[6] Generando figura de posiciones...")
 
@@ -307,7 +335,11 @@ print(f"    position_distribution.pdf generada")
 
 
 # =============================================================================
-# FIGURA 6: DRAWDOWN ANALYSIS
+# FIGURA 6: DRAWDOWN ANALYSIS (drawdown_analysis.pdf)
+# =============================================================================
+# Contenido: (arriba) Equity curve LSTM_Attention vs SPY, (abajo) drawdown en %
+# Fuente: daily_data.json (equity_curve, drawdown para LSTM_Attention), market_data.json
+# Nota: Anotacion del MaxDD con flecha en el punto de mayor caida
 # =============================================================================
 print("\n[7] Generando figura de drawdown...")
 
@@ -352,7 +384,11 @@ print(f"    drawdown_analysis.pdf generada")
 
 
 # =============================================================================
-# FIGURA 7: SHARPE VS MAX DRAWDOWN
+# FIGURA 7: SHARPE VS MAX DRAWDOWN (sharpe_vs_maxdd.pdf)
+# =============================================================================
+# Contenido: Scatter plot de MaxDD vs Sharpe para 23 modelos, coloreado por retorno
+# Fuente: models_summary.json (sharpe, max_drawdown, total_return)
+# Incluye: SPY B&H como estrella, lineas de cuadrante en Sharpe=0.5 y DD=-30%
 # =============================================================================
 print("\n[8] Generando figura Sharpe vs Max DD...")
 
@@ -393,7 +429,13 @@ print(f"    sharpe_vs_maxdd.pdf generada")
 
 
 # =============================================================================
-# FIGURA 8: DA VS RETURN (PARADOJA)
+# FIGURA 8: DA VS RETURN - LA PARADOJA (da_vs_return_paradox.pdf)
+# =============================================================================
+# Contenido: (izq) Scatter de DA% vs Retorno% con correlacion rho, (der) bar chart DA vs DA@3x
+# Fuente: models_summary.json (directional_accuracy, total_return), daily_data.json (positions),
+#         market_data.json (returns para calcular DA@3x)
+# DA@3x = hit rate en dias con posicion==3: mide la precision en las apuestas mas agresivas
+# Nota: Modelos con DA@3x > 50% pero DA general < 50% son los mejores (paradoja)
 # =============================================================================
 print("\n[9] Generando figura DA vs Return...")
 

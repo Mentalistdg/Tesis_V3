@@ -57,6 +57,13 @@ print(f"Timestamp: {datetime.now()}")
 # =============================================================================
 # CARGAR DATOS AUTORITATIVOS
 # =============================================================================
+# Fuentes de datos (todas generadas por el pipeline):
+#   - final_long_only_backtest.json: retorno total, Sharpe, Sortino, Calmar, MaxDD,
+#     distribuciones de posiciones, costos, n_trades para los 23 modelos
+#   - optimal_model_params.json: umbrales (q_ext, q_mod) mas frecuentes del Meta-KNN
+#   - regime_data.json: rendimiento desglosado por regimen (bull/bear/sideways/high_vol),
+#     generado por paper/update_backend_data.py
+# =============================================================================
 print("\n[1] Cargando datos JSON autoritativos...")
 
 with open(os.path.join(RESULTS_DIR, "final_long_only_backtest.json"), 'r') as f:
@@ -148,7 +155,13 @@ def format_money(value, decimals=0):
 
 
 # =============================================================================
-# TABLA 1: RENDIMIENTO PRINCIPAL DE MODELOS
+# TABLA 1: RENDIMIENTO PRINCIPAL DE MODELOS (tab:model_performance)
+# =============================================================================
+# Genera: tables/table_model_performance.tex
+# Contenido: Los 23 modelos ordenados por retorno total descendente
+# Columnas: Rank, Modelo, Categoria, Ret.Total, Ret.Anual, Sharpe, Sortino, Calmar, MaxDD
+# Fuente: final_long_only_backtest.json
+# Nota: modelos que superan SPY aparecen en negrita; retornos positivos en verde, negativos en rojo
 # =============================================================================
 print("\n[2] Generando tabla de rendimiento principal...")
 
@@ -202,7 +215,12 @@ print(f"    table_model_performance.tex generada")
 
 
 # =============================================================================
-# TABLA 2: METRICAS DE RIESGO
+# TABLA 2: METRICAS DE RIESGO (tab:risk_metrics)
+# =============================================================================
+# Genera: tables/table_risk_metrics.tex
+# Contenido: Top 17 modelos con Sharpe, Sortino, Calmar, MaxDD, Dir.Acc., Pos.Media
+# Fuente: final_long_only_backtest.json
+# Nota: Pos.Media = (pct_3x*3 + pct_1x*1)/100, donde 0=Cash, 1=SPY, 3=UPRO
 # =============================================================================
 print("\n[3] Generando tabla de metricas de riesgo...")
 
@@ -243,7 +261,11 @@ print(f"    table_risk_metrics.tex generada")
 
 
 # =============================================================================
-# TABLA 3: DISTRIBUCION DE POSICIONES
+# TABLA 3: DISTRIBUCION DE POSICIONES (tab:position_distribution)
+# =============================================================================
+# Genera: tables/table_position_distribution.tex
+# Contenido: 23 modelos con % dias en UPRO(3x), SPY(1x), Cash(0), Total Long, N trades
+# Fuente: final_long_only_backtest.json (campos pct_3x, pct_1x, pct_cash, n_trades)
 # =============================================================================
 print("\n[4] Generando tabla de distribucion de posiciones...")
 
@@ -283,7 +305,13 @@ print(f"    table_position_distribution.tex generada")
 
 
 # =============================================================================
-# TABLA 4: DESGLOSE DE COSTOS
+# TABLA 4: DESGLOSE DE COSTOS (tab:cost_breakdown)
+# =============================================================================
+# Genera: tables/table_cost_breakdown.tex
+# Contenido: 23 modelos con Capital Final, P&L Bruto, Tx Costs, Tx/P&L ratio, N Trades
+# Fuente: final_long_only_backtest.json (campos final_capital, gross_final, total_costs)
+# Metodologia: Tx/P&L = total_costs / (gross_final - 10000) * 100
+# Nota: Capital inicial = $10,000. Incluye expense ratios + bid-ask spreads + vol drag
 # =============================================================================
 print("\n[5] Generando tabla de desglose de costos...")
 
@@ -338,7 +366,13 @@ print(f"    table_cost_breakdown.tex generada ({len(models)} modelos, avg costs 
 
 
 # =============================================================================
-# TABLA 5: RENDIMIENTO POR REGIMEN
+# TABLA 5: RENDIMIENTO POR REGIMEN (tab:regime_performance)
+# =============================================================================
+# Genera: tables/table_regime_performance.tex
+# Contenido: Top 10 modelos con retorno total en cada regimen de mercado
+# Fuente: app/backend/data/regime_data.json (generado por update_backend_data.py)
+# Regimenes: Bull (ret>10%, vol<20%), Bear (ret<-10%), High Vol (vol>25%), Sideways (resto)
+# Ventana de clasificacion: 60 dias
 # =============================================================================
 print("\n[6] Generando tabla de rendimiento por regimen...")
 
@@ -396,7 +430,13 @@ else:
 
 
 # =============================================================================
-# TABLA 6: PARAMETROS OPTIMOS
+# TABLA 6: PARAMETROS OPTIMOS (tab:optimal_params)
+# =============================================================================
+# Genera: tables/table_optimal_params.tex
+# Contenido: 23 modelos con q_3x (percentil UPRO), q_1x (percentil SPY), interpretacion
+# Fuente: optimal_model_params.json
+# Nota: Los umbrales son los MAS FRECUENTES seleccionados por Meta-KNN dinamico;
+#       los umbrales reales varian por dia segun las meta-features
 # =============================================================================
 print("\n[7] Generando tabla de parametros optimos...")
 
@@ -439,7 +479,12 @@ print(f"    table_optimal_params.tex generada")
 
 
 # =============================================================================
-# TABLA 7: RESUMEN EJECUTIVO (Top 5)
+# TABLA 7: RESUMEN EJECUTIVO (tab:executive_summary)
+# =============================================================================
+# Genera: tables/table_executive_summary.tex
+# Contenido: Top 5 modelos + SPY B&H con Ret.Total, Sharpe, MaxDD, Capital Final, alpha
+# Fuente: final_long_only_backtest.json
+# alpha = retorno_modelo - retorno_SPY (exceso de retorno sobre el benchmark)
 # =============================================================================
 print("\n[8] Generando tabla resumen ejecutivo...")
 
@@ -486,7 +531,14 @@ print(f"    table_executive_summary.tex generada")
 
 
 # =============================================================================
-# TABLA 8: COMPARACION POR CATEGORIA
+# TABLA 8: COMPARACION POR CATEGORIA (tab:category_comparison)
+# =============================================================================
+# Genera: tables/table_category_comparison.tex
+# Contenido: 6 categorias con N modelos, retorno promedio, mejor retorno, Sharpe promedio,
+#            DD promedio, mejor modelo
+# Categorias: ML (5), GradientBoosting (3), TimeSeries (4), Specialized (2),
+#             DeepLearning (5), RNN (4)
+# Fuente: final_long_only_backtest.json, agrupado por MODEL_CATEGORIES
 # =============================================================================
 print("\n[9] Generando tabla de comparacion por categoria...")
 

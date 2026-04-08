@@ -5,264 +5,377 @@
 \section{Hiperpar\'ametros de Modelos}
 \label{app:hyperparameters}
 
-A continuaci\'on se detallan los hiperpar\'ametros de cada uno de los 23 modelos evaluados. Los valores fueron seleccionados mediante validaci\'on cruzada temporal (TimeSeriesSplit con 5 folds) sobre el conjunto de entrenamiento.
+A continuaci\'on se detallan los hiperpar\'ametros de cada uno de los 23 modelos evaluados. Para los modelos que emplean \textit{GridSearchCV}, se presenta el \textit{grid} de b\'usqueda explorado mediante validaci\'on cruzada temporal (\textit{TimeSeriesSplit} con 5 \textit{folds}) sobre el conjunto de entrenamiento, junto con los par\'ametros fijos establecidos en el constructor del modelo. Para los modelos restantes se documentan los par\'ametros expl\'icitamente configurados en el c\'odigo.
 
-\subsection{Modelos de Machine Learning Cl\'asico}
+\subsection{Modelos de Regresi\'on Lineal Regularizada (\textit{GridSearchCV})}
 \label{app:ml_hyperparams}
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Hiperpar\'ametros: Modelos de Regresi\'on Lineal Regularizada}
-\label{tab:hyper_linear}
+\caption{Ridge --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\label{tab:hyper_ridge}
 \small
 \begin{tabular}{@{}llp{8cm}@{}}
 \toprule
-\textbf{Modelo} & \textbf{Par\'ametro} & \textbf{Valor/Descripci\'on} \\
+\textbf{Tipo} & \textbf{Par\'ametro} & \textbf{Valor} \\
 \midrule
-Ridge & alpha & 1.0 (regularizaci\'on L2) \\
- & solver & 'auto' (selecci\'on autom\'atica) \\
- & fit\_intercept & True \\
+Fijo & random\_state & 42 \\
 \midrule
-Lasso & alpha & 0.001 (regularizaci\'on L1) \\
- & max\_iter & 10,000 \\
- & tol & $10^{-4}$ \\
-\midrule
-ElasticNet & alpha & 0.001 \\
- & l1\_ratio & 0.5 (balance L1/L2) \\
- & max\_iter & 10,000 \\
+\textit{Grid} & alpha & \{0.01,\; 0.1,\; 1,\; 10,\; 100\} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Hiperpar\'ametros: Modelos Ensemble}
-\label{tab:hyper_ensemble}
+\caption{Lasso --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\label{tab:hyper_lasso}
 \small
-\begin{tabular}{@{}llp{7cm}@{}}
+\begin{tabular}{@{}llp{8cm}@{}}
 \toprule
-\textbf{Modelo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\textbf{Tipo} & \textbf{Par\'ametro} & \textbf{Valor} \\
 \midrule
-RandomForest & n\_estimators & 200 \\
- & max\_depth & 10 \\
- & min\_samples\_split & 20 \\
- & min\_samples\_leaf & 10 \\
- & max\_features & 'sqrt' \\
- & bootstrap & True \\
- & n\_jobs & -1 \\
+Fijo & random\_state & 42 \\
+Fijo & max\_iter & 5{,}000 \\
 \midrule
-GradientBoosting & n\_estimators & 200 \\
- & max\_depth & 5 \\
- & learning\_rate & 0.05 \\
- & subsample & 0.8 \\
- & min\_samples\_split & 20 \\
+\textit{Grid} & alpha & \{$10^{-7}$,\; $10^{-6}$,\; $10^{-5}$,\; $10^{-4}$,\; $10^{-3}$\} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Modelos de Gradient Boosting}
-\label{app:gb_hyperparams}
-
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Hiperpar\'ametros: XGBoost, LightGBM, CatBoost}
+\caption{ElasticNet --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\label{tab:hyper_elasticnet}
+\small
+\begin{tabular}{@{}llp{8cm}@{}}
+\toprule
+\textbf{Tipo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+Fijo & random\_state & 42 \\
+Fijo & max\_iter & 50{,}000 \\
+Fijo & tol & $10^{-3}$ \\
+Fijo & selection & 'random' \\
+\midrule
+\textit{Grid} & alpha & \{$10^{-6}$,\; $10^{-5}$,\; $10^{-4}$,\; $10^{-3}$\} \\
+\textit{Grid} & l1\_ratio & \{0.3,\; 0.5,\; 0.7,\; 0.9\} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Modelos \textit{Ensemble} (\textit{GridSearchCV})}
+\label{app:ensemble_hyperparams}
+
+\begin{table}[H]
+\centering
+\caption{RandomForest --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\label{tab:hyper_rf}
+\small
+\begin{tabular}{@{}llp{8cm}@{}}
+\toprule
+\textbf{Tipo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+Fijo & random\_state & 42 \\
+Fijo & n\_jobs & $-1$ (todos los n\'ucleos) \\
+\midrule
+\textit{Grid} & n\_estimators & \{100,\; 200,\; 500\} \\
+\textit{Grid} & max\_depth & \{10,\; 20,\; 50,\; None\} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{GradientBoosting --- par\'ametros fijos y \textit{grid} de b\'usqueda}
 \label{tab:hyper_gb}
 \small
-\begin{tabular}{@{}llp{6cm}@{}}
+\begin{tabular}{@{}llp{8cm}@{}}
 \toprule
-\textbf{Modelo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\textbf{Tipo} & \textbf{Par\'ametro} & \textbf{Valor} \\
 \midrule
-XGBoost & n\_estimators & 200 \\
- & max\_depth & 6 \\
- & learning\_rate & 0.05 \\
- & subsample & 0.8 \\
- & colsample\_bytree & 0.8 \\
- & reg\_alpha & 0.1 (L1) \\
- & reg\_lambda & 1.0 (L2) \\
- & early\_stopping\_rounds & 50 \\
+Fijo & random\_state & 42 \\
 \midrule
-LightGBM & n\_estimators & 200 \\
- & max\_depth & 8 \\
- & learning\_rate & 0.05 \\
- & num\_leaves & 31 \\
- & subsample & 0.8 \\
- & colsample\_bytree & 0.8 \\
- & reg\_alpha & 0.1 \\
- & reg\_lambda & 1.0 \\
-\midrule
-CatBoost & iterations & 200 \\
- & depth & 6 \\
- & learning\_rate & 0.05 \\
- & l2\_leaf\_reg & 3.0 \\
- & random\_strength & 1.0 \\
- & bagging\_temperature & 0.5 \\
+\textit{Grid} & n\_estimators & \{100,\; 200,\; 500\} \\
+\textit{Grid} & learning\_rate & \{0.01,\; 0.05,\; 0.1\} \\
+\textit{Grid} & max\_depth & \{3,\; 5,\; 10,\; 15\} \\
+\textit{Grid} & subsample & \{0.8,\; 1.0\} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Modelos de Series Temporales}
+\subsection{Modelos de \textit{Gradient Boosting} Especializado}
+\label{app:gb_hyperparams}
+
+\begin{table}[H]
+\centering
+\caption{XGBoost (\textit{GridSearchCV}) --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\label{tab:hyper_xgb}
+\small
+\begin{tabular}{@{}llp{8cm}@{}}
+\toprule
+\textbf{Tipo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+Fijo & random\_state & 42 \\
+Fijo & n\_jobs & $-1$ \\
+Fijo & tree\_method & 'hist' \\
+\midrule
+\textit{Grid} & n\_estimators & \{100,\; 200\} \\
+\textit{Grid} & learning\_rate & \{0.01,\; 0.05\} \\
+\textit{Grid} & max\_depth & \{3,\; 5\} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{LightGBM (\textit{GridSearchCV}) --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\label{tab:hyper_lgbm}
+\small
+\begin{tabular}{@{}llp{8cm}@{}}
+\toprule
+\textbf{Tipo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+Fijo & random\_state & 42 \\
+Fijo & n\_jobs & $-1$ \\
+Fijo & verbosity & $-1$ \\
+\midrule
+\textit{Grid} & n\_estimators & \{100,\; 200,\; 500\} \\
+\textit{Grid} & learning\_rate & \{0.01,\; 0.05,\; 0.1\} \\
+\textit{Grid} & num\_leaves & \{31,\; 63,\; 127\} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{CatBoost --- par\'ametros expl\'icitos (sin \textit{GridSearchCV})}
+\label{tab:hyper_catboost}
+\small
+\begin{tabular}{@{}lp{10cm}@{}}
+\toprule
+\textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+iterations & 200 \\
+learning\_rate & 0.05 \\
+depth & 6 \\
+random\_state & 42 \\
+verbose & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Modelos de Series Temporales (Darts Cl\'asicos)}
 \label{app:ts_hyperparams}
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Hiperpar\'ametros: Modelos de Series Temporales}
+\caption{Hiperpar\'ametros de modelos de series temporales cl\'asicos}
 \label{tab:hyper_ts}
+\small
+\begin{tabular}{@{}llp{8cm}@{}}
+\toprule
+\textbf{Modelo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+AutoARIMA & --- & Par\'ametros por defecto de Darts (selecci\'on autom\'atica de $p$, $d$, $q$) \\
+\midrule
+ExponentialSmoothing & seasonal\_periods & None \\
+ & (resto) & Par\'ametros por defecto de Darts \\
+\midrule
+Theta & --- & Par\'ametros por defecto de Darts (los valores negativos del \textit{target} se desplazan hacia valores positivos antes del ajuste) \\
+\midrule
+Prophet & --- & Par\'ametros por defecto de Darts \\
+\midrule
+SeasonalNaive & K & 5 (rezago semanal en d\'ias h\'abiles) \\
+ & & Modelo sin par\'ametros entrenables --- replica el valor observado $K$ per\'iodos atr\'as \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{GARCH (\textit{arch library})}
+\label{app:garch_hyperparams}
+
+\begin{table}[H]
+\centering
+\caption{Hiperpar\'ametros de GARCH}
+\label{tab:hyper_garch}
+\small
+\begin{tabular}{@{}lp{10cm}@{}}
+\toprule
+\textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+vol & 'Garch' \\
+p & 1 (rezagos del t\'ermino GARCH) \\
+q & 1 (rezagos del t\'ermino ARCH) \\
+mean & 'AR' (modelo de media autoregresivo) \\
+lags & 1 (rezagos del componente AR) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Los retornos se escalan a porcentaje ($\times 100$) antes del ajuste para estabilidad num\'erica. Las predicciones de prueba se generan mediante predicci\'on \textit{one-step-ahead} re-estimando el modelo con una ventana m\'ovil de hasta 500 observaciones.
+
+\subsection{Modelos de \textit{Deep Learning} (Darts)}
+\label{app:dl_hyperparams}
+
+Todos los modelos de \textit{deep learning} de Darts comparten la configuraci\'on base descrita en la Tabla~\ref{tab:darts_dl_common}. Los par\'ametros de arquitectura no listados expl\'icitamente conservan sus valores por defecto seg\'un la implementaci\'on de Darts 0.41.
+
+\begin{table}[H]
+\centering
+\caption{Configuraci\'on com\'un de modelos Darts \textit{Deep Learning}}
+\label{tab:darts_dl_common}
+\small
+\begin{tabular}{@{}lp{10cm}@{}}
+\toprule
+\textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+input\_chunk\_length & 30 \\
+output\_chunk\_length & 21 \\
+n\_epochs & 100 (m\'aximo) \\
+batch\_size & 32 \\
+random\_state & 42 \\
+force\_reset & True \\
+\textit{Early stopping} & PLEarlyStopping(monitor='train\_loss', patience=5, mode='min') \\
+gradient\_clip\_val & 1.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Par\'ametros espec\'ificos de cada modelo Darts \textit{Deep Learning}}
+\label{tab:hyper_dl_specific}
+\small
+\begin{tabular}{@{}llp{8cm}@{}}
+\toprule
+\textbf{Modelo} & \textbf{Par\'ametro espec\'ifico} & \textbf{Valor} \\
+\midrule
+DLinear & --- & Solo par\'ametros comunes (Tabla~\ref{tab:darts_dl_common}) \\
+\midrule
+N-BEATS & --- & Solo par\'ametros comunes (arquitectura por defecto de Darts) \\
+\midrule
+N-HiTS & --- & Solo par\'ametros comunes (arquitectura por defecto de Darts) \\
+\midrule
+TCN & --- & Solo par\'ametros comunes (arquitectura por defecto de Darts) \\
+\midrule
+TFT & add\_relative\_index & True \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Modelos \textit{Custom} PyTorch}
+\label{app:pytorch_hyperparams}
+
+Los cuatro modelos \textit{custom} de PyTorch comparten la configuraci\'on de entrenamiento descrita en la Tabla~\ref{tab:pytorch_common}. A continuaci\'on se detallan los par\'ametros de arquitectura espec\'ificos de cada modelo.
+
+\begin{table}[H]
+\centering
+\caption{Configuraci\'on com\'un de entrenamiento PyTorch \textit{custom}}
+\label{tab:pytorch_common}
+\small
+\begin{tabular}{@{}lp{10cm}@{}}
+\toprule
+\textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+sequence\_length (\textit{lookback}) & 30 \\
+n\_epochs & 100 (m\'aximo) \\
+batch\_size & 32 \\
+optimizador & Adam \\
+learning\_rate & 0.0005 \\
+weight\_decay & $10^{-5}$ \\
+\textit{scheduler} & ReduceLROnPlateau(patience=5, factor=0.5) \\
+\textit{early stopping} & patience=10 (sobre p\'erdida de entrenamiento) \\
+gradient\_clip\_norm & 1.0 \\
+funci\'on de p\'erdida & MSELoss \\
+escalado del \textit{target} & StandardScaler (ajustado solo en \textit{train}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{CNN-LSTM --- arquitectura}
+\label{tab:hyper_cnnlstm}
 \small
 \begin{tabular}{@{}llp{7cm}@{}}
 \toprule
-\textbf{Modelo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\textbf{Componente} & \textbf{Par\'ametro} & \textbf{Valor} \\
 \midrule
-AutoARIMA & max\_p & 5 \\
- & max\_q & 5 \\
- & max\_d & 2 \\
- & seasonal & False \\
- & stepwise & True \\
- & suppress\_warnings & True \\
+Conv1d (capa 1) & n\_filters & 128 \\
+ & kernel\_size & 3 (padding=1) \\
+Conv1d (capa 2) & n\_filters & 256 ($128 \times 2$) \\
+ & kernel\_size & 3 (padding=1) \\
+MaxPool1d & kernel\_size & 2 \\
+Dropout (CNN) & p & 0.2 \\
 \midrule
-ExponentialSmoothing & trend & 'add' \\
- & seasonal & None \\
- & damped\_trend & True \\
-\midrule
-Theta & theta & 0 (optimizado autom\'aticamente) \\
- & deseasonalize & True \\
-\midrule
-SeasonalNaive & K & 5 (d\'ias de rezago) \\
-\midrule
-Prophet & changepoint\_prior\_scale & 0.05 \\
- & seasonality\_prior\_scale & 10 \\
- & yearly\_seasonality & True \\
- & weekly\_seasonality & True \\
- & daily\_seasonality & False \\
-\midrule
-GARCH & p & 1 \\
- & q & 1 \\
- & vol & 'GARCH' \\
- & dist & 'normal' \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Modelos de Deep Learning (Darts)}
-\label{app:dl_hyperparams}
-
-\begin{table}[htbp]
-\centering
-\caption{Hiperpar\'ametros: Modelos Deep Learning (Darts)}
-\label{tab:hyper_dl}
-\small
-\begin{tabular}{@{}llp{6cm}@{}}
-\toprule
-\textbf{Modelo} & \textbf{Par\'ametro} & \textbf{Valor} \\
-\midrule
-DLinear & input\_chunk\_length & 30 \\
- & output\_chunk\_length & 21 \\
- & n\_epochs & 100 \\
- & batch\_size & 32 \\
- & optimizer\_kwargs & \{'lr': 0.001\} \\
-\midrule
-N-BEATS & input\_chunk\_length & 30 \\
- & output\_chunk\_length & 21 \\
- & num\_stacks & 30 \\
- & num\_blocks & 1 \\
- & num\_layers & 4 \\
- & layer\_widths & 256 \\
- & n\_epochs & 100 \\
- & batch\_size & 32 \\
-\midrule
-N-HiTS & input\_chunk\_length & 30 \\
- & output\_chunk\_length & 21 \\
- & num\_stacks & 3 \\
- & num\_blocks & 1 \\
+LSTM & hidden\_dim & 128 \\
  & num\_layers & 2 \\
- & layer\_widths & 256 \\
- & n\_epochs & 100 \\
-\midrule
-TCN & input\_chunk\_length & 30 \\
- & output\_chunk\_length & 21 \\
- & kernel\_size & 3 \\
- & num\_filters & 32 \\
- & dilation\_base & 2 \\
- & n\_epochs & 100 \\
- & dropout & 0.2 \\
-\midrule
-TFT & input\_chunk\_length & 30 \\
- & output\_chunk\_length & 21 \\
- & hidden\_size & 64 \\
- & lstm\_layers & 1 \\
- & attention\_heads & 4 \\
  & dropout & 0.1 \\
- & n\_epochs & 100 \\
+ & bidirectional & False \\
+\midrule
+Capa densa & Linear & hidden\_dim $\to$ 1 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Modelos RNN Bidireccionales}
-\label{app:rnn_hyperparams}
-
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Hiperpar\'ametros: Bi-LSTM y Bi-GRU}
-\label{tab:hyper_rnn}
+\caption{LSTM+Attention (Luong) --- arquitectura}
+\label{tab:hyper_lstmattn}
 \small
-\begin{tabular}{@{}llp{6cm}@{}}
+\begin{tabular}{@{}llp{7cm}@{}}
 \toprule
-\textbf{Modelo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\textbf{Componente} & \textbf{Par\'ametro} & \textbf{Valor} \\
 \midrule
-BiLSTM & sequence\_length & 30 \\
- & hidden\_dim & 128 \\
- & n\_layers & 2 \\
- & bidirectional & True \\
+LSTM & hidden\_dim & 128 \\
+ & num\_layers & 2 \\
  & dropout & 0.1 \\
- & n\_epochs & 100 \\
- & batch\_size & 32 \\
- & learning\_rate & 0.0005 \\
- & weight\_decay & $10^{-5}$ \\
+ & bidirectional & True \\
 \midrule
-BiGRU & sequence\_length & 30 \\
- & hidden\_dim & 128 \\
- & n\_layers & 2 \\
- & bidirectional & True \\
- & dropout & 0.1 \\
- & n\_epochs & 100 \\
- & batch\_size & 32 \\
- & learning\_rate & 0.0005 \\
+Atenci\'on & tipo & \textit{dot-product} (Luong) \\
+ & dimensi\'on & hidden\_dim $\times$ 2 = 256 \\
+\midrule
+Dropout (salida) & p & 0.2 \\
+Capa densa & Linear & hidden\_dim $\times$ 2 $\to$ 1 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Modelos H\'ibridos y Attention (PyTorch)}
-\label{app:hybrid_hyperparams}
-
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Hiperpar\'ametros: CNN-LSTM y LSTM+Attention}
-\label{tab:hyper_hybrid}
+\caption{BiLSTM --- arquitectura}
+\label{tab:hyper_bilstm}
 \small
-\begin{tabular}{@{}llp{6cm}@{}}
+\begin{tabular}{@{}llp{7cm}@{}}
 \toprule
-\textbf{Modelo} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\textbf{Componente} & \textbf{Par\'ametro} & \textbf{Valor} \\
 \midrule
-CNN-LSTM & sequence\_length & 30 \\
- & n\_filters & 128 (Conv1d $\to$ Conv1d $\to$ MaxPool) \\
- & cnn\_kernel\_size & 3 \\
- & hidden\_dim & 128 \\
- & lstm\_layers & 2 \\
- & dropout (CNN) & 0.2 \\
- & dropout (LSTM) & 0.1 \\
- & n\_epochs & 100 \\
- & batch\_size & 32 \\
- & learning\_rate & 0.0005 \\
- & weight\_decay & $10^{-5}$ \\
+LSTM & hidden\_dim & 128 \\
+ & num\_layers & 2 \\
+ & dropout & 0.1 \\
+ & bidirectional & True \\
 \midrule
-LSTM+Attention & sequence\_length & 30 \\
-(Luong) & hidden\_dim & 128 \\
- & lstm\_layers & 2, bidirectional \\
- & attention\_type & dot-product (Luong) \\
- & dropout (LSTM) & 0.1 \\
- & dropout (output) & 0.2 \\
- & n\_epochs & 100 \\
- & batch\_size & 32 \\
- & learning\_rate & 0.0005 \\
+Dropout (salida) & p & 0.1 \\
+Capa densa & Linear & hidden\_dim $\times$ 2 $\to$ 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{BiGRU --- arquitectura}
+\label{tab:hyper_bigru}
+\small
+\begin{tabular}{@{}llp{7cm}@{}}
+\toprule
+\textbf{Componente} & \textbf{Par\'ametro} & \textbf{Valor} \\
+\midrule
+GRU & hidden\_dim & 128 \\
+ & num\_layers & 2 \\
+ & dropout & 0.1 \\
+ & bidirectional & True \\
+\midrule
+Dropout (salida) & p & 0.1 \\
+Capa densa & Linear & hidden\_dim $\times$ 2 $\to$ 1 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -270,24 +383,24 @@ LSTM+Attention & sequence\_length & 30 \\
 \subsection{Configuraci\'on de Entrenamiento Com\'un}
 \label{app:training_config}
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Configuraci\'on de Entrenamiento Com\'un}
+\caption{Configuraci\'on general de entrenamiento}
 \label{tab:training_common}
 \begin{tabular}{@{}lp{10cm}@{}}
 \toprule
 \textbf{Par\'ametro} & \textbf{Valor} \\
 \midrule
-Per\'iodo de entrenamiento & Enero 2000 - Septiembre 2020 \\
-Per\'iodo de prueba & Octubre 2020 - Diciembre 2025 \\
-Divisi\'on temporal & Sin shuffle, estrictamente cronol\'ogica \\
-Validaci\'on cruzada & TimeSeriesSplit, 5 folds \\
-Normalizaci\'on & StandardScaler, fit solo en train \\
-Features eliminados & Constantes, >50\% NaN \\
-Warmup para percentiles & 63 d\'ias (usando predicciones de train) \\
-Early stopping & 10-50 epochs sin mejora (seg\'un modelo) \\
-GPU & NVIDIA RTX 3090 (24GB) \\
-Seed & 42 (reproducibilidad) \\
+Per\'iodo de entrenamiento & Enero 2000 -- Septiembre 2020 \\
+Per\'iodo de prueba & Octubre 2020 -- Diciembre 2025 \\
+Divisi\'on temporal & 80/20 sin \textit{shuffle}, estrictamente cronol\'ogica \\
+Validaci\'on cruzada & TimeSeriesSplit, 5 \textit{folds} (modelos con \textit{GridSearchCV}) \\
+Imputaci\'on & SimpleImputer(strategy='median') \\
+Normalizaci\'on & StandardScaler, ajustado solo en \textit{train} \\
+\textit{Early stopping} (Darts DL) & PLEarlyStopping, patience=5 \\
+\textit{Early stopping} (PyTorch \textit{custom}) & patience=10 \\
+Dispositivo de entrenamiento & GPU NVIDIA T4 16~GB (modelos DL, v\'ia CUDA) / CPU (modelos cl\'asicos) \\
+Semilla & 42 (NumPy, PyTorch, sklearn) \\
 \bottomrule
 \end{tabular}
 \end{table}
