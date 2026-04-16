@@ -6,7 +6,7 @@
 \toprule
 \textbf{Categor\'ia} & \textbf{N} & \textbf{Ret. Prom.} & \textbf{Mejor Ret.} & \textbf{Sharpe Prom.} & \textbf{DD Prom.} & \textbf{Mejor Modelo} \\
 \midrule
-RNN & 4 & \textcolor{ForestGreen}{125.7\%} & 400.0\% & 0.347 & 42.3\% & LSTM\_Attention \\
+RNN & 4 & \textcolor{ForestGreen}{125.7\%} & 400.0\% & 0.347 & 42.3\% & LSTM+Attention \\
 ML & 5 & \textcolor{ForestGreen}{102.0\%} & 263.2\% & 0.461 & 22.7\% & Ridge \\
 DeepLearning & 5 & \textcolor{ForestGreen}{33.5\%} & 67.9\% & 0.125 & 37.2\% & DLinear \\
 GradientBoosting & 3 & \textcolor{ForestGreen}{29.4\%} & 47.4\% & 0.104 & 32.8\% & CatBoost \\
@@ -16,6 +16,6 @@ Specialized & 2 & \textcolor{ForestGreen}{17.4\%} & 27.2\% & -0.016 & 16.8\% & G
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: N = n\'umero de modelos en la categor\'ia. ML = Machine Learning cl\'asico, GradientBoosting = XGBoost/LightGBM/CatBoost, DeepLearning = redes Darts, RNN = LSTM/GRU, TimeSeries = ARIMA/ETS/Theta.
+\item Nota: N = n\'umero de modelos en la categor\'ia. ML = Machine Learning cl\'asico, GradientBoosting = XGBoost/LightGBM/CatBoost, DeepLearning = redes Darts, RNN = LSTM/GRU, TimeSeries = AutoARIMA/ExponentialSmoothing/Theta/SeasonalNaive.
 \end{tablenotes}
 \end{table}

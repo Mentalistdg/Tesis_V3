@@ -12,17 +12,17 @@ Los umbrales de posicionamiento $(q_{\text{extreme}}, q_{\text{moderate}})$ se d
 
 \subsubsection{Espacio de B\'usqueda}
 
-Se eval\'uan las 26 combinaciones v\'alidas de $(q_{\text{extreme}}, q_{\text{moderate}})$:
+Se eval\'uan las 26 combinaciones v\'alidas de $(q_{\text{extreme}}, q_{\text{moderate}})$.
 
 \begin{itemize}
     \item $q_{\text{extreme}} \in \{5, 10, 15, 20, 25, 30\}$ (percentil superior para posici\'on UPRO 3x)
     \item $q_{\text{moderate}} \in \{20, 30, 40, 50, 60\}$ (percentil superior para posici\'on SPY 1x)
-    \item Restricci\'on: $q_{\text{moderate}} > q_{\text{extreme}}$ (UPRO requiere mayor convicci\'on que SPY)
+    \item Restricci\'on --- $q_{\text{moderate}} > q_{\text{extreme}}$ (UPRO requiere mayor convicci\'on que SPY)
 \end{itemize}
 
 \subsubsection{Funci\'on Objetivo}
 
-Para cada ventana de evaluaci\'on en el meta-dataset de entrenamiento, se calcula el \textit{Sharpe ratio} penalizado:
+Para cada ventana de evaluaci\'on en el meta-dataset de entrenamiento, se calcula el \textit{Sharpe ratio} penalizado.
 
 \begin{equation}
 \text{score}(q_{\text{ext}}, q_{\text{mod}}) =
@@ -36,16 +36,16 @@ Para cada ventana de evaluaci\'on en el meta-dataset de entrenamiento, se calcul
 
 \subsubsection{Meta-Features}
 
-Siete caracter\'isticas describen el r\'egimen predictivo de cada ventana de 63 d\'ias:
+Siete caracter\'isticas describen el r\'egimen predictivo de cada ventana de 63 d\'ias.
 
 \begin{enumerate}
-    \item $\overline{\hat{y}}_w$: Media de las predicciones (nivel de optimismo)
-    \item $\sigma_{\hat{y},w}$: Desviaci\'on est\'andar (variabilidad de se\~nal)
-    \item $\gamma_{\hat{y},w}$: Asimetr\'ia (\textit{skewness} de la distribuci\'on)
-    \item $\rho_{\hat{y},w}$: Autocorrelaci\'on de primer orden (persistencia)
-    \item $\beta_{\hat{y},w}$: Pendiente de tendencia lineal (direcci\'on)
-    \item $\overline{\sigma}_{m,w}$: Volatilidad promedio del mercado (r\'egimen de vol)
-    \item $R_{m,w}$: Retorno acumulado del mercado (contexto reciente)
+    \item $\overline{\hat{y}}_w$ --- Media de las predicciones (nivel de optimismo)
+    \item $\sigma_{\hat{y},w}$ --- Desviaci\'on est\'andar (variabilidad de se\~nal)
+    \item $\gamma_{\hat{y},w}$ --- Asimetr\'ia (\textit{skewness} de la distribuci\'on)
+    \item $\rho_{\hat{y},w}$ --- Autocorrelaci\'on de primer orden (persistencia)
+    \item $\beta_{\hat{y},w}$ --- Pendiente de tendencia lineal (direcci\'on)
+    \item $\overline{\sigma}_{m,w}$ --- Volatilidad promedio del mercado (r\'egimen de vol)
+    \item $R_{m,w}$ --- Retorno acumulado del mercado (contexto reciente)
 \end{enumerate}
 
 \subsubsection{Par\'ametros del KNN}
@@ -54,13 +54,13 @@ Siete caracter\'isticas describen el r\'egimen predictivo de cada ventana de 63 
     \item $K = 5$ vecinos, ponderados por distancia inversa
     \item Estandarizaci\'on de features mediante \textit{StandardScaler}
     \item Ventanas deslizantes de 63 d\'ias con paso de 21 d\'ias
-    \item Horizonte de evaluaci\'on: 63 d\'ias siguientes a cada ventana
+    \item Horizonte de evaluaci\'on --- 63 d\'ias siguientes a cada ventana
     \item Aproximadamente 242 muestras de entrenamiento por modelo
 \end{itemize}
 
 \subsubsection{Filtro de Calidad de Se\~nal}
 
-Adem\'as del Meta-KNN, se aplica un filtro basado en la desviaci\'on est\'andar \textit{rolling} de las predicciones: si $\sigma_{\text{rolling},63} < \tau = 0{,}001$, la estrategia se posiciona en efectivo independientemente de los umbrales predichos por el KNN. Este filtro protege contra predicciones cuasi-constantes que generan percentiles aleatorios.
+Adem\'as del Meta-KNN, se aplica un filtro basado en la desviaci\'on est\'andar \textit{rolling} de las predicciones --- si $\sigma_{\text{rolling},63} < \tau = 0{,}001$, la estrategia se posiciona en efectivo independientemente de los umbrales predichos por el KNN. Este filtro protege contra predicciones cuasi-constantes que generan percentiles aleatorios.
 
 \subsection{Tabla de Par\'ametros Din\'amicos}
 \label{app:optimal_table}
@@ -74,22 +74,22 @@ La Tabla~\ref{tab:optimal_params} presenta los par\'ametros din\'amicos m\'as fr
 
 \subsubsection{Diversidad de Umbrales por Modelo}
 
-La naturaleza din\'amica del Meta-KNN implica que cada modelo utiliza m\'ultiples combinaciones de umbrales a lo largo del per\'iodo de prueba. Se distinguen tres patrones:
+La naturaleza din\'amica del Meta-KNN implica que cada modelo utiliza m\'ultiples combinaciones de umbrales a lo largo del per\'iodo de prueba. Se distinguen tres patrones.
 
 \begin{enumerate}
-    \item \textbf{Modelos altamente din\'amicos} (>15 combinaciones): LSTM+Attention (22), Ridge (21), CNN-LSTM (18). El KNN adapta activamente los umbrales a las condiciones cambiantes. Predominan las arquitecturas de \textit{deep learning} y modelos lineales con predicciones ricas.
+    \item \textbf{Modelos altamente din\'amicos} (>15 combinaciones) --- LSTM+Attention (22), Ridge (21), CNN-LSTM (18). El KNN adapta activamente los umbrales a las condiciones cambiantes. Predominan las arquitecturas de \textit{deep learning} y modelos lineales con predicciones ricas.
 
-    \item \textbf{Modelos moderadamente din\'amicos} (5--15 combinaciones): CatBoost (10), Theta (9), SeasonalNaive (7), LightGBM (7), GARCH (7). El KNN encuentra un rango limitado de configuraciones \'utiles.
+    \item \textbf{Modelos moderadamente din\'amicos} (5--15 combinaciones) --- CatBoost (10), Theta (9), SeasonalNaive (7), LightGBM (7), GARCH (7). El KNN encuentra un rango limitado de configuraciones \'utiles.
 
-    \item \textbf{Modelos est\'aticos o filtrados} (<5 combinaciones o mayoritariamente en Cash): RandomForest (4), XGBoost (4), NBEATS (2), NHiTS (1), GradientBoosting (1), AutoARIMA (0, 100\% filtrado). Predicciones insuficientemente variables o patr\'on dominante claro.
+    \item \textbf{Modelos est\'aticos o filtrados} (<5 combinaciones o mayoritariamente en Cash) --- RandomForest (4), XGBoost (4), NBEATS (2), NHiTS (1), GradientBoosting (1), AutoARIMA (0, 100\% filtrado). Predicciones insuficientemente variables o patr\'on dominante claro.
 \end{enumerate}
 
 \subsubsection{Implicaciones}
 
 \begin{itemize}
-    \item \textbf{Alta diversidad + buen rendimiento}: El modelo captura distintos reg\'imenes de mercado y el KNN adapta los umbrales adecuadamente (LSTM+Attention con 22 combinaciones y +400\%).
-    \item \textbf{Baja diversidad + buen rendimiento}: Una configuraci\'on robusta funciona consistentemente (RandomForest con 4 combinaciones y +131\%).
-    \item \textbf{Filtrado mayoritario}: Predicciones cuasi-constantes impiden la generaci\'on de se\~nales---el filtro de calidad protege correctamente (AutoARIMA permanece 100\% en Cash).
+    \item \textbf{Alta diversidad + buen rendimiento.} El modelo captura distintos reg\'imenes de mercado y el KNN adapta los umbrales adecuadamente (LSTM+Attention con 22 combinaciones y +400\%).
+    \item \textbf{Baja diversidad + buen rendimiento.} Una configuraci\'on robusta funciona consistentemente (RandomForest con 4 combinaciones y +131\%).
+    \item \textbf{Filtrado mayoritario.} Predicciones cuasi-constantes impiden la generaci\'on de se\~nales---el filtro de calidad protege correctamente (AutoARIMA permanece 100\% en Cash).
 \end{itemize}
 
 \subsection{Interpretaci\'on de los Umbrales Din\'amicos}
@@ -97,24 +97,24 @@ La naturaleza din\'amica del Meta-KNN implica que cada modelo utiliza m\'ultiple
 
 \subsubsection{Significado de los Percentiles}
 
-Para LSTM+Attention, cuya combinaci\'on m\'as frecuente es $(q_{\text{extreme}}{=}5, q_{\text{moderate}}{=}50)$:
+Para LSTM+Attention, cuya combinaci\'on m\'as frecuente es $(q_{\text{extreme}}{=}5, q_{\text{moderate}}{=}50)$.
 
 \begin{itemize}
-    \item \textbf{Predicci\'on en top 5\%}: Posici\'on UPRO (3x \textit{leverage})
-    \item \textbf{Predicci\'on en top 5--50\%}: Posici\'on SPY (1x)
-    \item \textbf{Predicci\'on debajo del top 50\%}: Cash (tasa libre de riesgo)
+    \item \textbf{Predicci\'on en top 5\%.} Posici\'on UPRO (3x \textit{leverage})
+    \item \textbf{Predicci\'on en top 5--50\%.} Posici\'on SPY (1x)
+    \item \textbf{Predicci\'on debajo del top 50\%.} Cash (tasa libre de riesgo)
 \end{itemize}
 
 Sin embargo, estos umbrales var\'ian din\'amicamente. En per\'iodos de alta volatilidad, el KNN puede seleccionar $(5, 20)$---reservando SPY solo para el top 20\%---mientras que en per\'iodos estables puede ampliar a $(20, 60)$, adoptando mayor exposici\'on. El modelo utiliz\'o 22 combinaciones distintas a lo largo del per\'iodo de prueba, lo que indica una adaptaci\'on activa a las condiciones de mercado.
 
 \subsubsection{Percentiles vs Valores Absolutos}
 
-El uso de percentiles \textit{rolling} en lugar de umbrales fijos tiene ventajas:
+El uso de percentiles \textit{rolling} en lugar de umbrales fijos tiene ventajas.
 
 \begin{enumerate}
-    \item \textbf{Adaptabilidad}: Se ajusta autom\'aticamente a cambios en la distribuci\'on de predicciones.
-    \item \textbf{Robustez}: Menos sensible a \textit{drift} en el modelo.
-    \item \textbf{Normalizaci\'on}: Permite comparar la convicci\'on de modelos con escalas muy distintas.
+    \item \textbf{Adaptabilidad.} Se ajusta autom\'aticamente a cambios en la distribuci\'on de predicciones.
+    \item \textbf{Robustez.} Menos sensible a \textit{drift} en el modelo.
+    \item \textbf{Normalizaci\'on.} Permite comparar la convicci\'on de modelos con escalas muy distintas.
 \end{enumerate}
 
-Combinados con los umbrales din\'amicos del Meta-KNN, los percentiles \textit{rolling} proporcionan un sistema de posicionamiento doblemente adaptativo: adaptativo a la escala del modelo (v\'ia percentiles) y adaptativo a las condiciones de mercado (v\'ia KNN).
+Combinados con los umbrales din\'amicos del Meta-KNN, los percentiles \textit{rolling} proporcionan un sistema de posicionamiento doblemente adaptativo---adaptativo a la escala del modelo (v\'ia percentiles) y adaptativo a las condiciones de mercado (v\'ia KNN).

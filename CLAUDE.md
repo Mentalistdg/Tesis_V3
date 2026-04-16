@@ -1,4 +1,4 @@
-# CLAUDE.md
+he re# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -29,8 +29,7 @@ python scripts/optimize_and_backtest.py  # Step 3: Meta-KNN thresholds + backtes
 python paper/update_backend_data.py      # Step 4: Pipeline results → app/backend/data/*.json
 
 # Optional scripts
-python scripts/demo_pipeline_prueba.py        # Anti-leakage verification
-python scripts/simulate_backtest_scenarios.py  # What-if analysis with risk filters (not used in main pipeline)
+python scripts/demo_pipeline_prueba.py   # Anti-leakage verification
 
 # Tip: use -u for unbuffered output on long-running scripts (train_models ~105 min)
 python -u scripts/train_models.py

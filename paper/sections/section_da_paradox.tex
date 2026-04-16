@@ -12,7 +12,7 @@ Uno de los hallazgos m\'as llamativos de este estudio es la desconexi\'on entre 
 
 \subsubsection{Intuici\'on Na\"ive vs Realidad}
 
-Intuitivamente, un modelo que acierta m\'as la direcci\'on del mercado deber\'ia generar mayores retornos. Los resultados, sin embargo, contradicen esta expectativa:
+Intuitivamente, un modelo que acierta m\'as la direcci\'on del mercado deber\'ia generar mayores retornos. Los resultados, sin embargo, contradicen esta expectativa.
 
 \begin{equation}
 \rho(\text{DA}, \text{Return}) = -0.37
@@ -62,7 +62,7 @@ La Figura~\ref{fig:da_paradox} ilustra gr\'aficamente esta relaci\'on inversa en
 
 El DA asigna el mismo peso a cada predicci\'on, sin distinguir entre la magnitud del movimiento, el tama\~no de la posici\'on o el momento del ciclo de mercado.
 
-\textbf{Ejemplo ilustrativo:}
+\textbf{Ejemplo ilustrativo.}
 
 \begin{center}
 \small
@@ -77,16 +77,16 @@ El DA asigna el mismo peso a cada predicci\'on, sin distinguir entre la magnitud
 \end{tabular}
 \end{center}
 
-\noindent DA = 66.7\% (2/3 aciertos), pero el P\&L acumulado es \textbf{negativo}: la p\'erdida del d\'ia~3 ($-3.0\%$) supera las ganancias combinadas de los d\'ias~1 y~2 ($+0.2\%$).
+\noindent DA = 66.7\% (2/3 aciertos), pero el P\&L acumulado es \textbf{negativo}---la p\'erdida del d\'ia~3 ($-3.0\%$) supera las ganancias combinadas de los d\'ias~1 y~2 ($+0.2\%$).
 
-\subsubsection{Lo Que Realmente Importa: Asimetr\'ia Condicional}
+\subsubsection{Lo Que Realmente Importa---Asimetr\'ia Condicional}
 
 La rentabilidad de una estrategia de \textit{trading} depende de tres factores que el DA no captura. En primer lugar, \textit{cu\'ando} se acierta---acertar en d\'ias de movimientos grandes importa m\'as que acertar en d\'ias tranquilos, dado que el P\&L se determina por la magnitud del movimiento, no por haber acertado la direcci\'on. En segundo lugar, \textit{cu\'anto} se expone---el tama\~no de la posici\'on cuando se acierta frente al tama\~no cuando se falla determina la contribuci\'on neta de cada predicci\'on al resultado. En tercer lugar, la asimetr\'ia entre ganancias y p\'erdidas---el ratio entre la ganancia promedio y la p\'erdida promedio por \textit{trade} (\textit{Profit Factor}) puede compensar una tasa de aciertos moderada si las ganancias son sustancialmente mayores que las p\'erdidas.
 
 \subsection{El Indicador DA@3x: Una M\'etrica M\'as Relevante}
 \label{subsec:da_3x}
 
-Se propone el indicador \textbf{DA@3x} (\textit{Directional Accuracy} en posiciones apalancadas) como una m\'etrica m\'as predictiva de rentabilidad:
+Se propone el indicador \textbf{DA@3x} (\textit{Directional Accuracy} en posiciones apalancadas) como una m\'etrica m\'as predictiva de rentabilidad.
 
 \begin{equation}
 \text{DA@3x} = \frac{\displaystyle\sum_{t=1}^{T} \mathbf{1}\bigl[\text{pos}_t = 3 \;\wedge\; r_t^{\text{mkt}} > 0\bigr]}{\displaystyle\sum_{t=1}^{T} \mathbf{1}\bigl[\text{pos}_t = 3\bigr]}
@@ -148,9 +148,9 @@ Este hallazgo es consistente con varios resultados fundamentales de la literatur
 
 \textbf{La paradoja de Grossman-Stiglitz} \citep{grossman1980} proporciona el marco te\'orico m\'as general para interpretar estos hallazgos. Si los mercados fueran perfectamente eficientes, ninguna estrategia---independientemente de su DA---podr\'ia generar alfa de forma sistem\'atica. El hecho de que modelos con DA inferior al azar generen rendimientos superiores al mercado sugiere que la ineficiencia explotable no reside en la capacidad de predecir la direcci\'on diaria del mercado, sino en la identificaci\'on de momentos donde la relaci\'on riesgo-retorno es asim\'etricamente favorable. La compensaci\'on que el mercado otorga por procesar esta informaci\'on---conforme al equilibrio de Grossman-Stiglitz---se materializa no a trav\'es de aciertos frecuentes, sino a trav\'es de aciertos concentrados en los momentos de mayor impacto.
 
-Los hallazgos son tambi\'en consistentes con la evidencia de \citet{gu2020}, quienes muestran que m\'ultiples familias de modelos convergen en las mismas se\~nales predictivas dominantes. En el contexto de la paradoja del DA, esta convergencia adquiere un matiz adicional: tanto Ridge (modelo lineal) como LSTM+Attention (red neuronal profunda) exhiben DA inferior al 50\% y, sin embargo, ambos superan ampliamente al mercado. Esto sugiere que la se\~nal predictiva capturada por ambos modelos---pese a sus arquitecturas radicalmente distintas---no es de naturaleza direccional simple, sino que involucra la identificaci\'on de estados de mercado donde la exposici\'on produce retornos asim\'etricos.
+Los hallazgos son tambi\'en consistentes con la evidencia de \citet{gu2020}, quienes muestran que m\'ultiples familias de modelos convergen en las mismas se\~nales predictivas dominantes. En el contexto de la paradoja del DA, esta convergencia adquiere un matiz adicional---tanto Ridge (modelo lineal) como LSTM+Attention (red neuronal profunda) exhiben DA inferior al 50\% y, sin embargo, ambos superan ampliamente al mercado. Esto sugiere que la se\~nal predictiva capturada por ambos modelos---pese a sus arquitecturas radicalmente distintas---no es de naturaleza direccional simple, sino que involucra la identificaci\'on de estados de mercado donde la exposici\'on produce retornos asim\'etricos.
 
-Desde la perspectiva de las finanzas conductuales, \citet{kahneman1979} documentaron que los agentes sistem\'aticamente sobrevaloran la frecuencia de aciertos frente a la magnitud de los resultados---un sesgo que la \textit{Prospect Theory} atribuye a la aversi\'on a las p\'erdidas. Esta tendencia cognitiva explica, al menos parcialmente, por qu\'e el DA persiste como m\'etrica dominante en la evaluaci\'on de modelos de \textit{trading} pese a su limitada capacidad predictiva: los inversores e investigadores tienden a favorecer estrategias que ``aciertan'' frecuentemente, aun cuando estrategias con menor frecuencia de aciertos pero mayor asimetr\'ia en las magnitudes produzcan resultados superiores.
+Desde la perspectiva de las finanzas conductuales, \citet{kahneman1979} documentaron que los agentes sistem\'aticamente sobrevaloran la frecuencia de aciertos frente a la magnitud de los resultados---un sesgo que la \textit{Prospect Theory} atribuye a la aversi\'on a las p\'erdidas. Esta tendencia cognitiva explica, al menos parcialmente, por qu\'e el DA persiste como m\'etrica dominante en la evaluaci\'on de modelos de \textit{trading} pese a su limitada capacidad predictiva---los inversores e investigadores tienden a favorecer estrategias que ``aciertan'' frecuentemente, aun cuando estrategias con menor frecuencia de aciertos pero mayor asimetr\'ia en las magnitudes produzcan resultados superiores.
 
 Finalmente, el concepto de selectividad temporal que emerge de la paradoja del DA se conecta directamente con la filosof\'ia del Triple Screen de \citet{elder1993}, cuya metodolog\'ia inspira la ingenier\'ia de caracter\'isticas de este estudio. Elder argumenta que las se\~nales m\'as fiables surgen cuando m\'ultiples marcos temporales se alinean, y que la disciplina de \textit{no} operar cuando la se\~nal es ambigua es tan importante como la precisi\'on de la se\~nal misma. El LSTM+Attention, al permanecer en efectivo el 55\% del tiempo y reservar la m\'axima exposici\'on para el 12\% de los d\'ias, implementa computacionalmente esta filosof\'ia de selectividad, dado que su ventaja no proviene de predecir mejor la direcci\'on del mercado, sino de identificar con mayor precisi\'on cu\'ando vale la pena asumir exposici\'on.
 
