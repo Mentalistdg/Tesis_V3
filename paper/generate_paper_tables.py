@@ -6,12 +6,9 @@ GENERADOR DE TABLAS LaTeX PARA EL PAPER
 Lee datos EXCLUSIVAMENTE de los JSONs autoritativos del pipeline:
   - results/final_long_only_backtest.json (rendimiento, posiciones, costos)
   - results/optimal_model_params.json (parametros y bootstrap CIs)
-  - app/backend/data/regime_data.json (rendimiento por regimen)
 
 Genera:
 - tables/table_model_performance.tex
-- tables/table_risk_metrics.tex
-- tables/table_regime_performance.tex
 - tables/table_cost_breakdown.tex
 - tables/table_position_distribution.tex
 - tables/table_optimal_params.tex
@@ -29,24 +26,24 @@ from datetime import datetime
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SCRIPT_DIR)
 RESULTS_DIR = os.path.join(BASE_DIR, "results")
-APP_DATA_DIR = os.path.join(BASE_DIR, "app", "backend", "data")
 TABLES_DIR = os.path.join(SCRIPT_DIR, "tables")
 
 os.makedirs(TABLES_DIR, exist_ok=True)
 
 # Model category mapping
 MODEL_CATEGORIES = {
-    'Ridge': 'ML', 'Lasso': 'ML', 'ElasticNet': 'ML',
-    'RandomForest': 'ML', 'GradientBoosting': 'ML',
-    'XGBoost': 'GradientBoosting', 'LightGBM': 'GradientBoosting',
-    'CatBoost': 'GradientBoosting',
-    'AutoARIMA': 'TimeSeries', 'ExponentialSmoothing': 'TimeSeries',
-    'Theta': 'TimeSeries', 'SeasonalNaive': 'TimeSeries',
-    'Prophet': 'Specialized', 'GARCH': 'Specialized',
-    'DLinear': 'DeepLearning', 'NBEATS': 'DeepLearning',
-    'NHiTS': 'DeepLearning', 'TCN': 'DeepLearning', 'TFT': 'DeepLearning',
-    'CNN_LSTM': 'RNN', 'LSTM_Attention': 'RNN',
-    'BiLSTM': 'RNN', 'BiGRU': 'RNN',
+    'Ridge': "ML cl\\'asico", 'Lasso': "ML cl\\'asico", 'ElasticNet': "ML cl\\'asico",
+    'RandomForest': "ML cl\\'asico",
+    'GradientBoosting': 'Boosting',
+    'XGBoost': 'Boosting', 'LightGBM': 'Boosting',
+    'CatBoost': 'Boosting',
+    'AutoARIMA': 'Series temporales', 'ExponentialSmoothing': 'Series temporales',
+    'Theta': 'Series temporales', 'SeasonalNaive': 'Series temporales',
+    'Prophet': 'Series temporales', 'GARCH': 'Series temporales',
+    'DLinear': 'Deep learning', 'NBEATS': 'Deep learning',
+    'NHiTS': 'Deep learning', 'TCN': 'Deep learning', 'TFT': 'Deep learning',
+    'CNN_LSTM': 'Deep learning', 'LSTM_Attention': 'Deep learning',
+    'BiLSTM': 'Deep learning', 'BiGRU': 'Deep learning',
 }
 
 print("=" * 80)
@@ -61,8 +58,6 @@ print(f"Timestamp: {datetime.now()}")
 #   - final_long_only_backtest.json: retorno total, Sharpe, Sortino, Calmar, MaxDD,
 #     distribuciones de posiciones, costos, n_trades para los 23 modelos
 #   - optimal_model_params.json: umbrales (q_ext, q_mod) mas frecuentes del Meta-KNN
-#   - regime_data.json: rendimiento desglosado por regimen (bull/bear/sideways/high_vol),
-#     generado por paper/update_backend_data.py
 # =============================================================================
 print("\n[1] Cargando datos JSON autoritativos...")
 
@@ -71,13 +66,6 @@ with open(os.path.join(RESULTS_DIR, "final_long_only_backtest.json"), 'r') as f:
 
 with open(os.path.join(RESULTS_DIR, "optimal_model_params.json"), 'r') as f:
     optimal_params = json.load(f)
-
-# Regime data (from app backend - only source)
-regime_path = os.path.join(APP_DATA_DIR, "regime_data.json")
-regime_data = None
-if os.path.exists(regime_path):
-    with open(regime_path, 'r') as f:
-        regime_data = json.load(f)
 
 benchmark = backtest_data['benchmark']
 raw_models = backtest_data['models']
@@ -170,9 +158,9 @@ latex_performance = r"""\begin{table}[htbp]
 \caption{Rendimiento de los 23 Modelos en el Per\'iodo de Prueba (Oct 2020 - Dic 2025)}
 \label{tab:model_performance}
 \small
-\begin{tabular}{@{}llrrrrrrr@{}}
+\begin{tabular}{@{}llrrrrr@{}}
 \toprule
-\textbf{Rank} & \textbf{Modelo} & \textbf{Categor\'ia} & \textbf{Ret. Total} & \textbf{Ret. Anual} & \textbf{Sharpe} & \textbf{Sortino} & \textbf{Calmar} & \textbf{Max DD} \\
+\textbf{Rank} & \textbf{Modelo} & \textbf{Categor\'ia} & \textbf{Ret. Total} & \textbf{Ret. Anual} & \textbf{Sharpe} & \textbf{Max DD} \\
 \midrule
 """
 
@@ -184,8 +172,6 @@ for i, m in enumerate(models_sorted):
     ret_total = format_pct(m['total_return'])
     ret_annual = format_pct(m['annual_return'])
     sharpe = format_num(m['sharpe'], 3)
-    sortino = format_num(m['sortino'], 3) if m['sortino'] != 0 else "--"
-    calmar = format_num(m['calmar'], 3) if abs(m['calmar']) < 100 else "--"
     max_dd = format_pct(m['max_drawdown'])
 
     if m['total_return'] > 0:
@@ -196,15 +182,23 @@ for i, m in enumerate(models_sorted):
     if m['beat_spy']:
         name = f"\\textbf{{{name}}}"
 
-    latex_performance += f"{rank} & {name} & {category} & {ret_total} & {ret_annual} & {sharpe} & {sortino} & {calmar} & {max_dd} \\\\\n"
+    # Marcadores: SeasonalNaive = benchmark minimo (fila resaltada); AutoARIMA = 100% cash
+    row_prefix = ""
+    if m['model'] == 'SeasonalNaive':
+        row_prefix = "\\rowcolor{naivebg} "
+        name = f"{name}$^\\dagger$"
+    elif m['model'] == 'AutoARIMA':
+        name = f"{name}$^\\ddagger$"
+
+    latex_performance += f"{row_prefix}{rank} & {name} & {category} & {ret_total} & {ret_annual} & {sharpe} & {max_dd} \\\\\n"
 
 latex_performance += r"""\midrule
--- & SPY (B\&H) & Benchmark & """ + format_pct(benchmark['total_return']) + r""" & -- & """ + format_num(benchmark['sharpe'], 3) + r""" & -- & -- & """ + format_pct(benchmark['max_drawdown']) + r""" \\
+-- & SPY (B\&H) & Benchmark & """ + format_pct(benchmark['total_return']) + r""" & -- & """ + format_num(benchmark['sharpe'], 3) + r""" & """ + format_pct(benchmark['max_drawdown']) + r""" \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: Los modelos en negrita superan al benchmark SPY Buy \& Hold. Retorno total calculado como producto de (1+r) - 1 sobre el per\'iodo completo. Sharpe ratio anualizado con tasa libre de riesgo promedio del per\'iodo.
+\item Nota: Los modelos en negrita superan al benchmark SPY Buy \& Hold. \colorbox{naivebg}{$^\dagger$SeasonalNaive} = \textit{benchmark} de complejidad m\'inima. $^\ddagger$AutoARIMA permanece el 100\% del per\'iodo en efectivo (filtro de calidad de se\~nal), por lo que su retorno corresponde a la tasa libre de riesgo y su Sharpe, calculado sobre una volatilidad casi nula (0.14\%), no es comparable con el de los modelos con operaci\'on activa. Retorno total calculado como producto de (1+r) - 1 sobre el per\'iodo completo. Sharpe ratio anualizado con tasa libre de riesgo promedio del per\'iodo.
 \end{tablenotes}
 \end{table}
 """
@@ -215,53 +209,7 @@ print(f"    table_model_performance.tex generada")
 
 
 # =============================================================================
-# TABLA 2: METRICAS DE RIESGO (tab:risk_metrics)
-# =============================================================================
-# Genera: tables/table_risk_metrics.tex
-# Contenido: Top 17 modelos con Sharpe, Sortino, Calmar, MaxDD, Dir.Acc., Pos.Media
-# Fuente: final_long_only_backtest.json
-# Nota: Pos.Media = (pct_3x*3 + pct_1x*1)/100, donde 0=Cash, 1=SPY, 3=UPRO
-# =============================================================================
-print("\n[3] Generando tabla de metricas de riesgo...")
-
-latex_risk = r"""\begin{table}[htbp]
-\centering
-\caption{M\'etricas de Riesgo Ajustado por Modelo}
-\label{tab:risk_metrics}
-\small
-\begin{tabular}{@{}lrrrrrr@{}}
-\toprule
-\textbf{Modelo} & \textbf{Sharpe} & \textbf{Sortino} & \textbf{Calmar} & \textbf{Max DD} & \textbf{Dir. Acc.} & \textbf{Pos. Media} \\
-\midrule
-"""
-
-for m in models_sorted[:17]:  # Top 17
-    name = m['model'].replace('_', '\\_')
-    sharpe = format_num(m['sharpe'], 3)
-    sortino = format_num(m['sortino'], 3) if m['sortino'] != 0 else "--"
-    calmar = format_num(m['calmar'], 3) if abs(m['calmar']) < 100 else "--"
-    max_dd = format_pct(m['max_drawdown'])
-    dir_acc = format_pct(m['directional_accuracy'])
-    mean_pos = format_num(m['mean_position'], 2)
-
-    latex_risk += f"{name} & {sharpe} & {sortino} & {calmar} & {max_dd} & {dir_acc} & {mean_pos}x \\\\\n"
-
-latex_risk += r"""\bottomrule
-\end{tabular}
-\begin{tablenotes}
-\small
-\item Nota: Dir. Acc. = precisi\'on direccional respecto al mercado. Pos. Media = posici\'on promedio (0=Cash, 1=SPY, 3=UPRO).
-\end{tablenotes}
-\end{table}
-"""
-
-with open(os.path.join(TABLES_DIR, "table_risk_metrics.tex"), 'w', encoding='utf-8') as f:
-    f.write(latex_risk)
-print(f"    table_risk_metrics.tex generada")
-
-
-# =============================================================================
-# TABLA 3: DISTRIBUCION DE POSICIONES (tab:position_distribution)
+# TABLA 2: DISTRIBUCION DE POSICIONES (tab:position_distribution)
 # =============================================================================
 # Genera: tables/table_position_distribution.tex
 # Contenido: 23 modelos con % dias en UPRO(3x), SPY(1x), Cash(0), Total Long, N trades
@@ -269,7 +217,7 @@ print(f"    table_risk_metrics.tex generada")
 # =============================================================================
 print("\n[4] Generando tabla de distribucion de posiciones...")
 
-latex_positions = r"""\begin{table}[htbp]
+latex_positions = r"""\begin{table}[H]
 \centering
 \caption{Distribuci\'on de Posiciones por Modelo (Estrategia Long-Only)}
 \label{tab:position_distribution}
@@ -288,13 +236,18 @@ for m in models_sorted:
     pct_long = f"{m['pct_long']:.1f}\\%"
     n_trades = m['n_trades']
 
-    latex_positions += f"{name} & {pct_3x} & {pct_1x} & {pct_cash} & {pct_long} & {n_trades} \\\\\n"
+    row_prefix = ""
+    if m['model'] == 'SeasonalNaive':
+        row_prefix = "\\rowcolor{naivebg} "
+        name = f"{name}$^\\dagger$"
+
+    latex_positions += f"{row_prefix}{name} & {pct_3x} & {pct_1x} & {pct_cash} & {pct_long} & {n_trades} \\\\\n"
 
 latex_positions += r"""\bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: Porcentajes representan la proporci\'on de d\'ias en cada posici\'on. UPRO = 3x apalancado largo, SPY = 1x largo, Cash = tasa libre de riesgo. N\'umero de trades = cambios de posici\'on.
+\item Nota: Porcentajes representan la proporci\'on de d\'ias en cada posici\'on. UPRO = 3x apalancado largo, SPY = 1x largo, Cash = tasa libre de riesgo. \colorbox{naivebg}{$^\dagger$SeasonalNaive} = \textit{benchmark} de complejidad m\'inima. N\'umero de trades = cambios de posici\'on.
 \end{tablenotes}
 \end{table}
 """
@@ -315,7 +268,7 @@ print(f"    table_position_distribution.tex generada")
 # =============================================================================
 print("\n[5] Generando tabla de desglose de costos...")
 
-latex_costs = r"""\begin{table}[htbp]
+latex_costs = r"""\begin{table}[H]
 \centering
 \caption{Impacto de Costos de Transacci\'on por Modelo}
 \label{tab:cost_breakdown}
@@ -344,7 +297,12 @@ for m in models_sorted:
     else:
         pnl = f"\\textcolor{{BrickRed}}{{{pnl}}}"
 
-    latex_costs += f"{name} & {final_eq} & {pnl} & {tx_costs} & {tx_ratio} & {n_trades} \\\\\n"
+    row_prefix = ""
+    if m['model'] == 'SeasonalNaive':
+        row_prefix = "\\rowcolor{naivebg} "
+        name = f"{name}$^\\dagger$"
+
+    latex_costs += f"{row_prefix}{name} & {final_eq} & {pnl} & {tx_costs} & {tx_ratio} & {n_trades} \\\\\n"
 
 avg_costs = np.mean([m['total_costs'] for m in models])
 avg_trades = np.mean([m['n_trades'] for m in models])
@@ -355,7 +313,7 @@ latex_costs += r"""\midrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: Capital inicial = \$10,000. Tx Costs incluye bid-ask spreads (UPRO: 10 bps, SPY: 4 bps), expense ratios y volatility drag. Tx/P\&L = proporci\'on de costos respecto a ganancias brutas.
+\item Nota: Capital inicial = \$10,000. \colorbox{naivebg}{$^\dagger$SeasonalNaive} = \textit{benchmark} de complejidad m\'inima. Tx Costs incluye bid-ask spreads (UPRO 5 bps, SPY 2 bps por operaci\'on; 10 y 4 bps ida y vuelta), expense ratios y volatility drag. Tx/P\&L = proporci\'on de costos respecto a ganancias brutas.
 \end{tablenotes}
 \end{table}
 """
@@ -366,71 +324,7 @@ print(f"    table_cost_breakdown.tex generada ({len(models)} modelos, avg costs 
 
 
 # =============================================================================
-# TABLA 5: RENDIMIENTO POR REGIMEN (tab:regime_performance)
-# =============================================================================
-# Genera: tables/table_regime_performance.tex
-# Contenido: Top 10 modelos con retorno total en cada regimen de mercado
-# Fuente: app/backend/data/regime_data.json (generado por update_backend_data.py)
-# Regimenes: Bull (ret>10%, vol<20%), Bear (ret<-10%), High Vol (vol>25%), Sideways (resto)
-# Ventana de clasificacion: 60 dias
-# =============================================================================
-print("\n[6] Generando tabla de rendimiento por regimen...")
-
-if regime_data:
-    regime_perf = regime_data['regime_performance']
-    regime_counts = regime_data['regime_counts']
-
-    regimes = ['bull', 'sideways', 'bear', 'high_vol']
-
-    latex_regime = r"""\begin{table}[htbp]
-\centering
-\caption{Rendimiento por R\'egimen de Mercado (Top 10 Modelos)}
-\label{tab:regime_performance}
-\small
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-\textbf{Modelo} & \textbf{Bull} & \textbf{Sideways} & \textbf{Bear} & \textbf{High Vol} \\
- & \textit{(""" + str(regime_counts.get('bull', 0)) + r""" d\'ias)} & \textit{(""" + str(regime_counts.get('sideways', 0)) + r""" d\'ias)} & \textit{(""" + str(regime_counts.get('bear', 0)) + r""" d\'ias)} & \textit{(""" + str(regime_counts.get('high_vol', 0)) + r""" d\'ias)} \\
-\midrule
-"""
-
-    for m in models_sorted[:10]:
-        name = m['model'].replace('_', '\\_')
-        model_regime = regime_perf.get(m['model'], {})
-
-        row_values = []
-        for reg in regimes:
-            if reg in model_regime:
-                ret = model_regime[reg]['total_return']
-                formatted = format_pct(ret)
-                if ret > 0:
-                    formatted = f"\\textcolor{{ForestGreen}}{{{formatted}}}"
-                elif ret < 0:
-                    formatted = f"\\textcolor{{BrickRed}}{{{formatted}}}"
-                row_values.append(formatted)
-            else:
-                row_values.append("--")
-
-        latex_regime += f"{name} & {' & '.join(row_values)} \\\\\n"
-
-    latex_regime += r"""\bottomrule
-\end{tabular}
-\begin{tablenotes}
-\small
-\item Nota: Bull = retorno acumulado $>$ 10\% y volatilidad $<$ 20\% en ventana de 60 d\'ias. Bear = retorno $<$ -10\%. High Vol = volatilidad $>$ 25\%. Sideways = resto.
-\end{tablenotes}
-\end{table}
-"""
-
-    with open(os.path.join(TABLES_DIR, "table_regime_performance.tex"), 'w', encoding='utf-8') as f:
-        f.write(latex_regime)
-    print(f"    table_regime_performance.tex generada")
-else:
-    print("    [SKIP] regime_data.json no encontrado")
-
-
-# =============================================================================
-# TABLA 6: PARAMETROS OPTIMOS (tab:optimal_params)
+# TABLA 5: PARAMETROS OPTIMOS (tab:optimal_params)
 # =============================================================================
 # Genera: tables/table_optimal_params.tex
 # Contenido: 23 modelos con q_3x (percentil UPRO), q_1x (percentil SPY), interpretacion
@@ -462,13 +356,18 @@ for m in models_sorted:
     else:
         interp = "--"
 
-    latex_params += f"{name} & {category} & {q_3x} & {q_1x} & {interp} \\\\\n"
+    row_prefix = ""
+    if m['model'] == 'SeasonalNaive':
+        row_prefix = "\\rowcolor{naivebg} "
+        name = f"{name}$^\\dagger$"
+
+    latex_params += f"{row_prefix}{name} & {category} & {q_3x} & {q_1x} & {interp} \\\\\n"
 
 latex_params += r"""\bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: $q_{3x}$ = percentil para posici\'on UPRO (3x). $q_{1x}$ = percentil para posici\'on SPY (1x). Predicciones por debajo del percentil $q_{1x}$ resultan en posici\'on Cash (0). Par\'ametros mostrados corresponden a la combinaci\'on m\'as frecuente seleccionada por el Meta-KNN din\'amico; los umbrales reales var\'ian por d\'ia.
+\item Nota: $q_{3x}$ = percentil para posici\'on UPRO (3x). $q_{1x}$ = percentil para posici\'on SPY (1x). Predicciones por debajo del percentil $q_{1x}$ resultan en posici\'on Cash (0). \colorbox{naivebg}{$^\dagger$SeasonalNaive} = \textit{benchmark} de complejidad m\'inima. Par\'ametros mostrados corresponden a la combinaci\'on m\'as frecuente seleccionada por el Meta-KNN din\'amico; los umbrales reales var\'ian por d\'ia.
 \end{tablenotes}
 \end{table}
 """
@@ -566,9 +465,9 @@ latex_category = r"""\begin{table}[htbp]
 \centering
 \caption{Rendimiento Promedio por Categor\'ia de Modelo}
 \label{tab:category_comparison}
-\begin{tabular}{@{}lrrrrrr@{}}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-\textbf{Categor\'ia} & \textbf{N} & \textbf{Ret. Prom.} & \textbf{Mejor Ret.} & \textbf{Sharpe Prom.} & \textbf{DD Prom.} & \textbf{Mejor Modelo} \\
+\textbf{Categor\'ia} & \textbf{N} & \textbf{Ret. Prom.} & \textbf{Mejor Ret.} & \textbf{Sharpe Prom.} & \textbf{Mejor Modelo} \\
 \midrule
 """
 
@@ -577,7 +476,6 @@ for cat, stats in cat_sorted:
     avg_ret = format_pct(stats['avg_return'])
     best_ret = format_pct(stats['best_return'])
     avg_sharpe = format_num(stats['avg_sharpe'], 3)
-    avg_dd = format_pct(stats['avg_max_dd'])
     best_model = stats['best_model'].replace('_', '\\_')
 
     if stats['avg_return'] > 0:
@@ -585,13 +483,13 @@ for cat, stats in cat_sorted:
     else:
         avg_ret = f"\\textcolor{{BrickRed}}{{{avg_ret}}}"
 
-    latex_category += f"{cat} & {n} & {avg_ret} & {best_ret} & {avg_sharpe} & {avg_dd} & {best_model} \\\\\n"
+    latex_category += f"{cat} & {n} & {avg_ret} & {best_ret} & {avg_sharpe} & {best_model} \\\\\n"
 
 latex_category += r"""\bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: N = n\'umero de modelos en la categor\'ia. ML = Machine Learning cl\'asico, GradientBoosting = XGBoost/LightGBM/CatBoost, DeepLearning = redes Darts, RNN = LSTM/GRU, TimeSeries = ARIMA/ETS/Theta.
+\item Nota: N = n\'umero de modelos en la categor\'ia. ML cl\'asico = Ridge/Lasso/ElasticNet/RandomForest; Boosting = GradientBoosting (sklearn) y las librer\'ias XGBoost/LightGBM/CatBoost; Series temporales = AutoARIMA/ETS/Theta/SeasonalNaive/Prophet/GARCH; Deep learning = redes Darts (DLinear/N-BEATS/N-HiTS/TCN/TFT) y arquitecturas \textit{custom} en PyTorch (CNN-LSTM/LSTM+Attention/BiLSTM/BiGRU).
 \end{tablenotes}
 \end{table}
 """

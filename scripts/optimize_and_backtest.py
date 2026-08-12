@@ -1,41 +1,42 @@
 # -*- coding: utf-8 -*-
 """
 ================================================================================
-OPTIMIZE_AND_BACKTEST.PY — Meta-KNN Threshold Optimization + Final Backtest
+OPTIMIZE_AND_BACKTEST.PY — Umbrales dinamicos Meta-KNN + Backtest final
 ================================================================================
 
-Replaces the previous two-step pipeline:
-  - optimize_model_params.py (oracle-based grid search over test period)
-  - final_long_only_backtest_new.py (static thresholds from oracle)
+Paso 3 del pipeline. Lee las predicciones de los 23 modelos desde
+models/trained_artifacts.pkl y ejecuta la estrategia Long-Only {CASH, SPY, UPRO}
+con costos completos. Tiempo aproximado: ~3 minutos.
 
-NEW APPROACH: Non-oracle, fully out-of-sample threshold optimization.
+Dos componentes:
 
-Two components:
+1. PREDICCION DE UMBRALES VIA META-KNN (sin datos futuros):
+   - Recorre las predicciones de ENTRENAMIENTO con ventanas de 63 dias (paso 21)
+   - Para cada ventana calcula 7 meta-features que describen el comportamiento
+     reciente de las predicciones y del mercado
+   - Evalua las 26 combinaciones de umbrales sobre los SIGUIENTES 63 dias de
+     entrenamiento y etiqueta la combinacion optima
+   - Entrena un KNN (K=5, ponderado por distancia) sobre ese meta-dataset
+   - Para cada dia de PRUEBA, predice los umbrales (q_ext, q_mod) a aplicar
 
-1. META-KNN THRESHOLD PREDICTION:
-   - Slides 63-day windows over TRAINING predictions (step=21d)
-   - For each window, computes 7 meta-features describing prediction behavior
-   - Evaluates all 26 threshold combos on NEXT 63 training days -> labels optimal
-   - Trains KNN(K=5, distance-weighted) on this meta-dataset
-   - For each TEST day, predicts optimal (q_ext, q_mod) from recent features
+2. FILTRO DE CALIDAD DE SENAL:
+   - Calcula la desviacion estandar rolling (63 dias) de las predicciones
+   - Si std < 0.001 las predicciones carecen de variacion -> posicion CASH
+   - Evita que modelos degenerados (predicciones cuasi-constantes) sean
+     amplificados a posiciones extremas por el sistema de percentiles
 
-2. SIGNAL QUALITY FILTER:
-   - Computes rolling 63-day std of model predictions
-   - If std < 0.001: predictions lack variation -> default to CASH
-   - Prevents degenerate models (near-constant predictions) from being
-     amplified into extreme positions by the percentile ranking system
+EN NINGUN PUNTO SE USAN DATOS FUTUROS: los umbrales se determinan con datos
+de entrenamiento via KNN y se aplican dinamicamente en prueba.
 
-NO FUTURE DATA USED at any point. All thresholds are determined from
-training data via KNN, applied dynamically in test.
+SALIDAS:
+  - results/final_long_only_backtest.json   (metricas por modelo + benchmark)
+  - results/long_only_equity_curves.json    (curvas de capital)
+  - results/optimal_model_params.json       (umbrales mas frecuentes por modelo)
+  - results/backtest_detail.pkl             (arrays diarios por modelo)
 
-OUTPUTS (backward-compatible with previous pipeline):
-  - results/final_long_only_backtest.json
-  - results/long_only_equity_curves.json
-  - results/optimal_model_params.json
-  - results/backtest_detail.pkl (positions/percentiles for update_backend_data.py)
-
+USO:  python scripts/optimize_and_backtest.py
 ================================================================================
-Author: David Gonzalez Canon
+Autor: David Gonzalez Canon
 ================================================================================
 """
 
@@ -68,7 +69,8 @@ INSTRUMENTS = {
     'CASH': {'expense_ratio': 0.0000, 'bid_ask': 0.0000},
 }
 
-# All valid (q_ext, q_mod) combos where q_mod > q_ext
+# Las 26 combinaciones validas de umbrales (q_ext, q_mod) con q_mod > q_ext:
+# la posicion apalancada (UPRO) exige mayor conviccion que la moderada (SPY)
 PARAM_COMBOS = [(q_ext, q_mod)
                 for q_ext in [5, 10, 15, 20, 25, 30]
                 for q_mod in [20, 30, 40, 50, 60]
@@ -82,10 +84,10 @@ FEATURE_WINDOW = 63
 EVAL_HORIZON = 63
 SLIDE_STEP = 21
 
-# Signal quality filter: minimum rolling std of predictions
-# Calibrated: all genuine models have median rolling std > 0.001,
-# all degenerate models (XGBoost, GradientBoosting, AutoARIMA, SeasonalNaive)
-# have median < 0.001
+# Filtro de calidad de senal: std rolling minima de las predicciones.
+# Umbral calibrado sobre entrenamiento: los modelos genuinos tienen std rolling
+# mediana > 0.001; los degenerados (XGBoost, GradientBoosting, AutoARIMA,
+# SeasonalNaive) quedan por debajo
 MIN_SIGNAL_STD = 0.001
 
 FEATURE_NAMES = [
@@ -99,7 +101,11 @@ FEATURE_NAMES = [
 # =============================================================================
 
 def compute_rolling_percentiles(all_preds, window=63):
-    """Compute rolling percentiles for the entire series (backward-looking)."""
+    """Percentil empirico rolling de cada prediccion (solo mira hacia atras).
+
+    Percentil = 100 * proporcion de las ultimas `window` predicciones que son
+    <= a la de hoy. Con menos de 5 observaciones devuelve 50 (neutro).
+    """
     n = len(all_preds)
     percentiles = np.full(n, 50.0)
     for i in range(n):
@@ -112,7 +118,11 @@ def compute_rolling_percentiles(all_preds, window=63):
 
 
 def compute_rolling_std(preds, window=63):
-    """Compute rolling standard deviation of predictions (backward-looking)."""
+    """Desviacion estandar rolling de las predicciones (solo mira hacia atras).
+
+    Es el insumo del filtro de calidad de senal; std cercana a 0 delata
+    predicciones cuasi-constantes.
+    """
     n = len(preds)
     rolling_std = np.full(n, 0.0)
     for i in range(n):
@@ -124,10 +134,17 @@ def compute_rolling_std(preds, window=63):
 
 
 def evaluate_combo(percentiles, fwd_returns, rf, q_ext, q_mod):
-    """Evaluate a threshold combo over a window (penalized Sharpe)."""
+    """Evalua una combinacion de umbrales sobre una ventana (Sharpe penalizado).
+
+    Funcion objetivo del meta-dataset: simula la estrategia con los umbrales
+    dados y devuelve su Sharpe anualizado, restando 0.5 si el drawdown maximo
+    de la ventana supera el 20% (desincentiva configuraciones riesgosas).
+    """
     if len(percentiles) < 10:
         return -999
 
+    # q_ext/q_mod son percentiles superiores; se invierten con 100-q.
+    # Ej.: q_ext=5 -> umbral 95 -> UPRO solo si la prediccion esta en el top 5%
     thresh_3x = 100 - q_ext
     thresh_1x = 100 - q_mod
 
@@ -136,6 +153,7 @@ def evaluate_combo(percentiles, fwd_returns, rf, q_ext, q_mod):
     mask_1x = (percentiles >= thresh_1x) & (percentiles < thresh_3x)
     positions[mask_1x] = 1
 
+    # Formula de retorno de la estrategia: r = rf + posicion * (r_mercado - rf)
     returns = rf + positions * (fwd_returns - rf)
 
     std = np.std(returns)
@@ -143,12 +161,15 @@ def evaluate_combo(percentiles, fwd_returns, rf, q_ext, q_mod):
         return -999
 
     sharpe = (np.mean(returns) - np.mean(rf)) / std * np.sqrt(252)
+    # Acota el Sharpe de ventanas cortas para que valores extremos no dominen
+    # el etiquetado del meta-dataset
     sharpe = np.clip(sharpe, -5, 5)
 
     equity = np.cumprod(1 + returns)
     running_max = np.maximum.accumulate(equity)
     max_dd = np.max((running_max - equity) / running_max)
 
+    # Penalizacion por drawdown excesivo dentro de la ventana de evaluacion
     score = sharpe
     if max_dd > 0.20:
         score -= 0.5
@@ -157,7 +178,19 @@ def evaluate_combo(percentiles, fwd_returns, rf, q_ext, q_mod):
 
 
 def compute_meta_features(preds_window, market_returns_window):
-    """Compute 7 meta-features from a window of predictions and market data."""
+    """Calcula las 7 meta-features de una ventana (todas retrospectivas).
+
+    Describen el regimen predictivo del modelo y el contexto de mercado, y son
+    el insumo con que el KNN reconoce episodios historicos similares:
+      1. mean_pred      media de las predicciones (nivel de optimismo)
+      2. std_pred       desviacion estandar (variabilidad de la senal)
+      3. skew_pred      asimetria de la distribucion
+      4. autocorr_pred  autocorrelacion de primer orden (persistencia)
+      5. trend_pred     pendiente de tendencia lineal (direccion)
+      6. mean_vol       volatilidad realizada promedio del mercado (21d)
+      7. recent_return  retorno acumulado del mercado en la ventana
+    Valores no finitos se reemplazan por 0.
+    """
     n = len(preds_window)
 
     mean_pred = np.mean(preds_window)
@@ -208,11 +241,13 @@ def compute_meta_features(preds_window, market_returns_window):
 
 def build_meta_dataset(train_preds, train_percentiles, fwd_train, rf_train):
     """
-    Phase 1: Build meta-learning dataset from TRAINING data only.
+    Fase 1: construye el meta-dataset usando SOLO datos de entrenamiento.
 
-    Slides 63-day windows over training predictions, computes 7 features per
-    window, evaluates all 26 combos on the NEXT 63 training days, and records
-    the optimal combo as the label.
+    Recorre las predicciones de entrenamiento con pares de ventanas que avanzan
+    en pasos de 21 dias: la primera (63 dias) genera las 7 meta-features y la
+    segunda (los 63 dias siguientes) evalua las 26 combinaciones de umbrales y
+    etiqueta la optima. Cada par produce un ejemplo (features -> combo optimo);
+    el recorrido completo genera ~242 ejemplos por modelo.
     """
     n = len(train_preds)
     X_list = []
@@ -259,7 +294,11 @@ def build_meta_dataset(train_preds, train_percentiles, fwd_train, rf_train):
 
 
 def train_meta_knn(X_train, y_train):
-    """Phase 2: Train KNN meta-model on training meta-dataset."""
+    """Fase 2: entrena el meta-modelo KNN sobre el meta-dataset de entrenamiento.
+
+    Estandariza las features (StandardScaler ajustado solo aqui) y ajusta un
+    KNN de K=5 vecinos ponderados por distancia inversa.
+    """
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X_train)
     X_scaled = np.nan_to_num(X_scaled, nan=0.0, posinf=0.0, neginf=0.0)
@@ -282,12 +321,17 @@ def meta_knn_filtered_backtest(test_preds, train_preds,
                                 rf_test, rf_train,
                                 meta_model, min_signal_std):
     """
-    Phase 3: Apply Meta-KNN with signal quality filter in test.
+    Fase 3: aplica el Meta-KNN con filtro de calidad de senal en prueba.
 
-    For each test day t:
-    1. Compute rolling std of predictions over last 63 days
-    2. If std < min_signal_std -> CASH (no reliable signal)
-    3. Otherwise: compute 7 features, predict thresholds via KNN, apply
+    Para cada dia t del periodo de prueba:
+    1. Calcula la std rolling de las predicciones de los ultimos 63 dias
+    2. Si std < min_signal_std -> CASH (la senal no es confiable)
+    3. Si no, calcula las 7 meta-features, predice los umbrales via KNN y
+       los aplica al percentil del dia
+
+    Las predicciones de entrenamiento se anteponen a las de prueba para que
+    el percentil rolling del primer dia de prueba tenga historia (warmup);
+    todos los calculos siguen siendo estrictamente retrospectivos.
     """
     n_tr = min(len(train_preds), len(fwd_train), len(rf_train))
     train_preds_al = train_preds[-n_tr:]
@@ -301,7 +345,7 @@ def meta_knn_filtered_backtest(test_preds, train_preds,
     n_train = len(train_preds_al)
     n_test = len(test_preds)
 
-    # Pre-compute percentiles and rolling std for entire series (backward-looking)
+    # Pre-calcula percentiles y std rolling para toda la serie (retrospectivos)
     all_percentiles = compute_rolling_percentiles(all_preds, window=PCTILE_WINDOW)
     all_rolling_std = compute_rolling_std(all_preds, window=PCTILE_WINDOW)
 
@@ -318,7 +362,7 @@ def meta_knn_filtered_backtest(test_preds, train_preds,
 
         percentiles_out[t] = all_percentiles[abs_t]
 
-        # Step 1: Check signal quality
+        # Paso 1: verificar calidad de la senal
         today_std = all_rolling_std[abs_t]
         if today_std < min_signal_std:
             positions[t] = 0
@@ -328,7 +372,8 @@ def meta_knn_filtered_backtest(test_preds, train_preds,
 
         signal_valid[t] = True
 
-        # Step 2: Compute meta-features from last FEATURE_WINDOW days
+        # Paso 2: calcular meta-features de los ultimos FEATURE_WINDOW dias
+        # y predecir con el KNN los umbrales a aplicar hoy
         feat_start = max(0, abs_t - FEATURE_WINDOW)
         feat_end = abs_t
 
@@ -343,7 +388,7 @@ def meta_knn_filtered_backtest(test_preds, train_preds,
             combo_idx = knn.predict(features_scaled)[0]
             best_combo = IDX_TO_COMBO[combo_idx]
 
-        # Step 3: Apply thresholds to today's percentile
+        # Paso 3: aplicar los umbrales al percentil de hoy -> posicion {0, 1, 3}
         today_pctile = all_percentiles[abs_t]
         thresh_3x = 100 - best_combo[0]
         thresh_1x = 100 - best_combo[1]
@@ -360,8 +405,16 @@ def meta_knn_filtered_backtest(test_preds, train_preds,
     return positions, percentiles_out, chosen_params, signal_valid
 
 
-def calculate_returns_with_costs(positions, market_returns, risk_free):
-    """Compute net returns with full cost model."""
+def calculate_returns_with_costs(positions, market_returns, risk_free, vol_window=21):
+    """Calcula los retornos netos con el modelo de costos completo.
+
+    Tres fuentes de costo: expense ratio diario del ETF en posicion, bid-ask
+    spread cuando cambia la posicion, y volatility drag cuando la posicion es
+    3x. El drag usa la volatilidad diaria REALIZADA (ventana rolling de 21 dias
+    estrictamente pasada, sin look-ahead) en lugar de un 1% fijo, para no
+    subestimar el decaimiento del apalancamiento en regimenes volatiles
+    (ej. 2022, abril 2025).
+    """
     n = len(positions)
     returns = np.zeros(n)
     gross_returns = np.zeros(n)
@@ -370,11 +423,21 @@ def calculate_returns_with_costs(positions, market_returns, risk_free):
     vol_drag_costs = np.zeros(n)
     pos_to_inst = {3: 'UPRO', 1: 'SPY', 0: 'CASH'}
 
+    # Volatilidad diaria realizada (retrospectiva) para el termino de decaimiento.
+    # Usa solo retornos de mercado anteriores al dia i; si no hay historia
+    # suficiente (primeros dias) recurre al 1% por defecto.
+    realized_vol = np.full(n, 0.01)
+    for i in range(n):
+        w = market_returns[max(0, i - vol_window):i]
+        if len(w) >= 5:
+            realized_vol[i] = np.std(w)
+
     for i in range(n):
         pos = int(positions[i])
         inst = pos_to_inst.get(pos, 'CASH')
         cfg = INSTRUMENTS[inst]
 
+        # Retorno bruto: r = rf + posicion * (r_mercado - rf), con posicion en {0,1,3}
         if pos == 0:
             gross = risk_free[i]
         else:
@@ -388,9 +451,12 @@ def calculate_returns_with_costs(positions, market_returns, risk_free):
             prev_inst = pos_to_inst.get(int(positions[i-1]), 'CASH')
             trading += INSTRUMENTS[prev_inst]['bid_ask'] + cfg['bid_ask']
 
+        # Volatility drag del ETF apalancado: 0.5*(L^2 - L)*sigma^2 con L=3,
+        # es decir 0.5*6*sigma^2, usando la volatilidad realizada del dia
         vol_drag = 0
         if pos == 3:
-            vol_drag = 0.5 * 6 * (0.01)**2
+            sigma = realized_vol[i]
+            vol_drag = 0.5 * 6 * sigma**2
 
         expense_costs[i] = expense
         trading_costs[i] = trading
@@ -402,7 +468,15 @@ def calculate_returns_with_costs(positions, market_returns, risk_free):
 
 
 def compute_metrics(returns, gross_returns, rf, positions, n_test):
-    """Compute all strategy metrics."""
+    """Calcula las metricas de la estrategia a partir de sus retornos netos.
+
+    Devuelve un diccionario con retorno total y anualizado, Sharpe (exceso de
+    retorno anual sobre rf dividido por volatilidad anual), Sortino (igual pero
+    penalizando solo la volatilidad a la baja), Calmar (retorno anual sobre
+    drawdown maximo), drawdown maximo, distribucion de posiciones (% en 3x/1x/
+    cash), numero de trades, capital final bruto y neto (base $10,000) y las
+    series de equity y posiciones.
+    """
     equity = np.cumprod(1 + returns)
     gross_equity = np.cumprod(1 + gross_returns)
     total_ret = equity[-1] - 1
@@ -431,7 +505,7 @@ def compute_metrics(returns, gross_returns, rf, positions, n_test):
     pct_1x = np.mean(positions == 1) * 100
     pct_cash = np.mean(positions == 0) * 100
 
-    # Cost breakdown ($10,000 initial)
+    # Desglose de costos en dolares (capital inicial $10,000)
     initial_capital = 10000
     final_capital = initial_capital * equity[-1]
     gross_final = initial_capital * gross_equity[-1]
@@ -472,13 +546,15 @@ def main():
     print(f"Meta-features: {FEATURE_NAMES}")
     print()
 
-    # --- Load data ---
+    # --- Carga de datos ---
     print("[1] Loading trained_artifacts.pkl...")
     artifacts_path = os.path.join(MODELS_DIR, "trained_artifacts.pkl")
     with open(artifacts_path, 'rb') as f:
         artifacts = pickle.load(f)
 
     metadata = artifacts['metadata']
+    # Se descarta el ultimo dia ([:-1]): su retorno forward se materializa fuera
+    # de la muestra, por lo que las metricas se calculan sobre n-1 dias evaluables
     fwd_test = np.array(metadata['forward_returns_test'][:-1])
     rf_test = np.array(metadata['risk_free_test'][:-1])
     fwd_train = np.array(metadata['forward_returns_train'])
@@ -489,18 +565,22 @@ def main():
     n_years = n_test / 252
     print(f"    Train: {n_train} days | Test: {n_test} days ({n_years:.1f} years)")
 
-    # Benchmark
-    spy_equity = np.cumprod(1 + fwd_test)
+    # Benchmark SPY Buy & Hold neto del expense ratio del ETF (el mismo costo que
+    # paga el tramo SPY de la estrategia), para una comparacion simetrica. fwd_test
+    # se mantiene CRUDO en el resto del script (es el retorno de mercado que la
+    # estrategia captura y el objetivo del DA); solo el benchmark resta el expense.
+    spy_bh_net = fwd_test - INSTRUMENTS['SPY']['expense_ratio'] / 252
+    spy_equity = np.cumprod(1 + spy_bh_net)
     spy_return = float(spy_equity[-1] - 1)
     spy_cagr = float((1 + spy_return) ** (252/n_test) - 1)
     spy_rf_annual = float(np.mean(rf_test) * 252)
-    spy_annual_vol = float(np.std(fwd_test) * np.sqrt(252))
+    spy_annual_vol = float(np.std(spy_bh_net) * np.sqrt(252))
     spy_sharpe = float((spy_cagr - spy_rf_annual) / spy_annual_vol) if spy_annual_vol > 0 else 0
     spy_running_max = np.maximum.accumulate(spy_equity)
     spy_max_dd = float(np.max((spy_running_max - spy_equity) / spy_running_max))
     print(f"    SPY B&H: Return={spy_return*100:+.1f}%, Sharpe={spy_sharpe:.3f}, MaxDD={spy_max_dd*100:.1f}%")
 
-    # --- Process each model ---
+    # --- Procesamiento de cada modelo ---
     backtest_results = {}
     optimal_params = {}
     equity_curves = {'dates': list(range(n_test)), 'spy': spy_equity.tolist(), 'models': {}}
@@ -529,11 +609,11 @@ def main():
 
         print(f"  [{model_idx+1}/{model_count}] {model_name}")
 
-        # Prediction quality diagnostic
+        # Diagnostico de calidad de las predicciones
         test_std = np.std(test_preds_al)
         n_unique = len(np.unique(np.round(test_preds_al, 6)))
 
-        # Phase 1: Build meta-learning dataset from training data
+        # Fase 1: construir el meta-dataset con datos de entrenamiento
         train_percentiles = compute_rolling_percentiles(train_preds_tr, window=PCTILE_WINDOW)
 
         X_meta, y_meta = build_meta_dataset(
@@ -548,11 +628,11 @@ def main():
         n_unique_classes = len(np.unique(y_meta))
         print(f"        Meta-dataset: {len(X_meta)} windows, {n_unique_classes} unique combos")
 
-        # Phase 2: Train KNN on training meta-dataset
+        # Fase 2: entrenar el KNN sobre el meta-dataset
         meta_model = train_meta_knn(X_meta, y_meta)
         print(f"        KNN train accuracy: {meta_model['train_acc']:.1%}")
 
-        # Phase 3: Backtest with signal quality filter
+        # Fase 3: backtest en prueba con filtro de calidad de senal
         positions, percentiles, chosen_params, signal_valid = meta_knn_filtered_backtest(
             test_preds_al, train_preds,
             fwd_al, fwd_train,
@@ -560,19 +640,19 @@ def main():
             meta_model, MIN_SIGNAL_STD,
         )
 
-        # Compute returns with full cost model
+        # Retornos netos con el modelo de costos completo
         net_returns, gross_returns, expense_costs, trading_costs, vol_drag_costs = \
             calculate_returns_with_costs(positions, fwd_al, rf_al)
 
         metrics = compute_metrics(net_returns, gross_returns, rf_al, positions, nt)
 
-        # Directional accuracy
+        # Directional Accuracy: % de dias en que prediccion y mercado comparten signo
         pred_dir = np.sign(test_preds_al[:len(fwd_al)])
         actual_dir = np.sign(fwd_al[:len(test_preds_al)])
         da = float(np.mean(pred_dir == actual_dir))
         metrics['directional_accuracy'] = da
 
-        # Signal quality stats
+        # Estadisticas del filtro de calidad de senal
         pct_signal_days = float(np.mean(signal_valid) * 100)
         pct_filtered_days = 100 - pct_signal_days
         metrics['signal_quality'] = {
@@ -583,7 +663,9 @@ def main():
             'min_signal_std': float(MIN_SIGNAL_STD),
         }
 
-        # Dynamic threshold stats (only for signal-valid days)
+        # Estadisticas de umbrales dinamicos (solo dias con senal valida):
+        # se registra la combinacion MAS FRECUENTE para reporte, aunque en la
+        # practica los umbrales cambian dia a dia
         valid_params = [p for p, v in zip(chosen_params, signal_valid) if v]
         if valid_params:
             p_counter = Counter(valid_params)
@@ -601,11 +683,12 @@ def main():
             'knn_train_acc': float(meta_model['train_acc']),
         }
 
-        # Store results
+        # Almacenar resultados del modelo
         backtest_results[model_name] = metrics
         equity_curves['models'][model_name] = metrics['equity_curve']
 
-        # Optimal params (most common combo for display/compatibility)
+        # Parametros "optimos" para reporte (la combinacion mas frecuente;
+        # en la practica los umbrales son dinamicos dia a dia)
         if valid_params:
             repr_q_ext, repr_q_mod = most_common_p[0]
         else:
@@ -628,7 +711,7 @@ def main():
             },
         }
 
-        # Detail data for update_backend_data.py
+        # Arrays diarios detallados (se persisten en backtest_detail.pkl)
         costs = expense_costs + trading_costs + vol_drag_costs
         equity = np.cumprod(1 + net_returns)
         drawdown = (equity - np.maximum.accumulate(equity)) / np.maximum.accumulate(equity)

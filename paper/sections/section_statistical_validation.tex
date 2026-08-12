@@ -2,185 +2,73 @@
 % SECCION: VALIDACION ESTADISTICA
 % =============================================================================
 
-\section{Validaci\'on Estad\'istica}
+\subsection{Validaci\'on Estad\'istica}
 \label{sec:statistical_validation}
 
-M\'as all\'a de la comparaci\'on directa de retornos presentada en secciones anteriores, se requiere validaci\'on estad\'istica formal para descartar que los resultados observados sean atribuibles al azar muestral. En mercados financieros, donde la se\~nal predictiva es inherentemente d\'ebil en relaci\'on con el ruido de los retornos diarios, la distinci\'on entre habilidad genuina y suerte se vuelve cr\'itica para cualquier conclusi\'on sobre eficiencia de mercado. A continuaci\'on se presentan seis tests estad\'isticos aplicados a los cuatro modelos ganadores---LSTM+Attention, Ridge, RandomForest y CNN-LSTM---y al \textit{benchmark} SPY \textit{Buy \& Hold}, todos computados a partir de los retornos diarios del per\'iodo de prueba (1{,}302 d\'ias).
+M\'as all\'a de la comparaci\'on directa de retornos presentada en secciones anteriores, se requiere validaci\'on estad\'istica formal para evaluar en qu\'e medida los resultados observados podr\'ian ser atribuibles al azar muestral. A continuaci\'on se presentan los tests estad\'isticos aplicados a los cuatro modelos ganadores (LSTM+Attention, Ridge, RandomForest y CNN-LSTM) y al \textit{benchmark} SPY \textit{Buy \& Hold}, todos computados a partir de los retornos diarios del per\'iodo de prueba (1{,}302 d\'ias).
 
 % ─────────────────────────────────────────────────────────────────────────────
-\subsection{Bootstrap de Sharpe Ratios}
+\subsubsection{Bootstrap de Sharpe Ratios}
 \label{subsec:bootstrap_sharpe}
 
-El Sharpe Ratio est\'andar constituye una estimaci\'on puntual que no provee informaci\'on sobre la precisi\'on de la estimaci\'on ni permite cuantificar la incertidumbre asociada. Para abordar esta limitaci\'on, se emplea \textit{bootstrap} no param\'etrico \citep{efron1979bootstrap}, un m\'etodo de remuestreo que genera $B = 5{,}000$ muestras con reemplazo de los retornos diarios de cada estrategia, computa el Sharpe Ratio para cada muestra, y construye intervalos de confianza al 95\% a partir de los percentiles 2.5 y 97.5 de la distribuci\'on resultante. Adicionalmente, se estima la probabilidad de que el Sharpe sea positivo---$P(\hat{S} > 0)$---y la probabilidad de que supere al del \textit{benchmark}---$P(\hat{S} > \hat{S}_{\text{SPY}})$---mediante comparaci\'on pareada de las distribuciones \textit{bootstrap}.
-
-Dado que los retornos financieros exhiben autocorrelaci\'on de primer orden, el error est\'andar convencional del Sharpe Ratio subestima la incertidumbre verdadera. Se aplica por ello la correcci\'on propuesta por \citet{lo2002}, que ajusta el error est\'andar incorporando la estructura de dependencia temporal, expresada como
+Se emplea \hyperlink{glos:bootstrap}{\textit{bootstrap}} no param\'etrico \citep{efron1979bootstrap} con $B = 5{,}000$ muestras con reemplazo para construir intervalos de confianza al 95\% del Sharpe Ratio de cada estrategia. Se incorpora la correcci\'on de \citet{lo2002} al error est\'andar para ajustar por la autocorrelaci\'on de primer orden de los retornos.
 
 \begin{equation}
 \text{SE}(\hat{S}) = \sqrt{\frac{1 + \frac{\hat{S}^2}{2} \cdot (1 + \hat{\rho}_1)}{T \cdot (1 - \hat{\rho}_1)}}
 \label{eq:lo2002}
 \end{equation}
 
-donde $\hat{\rho}_1$ denota la autocorrelaci\'on de primer orden de los retornos y $T$ el n\'umero de observaciones.
-
-\begin{table}[htbp]
-\centering
-\caption{Intervalos de confianza del Sharpe Ratio (\textit{bootstrap} 95\%, $B = 5{,}000$)}
-\label{tab:sharpe_ci}
-\small
-\begin{tabular}{@{}lrrrrr@{}}
-\toprule
-\textbf{Modelo} & \textbf{Sharpe} & \textbf{IC 95\% Inf} & \textbf{IC 95\% Sup} & \textbf{P(S$>$0)} & \textbf{P(S$>$SPY)} \\
-\midrule
-LSTM+Attention & 1.327 & 0.387 & 2.394 & 99.7\% & 82.0\% \\
-Ridge & 0.881 & $-$0.089 & 2.187 & 96.1\% & 61.6\% \\
-RandomForest & 0.666 & $-$0.201 & 1.499 & 93.5\% & 50.8\% \\
-CNN-LSTM & 0.599 & $-$0.302 & 1.491 & 90.7\% & 44.7\% \\
-\midrule
-SPY (B\&H) & 0.663 & $-$0.248 & 1.737 & 91.6\% & -- \\
-\bottomrule
-\end{tabular}
-\vspace{0.2cm}
-\parbox{0.9\textwidth}{\footnotesize\textit{Nota: P(S$>$0) = probabilidad de Sharpe positivo. P(S$>$SPY) = probabilidad de superar el Sharpe del benchmark. Intervalos calculados con 5{,}000 iteraciones bootstrap, semilla 42.}}
-\end{table}
-
-Los resultados de la Tabla~\ref{tab:sharpe_ci} revelan una jerarqu\'ia clara en la robustez estad\'istica de los cuatro modelos ganadores. LSTM+Attention es el \'unico modelo cuyo intervalo de confianza se mantiene \'integramente por encima de cero, con un l\'imite inferior de 0.387 que descarta con alta confianza la posibilidad de un Sharpe nulo o negativo. La probabilidad de 99.7\% de Sharpe positivo y de 82.0\% de superar al \textit{benchmark} confiere solidez a la conclusi\'on de que la superioridad de este modelo no obedece al azar muestral. Ridge exhibe un intervalo de confianza que roza el cero por su l\'imite inferior ($-$0.089), si bien mantiene una probabilidad del 96.1\% de Sharpe positivo y del 61.6\% de superar al SPY, lo que sugiere una ventaja real aunque estad\'isticamente menos robusta.
-
-En contraste, RandomForest y CNN-LSTM presentan probabilidades cercanas al 50\% de superar al \textit{benchmark} (50.8\% y 44.7\%, respectivamente), lo que indica que, a pesar de sus retornos absolutos positivos, la evidencia estad\'istica de superioridad frente al SPY es d\'ebil. Resulta revelador que el propio SPY \textit{Buy \& Hold} presente un intervalo de confianza que cruza el cero ($-$0.248 a 1.737), con solo un 91.6\% de probabilidad de Sharpe positivo, dado que esto contextualiza la dificultad inherente de demostrar significancia estad\'istica en retornos de renta variable sobre per\'iodos de cinco a\~nos.
+Los resultados (Tabla~\ref{tab:sharpe_ci}) sugieren que LSTM+Attention es el \'unico modelo cuyo intervalo de confianza se mantiene \'integramente positivo (0.375--2.424), con 99.6\% de probabilidad de Sharpe positivo y 83.1\% de superar al \textit{benchmark}. Ridge alcanza 94.9\% de probabilidad positiva pero su l\'imite inferior se mantiene ligeramente negativo ($-$0.121), mientras que RandomForest y CNN-LSTM presentan probabilidades cercanas al 50\% de superar al SPY (49.9\% y 44.4\%), indicando evidencia d\'ebil de que el mejor rendimiento observado sea estad\'isticamente distinguible del \textit{benchmark} pese a retornos absolutos positivos.
 
 % ─────────────────────────────────────────────────────────────────────────────
-\subsection{Test de Diebold-Mariano}
+\subsubsection{Test de Diebold-Mariano}
 \label{subsec:diebold_mariano}
 
-El test de \citet{diebold1995} permite evaluar si la diferencia en rendimiento econ\'omico entre dos estrategias de inversi\'on es estad\'isticamente significativa. En su formulaci\'on, se define la diferencia de p\'erdida como $d_t = L(\text{benchmark}_t) - L(\text{estrategia}_t)$, donde la funci\'on de p\'erdida $L$ corresponde al retorno negativo de cada estrategia. El estad\'istico resultante se construye como
+El test de \citet{diebold1995} eval\'ua si la diferencia en rendimiento econ\'omico entre dos estrategias es estad\'isticamente significativa, definiendo $d_t = L(\text{benchmark}_t) - L(\text{estrategia}_t)$ con funci\'on de p\'erdida igual al retorno negativo.
 
 \begin{equation}
 DM = \frac{\bar{d}}{\sqrt{\hat{V}(\bar{d})}}
 \label{eq:dm_test}
 \end{equation}
 
-donde $\hat{V}(\bar{d})$ es un estimador consistente de la varianza de $\bar{d}$ que incorpora la correcci\'on de \citet{newey1987} con cinco rezagos para ajustar por heterocedasticidad y autocorrelaci\'on en las series de retornos. Bajo la hip\'otesis nula de igual capacidad---es decir, que la estrategia no genera retornos superiores al SPY \textit{Buy \& Hold}---el estad\'istico $DM$ sigue asint\'oticamente una distribuci\'on $N(0,1)$, y se emplea un contraste de una cola dado que la hip\'otesis alternativa es unidireccional (la estrategia supera al \textit{benchmark}).
-
-\begin{table}[htbp]
-\centering
-\caption{Test de Diebold-Mariano (retornos de estrategia vs SPY \textit{Buy \& Hold})}
-\label{tab:dm_test}
-\small
-\begin{tabular}{@{}lrrr@{}}
-\toprule
-\textbf{Modelo} & \textbf{Estad\'istico DM} & \textbf{p-valor (1 cola)} & \textbf{Significativo (5\%)} \\
-\midrule
-LSTM+Attention & 2.300 & 0.0107 & S\'i \\
-Ridge & 1.319 & 0.0937 & No (s\'i al 10\%) \\
-RandomForest & 0.387 & 0.3494 & No \\
-CNN-LSTM & 0.376 & 0.3535 & No \\
-\bottomrule
-\end{tabular}
-\vspace{0.2cm}
-\parbox{0.9\textwidth}{\footnotesize\textit{Nota: $DM > 0$ indica que la estrategia genera retornos superiores al \textit{benchmark}. Correcci\'on Newey-West con 5 rezagos. Hip\'otesis alternativa unidireccional (estrategia $>$ \textit{benchmark}).}}
-\end{table}
-
-La Tabla~\ref{tab:dm_test} confirma que LSTM+Attention es el \'unico modelo que alcanza significancia estad\'istica al nivel convencional del 5\% ($DM = 2.300$, $p = 0.011$), lo que permite rechazar la hip\'otesis nula de que sus retornos diarios sean indistinguibles de los del \textit{benchmark}. Este resultado es particularmente notable porque el test de Diebold-Mariano opera sobre los 1{,}302 retornos diarios individuales, no sobre la cifra agregada de retorno total, lo que descarta que la superioridad observada se concentre en unos pocos d\'ias at\'ipicos. Ridge se sit\'ua en la zona marginal ($p = 0.094$), alcanzando significancia al 10\% pero no al 5\%, mientras que RandomForest y CNN-LSTM no presentan evidencia estad\'istica de superioridad frente al SPY ($p > 0.34$ en ambos casos), a pesar de que sus retornos totales superan al \textit{benchmark} en t\'erminos absolutos.
-
-La asimetr\'ia entre significancia econ\'omica y estad\'istica observada en RandomForest y CNN-LSTM constituye un fen\'omeno habitual en la literatura de predicci\'on de retornos, donde la elevada volatilidad diaria de la renta variable dificulta la detecci\'on de diferencias genuinas incluso cuando estas persisten durante cinco a\~nos de operaci\'on.
+donde $\hat{V}(\bar{d})$ incorpora la correcci\'on de \citet{newey1987} con cinco rezagos. La Tabla~\ref{tab:dm_test} sugiere que LSTM+Attention es el \'unico modelo que alcanza significancia al 5\% ($DM = 2.296$, $p = 0.011$), permitiendo rechazar la hip\'otesis nula de retornos indistinguibles del \textit{benchmark}. Ridge se sit\'ua en la zona marginal ($p = 0.101$), mientras que RandomForest y CNN-LSTM no presentan evidencia de mejor rendimiento respecto al \textit{benchmark} ($p > 0.35$), lo que ilustra la asimetr\'ia habitual entre significancia econ\'omica y estad\'istica en la predicci\'on de retornos.
 
 % ─────────────────────────────────────────────────────────────────────────────
-\subsection{Test de Clark-West}
+\subsubsection{Test de Clark-West}
 \label{subsec:clark_west}
 
-Mientras el test de Diebold-Mariano eval\'ua la superioridad en retornos de la estrategia, el test de \citet{clark2007approximately} se dise\~n\'o espec\'ificamente para evaluar la capacidad predictiva de modelos anidados (\textit{nested models}). En este contexto, se compara cada modelo contra el predictor ingenuo de media hist\'orica---que predice el retorno promedio observado en el per\'iodo de entrenamiento (0.025\% diario)---mediante la siguiente correcci\'on del error cuadr\'atico
+El test de \citet{clark2007approximately} eval\'ua la capacidad predictiva de modelos anidados comparando cada modelo contra el predictor de media hist\'orica ($\bar{r}_{\text{train}} = 0.025\%$ diario).
 
 \begin{equation}
 CW_t = (e_{1,t}^2 - e_{2,t}^2) + (\hat{y}_{1,t} - \hat{y}_{2,t})^2
 \label{eq:cw_test}
 \end{equation}
 
-donde $e_{1,t}$ y $e_{2,t}$ son los errores de predicci\'on del modelo restringido (media hist\'orica) y del modelo extendido (ML), respectivamente. El t\'ermino de ajuste $(\hat{y}_{1,t} - \hat{y}_{2,t})^2$ corrige el sesgo que surge cuando el modelo restringido es verdadero, dado que en ese caso el modelo extendido introduce ruido de estimaci\'on que infla artificialmente su error cuadr\'atico. El estad\'istico resultante sigue una distribuci\'on $N(0,1)$ bajo $H_0$, y se emplea un contraste de una cola dado que la hip\'otesis alternativa es que el modelo ML posee capacidad predictiva superior.
-
-\begin{table}[htbp]
-\centering
-\caption{Test de Clark-West (predicciones vs media hist\'orica del entrenamiento)}
-\label{tab:cw_test}
-\small
-\begin{tabular}{@{}lrrr@{}}
-\toprule
-\textbf{Modelo} & \textbf{CW Stat} & \textbf{p-valor (1 cola)} & \textbf{Conclusi\'on} \\
-\midrule
-LSTM+Attention & 1.901 & 0.029 & Rechaza $H_0$ (5\%) \\
-Ridge & 1.215 & 0.112 & No rechaza \\
-CNN-LSTM & 0.641 & 0.261 & No rechaza \\
-RandomForest & $-$0.336 & 0.631 & No rechaza \\
-\bottomrule
-\end{tabular}
-\vspace{0.2cm}
-\parbox{0.9\textwidth}{\footnotesize\textit{Nota --- $H_0$ establece que el modelo no posee capacidad predictiva superior a la media hist\'orica. Test de una cola. Correcci\'on Newey-West con 5 rezagos.}}
-\end{table}
-
-Los resultados de la Tabla~\ref{tab:cw_test} refuerzan el patr\'on identificado en el test de Diebold-Mariano, dado que LSTM+Attention es nuevamente el \'unico modelo que alcanza significancia estad\'istica ($CW = 1.901$, $p = 0.029$). Este hallazgo es sustantivamente distinto del anterior, puesto que el test de Clark-West eval\'ua la capacidad predictiva en t\'erminos de error cuadr\'atico medio---no de retornos de estrategia---y aun as\'i identifica a LSTM+Attention como el \'unico modelo cuyas predicciones superan significativamente al predictor de media hist\'orica. La convergencia de ambos tests sobre el mismo modelo confiere robustez a la conclusi\'on de que LSTM+Attention posee habilidad predictiva genuina, no meramente rentabilidad estrat\'egica derivada de la suerte en el \textit{timing} de posiciones.
-
-El valor negativo de RandomForest ($CW = -0.336$) indica que, en t\'erminos de error cuadr\'atico de predicci\'on, este modelo no mejora respecto a simplemente predecir la media hist\'orica. No obstante, su retorno total positivo (131\%) demuestra que la rentabilidad de una estrategia no requiere predicciones puntuales precisas, sino \'unicamente se\~nales direccionales que permitan asignar posiciones de forma asim\'etrica---un resultado consistente con la literatura de \textit{directional forecasting} \citep{pesaran2002}.
+La Tabla~\ref{tab:cw_test} es consistente con el patr\'on identificado, dado que LSTM+Attention es nuevamente el \'unico modelo significativo ($CW = 1.901$, $p = 0.029$). La convergencia de ambos tests, que eval\'uan dimensiones distintas del rendimiento (retornos de estrategia vs.\ error de predicci\'on), sobre el mismo modelo es compatible con la interpretaci\'on de un error de predicci\'on menor al del predictor de media hist\'orica en este per\'iodo. El valor negativo de RandomForest ($CW = -0.336$) indica que sus predicciones no mejoran respecto a la media hist\'orica, sugiriendo que la rentabilidad de la estrategia proviene de se\~nales direccionales asim\'etricas \citep{pesaran2002}.
 
 % ─────────────────────────────────────────────────────────────────────────────
-\subsection{Model Confidence Set}
+\subsubsection{Model Confidence Set}
 \label{subsec:mcs}
 
-El \textit{Model Confidence Set} (MCS) de \citet{hansen2011} constituye un procedimiento iterativo que identifica el subconjunto de modelos que contiene al mejor modelo verdadero con una probabilidad dada. El algoritmo parte del conjunto completo de modelos $\mathcal{M}_0$, contrasta la hip\'otesis de igual capacidad predictiva (EPA) mediante el estad\'istico $T_{\max}$ con \textit{bootstrap} de bloques estacionarios ($B = 3{,}000$), y elimina secuencialmente el peor modelo cuando EPA se rechaza, hasta que la hip\'otesis de igualdad no pueda rechazarse al nivel $\alpha = 0.10$.
-
-En este estudio, se aplica el MCS utilizando los retornos negativos de cada estrategia como funci\'on de p\'erdida---de modo que un retorno m\'as alto corresponde a una p\'erdida menor---sobre los 23 modelos y el \textit{benchmark} SPY \textit{Buy \& Hold} (24 estrategias en total). El resultado es que el procedimiento no logra eliminar ning\'un modelo del conjunto.
+El \textit{Model Confidence Set} (MCS) de \citet{hansen2011} identifica el subconjunto de modelos que contiene al mejor con probabilidad dada, mediante el estad\'istico $T_{\max}$ con \textit{bootstrap} de bloques estacionarios ($B = 3{,}000$) al nivel $\alpha = 0.10$. Aplicado a las 24 estrategias (23 modelos + SPY), el procedimiento no logra eliminar ning\'un modelo del conjunto.
 
 \begin{equation}
 \hat{\mathcal{M}}^*_{0.10} = \mathcal{M}_0 \quad \text{(24 modelos, 0 eliminados)}
 \label{eq:mcs_result}
 \end{equation}
 
-Este resultado, aparentemente contraintuitivo dado que LSTM+Attention genera un retorno cuatro veces superior al del SPY, se explica por la elevada varianza de los retornos diarios de renta variable. La desviaci\'on est\'andar diaria del S\&P~500 es aproximadamente 1.1\%, mientras que la diferencia media diaria entre la mejor y la peor estrategia es del orden de 0.05\%, de modo que la relaci\'on se\~nal-ruido resulta insuficiente para que el procedimiento MCS discrimine entre estrategias con 1{,}302 observaciones. Este fen\'omeno es consistente con la literatura emp\'irica de comparaci\'on de estrategias de inversi\'on, donde \citet{hansen2011} documentan que se requieren frecuentemente m\'as de 5{,}000 observaciones para que el MCS posea potencia estad\'istica suficiente en activos de alta volatilidad.
-
-La implicaci\'on para la tesis de eficiencia de mercado es relevante, dado que el MCS formaliza cuantitativamente una dificultad fundamental de la investigaci\'on en finanzas emp\'iricas---la diferencia entre un modelo que genuinamente predice retornos y uno que simplemente captura ruido muestral es tan peque\~na, en t\'erminos diarios, que resulta estad\'isticamente indistinguible incluso con cinco a\~nos de datos.
+Este resultado se explica por la elevada varianza de los retornos diarios de renta variable, dado que la desviaci\'on est\'andar diaria del S\&P~500 ($\approx 1.1\%$) excede ampliamente la diferencia media entre estrategias ($\approx 0.05\%$), generando una relaci\'on se\~nal-ruido insuficiente para discriminar con 1{,}302 observaciones, resultado consistente con \citet{hansen2011}.
 
 % ─────────────────────────────────────────────────────────────────────────────
-\subsection{An\'alisis de \textit{Overfitting}}
+\subsubsection{An\'alisis de \textit{Overfitting} y Comparaciones M\'ultiples}
 \label{subsec:overfitting}
 
-\subsubsection{Degradaci\'on de m\'etricas de predicci\'on}
+La Tabla~\ref{tab:overfitting} muestra que LSTM+Attention exhibe la menor degradaci\'on en precisi\'on direccional entre entrenamiento y prueba ($-$4.6\%), con un error cuadr\'atico que \textit{disminuye} en el per\'iodo fuera de muestra ($0.68\times$), lo que sugiere que el mecanismo de atenci\'on captura patrones con cierta capacidad de generalizaci\'on. Ridge y RandomForest muestran mayor degradaci\'on ($-$18.6\% y $-$20.9\%) con ratios de MSE superiores a uno, indicando sobreajuste m\'as pronunciado aunque sin anular la rentabilidad. XGBoost, como contraejemplo, muestra m\'inima degradaci\'on ($-$1.6\%) pero un Sharpe de $-$0.024, dado que su baja degradaci\'on refleja ausencia de se\~nal en ambos per\'iodos.
 
-Una se\~nal cl\'asica de sobreajuste (\textit{overfitting}) es la degradaci\'on significativa de las m\'etricas de predicci\'on entre el per\'iodo de entrenamiento y el de prueba. Para cuantificar este fen\'omeno, se comparan la precisi\'on direccional (\textit{directional accuracy}, DA) y la raz\'on de error cuadr\'atico medio (MSE) entre ambos per\'iodos para los cuatro modelos ganadores y XGBoost como ejemplo de sobreajuste severo.
-
-\begin{table}[htbp]
-\centering
-\caption{Degradaci\'on de m\'etricas predictivas entre entrenamiento y prueba}
-\label{tab:overfitting}
-\small
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-\textbf{Modelo} & \textbf{DA Train} & \textbf{DA Test} & \textbf{Degradaci\'on DA} & \textbf{MSE Test/Train} \\
-\midrule
-LSTM+Attention & 0.492 & 0.470 & $-$4.6\% & 0.68$\times$ \\
-CNN-LSTM & 0.501 & 0.455 & $-$9.3\% & 0.87$\times$ \\
-Ridge & 0.575 & 0.468 & $-$18.6\% & 2.55$\times$ \\
-RandomForest & 0.580 & 0.459 & $-$20.9\% & 1.86$\times$ \\
-\midrule
-XGBoost & 0.552 & 0.543 & $-$1.6\% & 0.89$\times$ \\
-\bottomrule
-\end{tabular}
-\vspace{0.2cm}
-\parbox{0.9\textwidth}{\footnotesize\textit{Nota: DA = \textit{directional accuracy} (proporci\'on de predicciones con signo correcto). MSE Test/Train $> 1$ indica que el error cuadr\'atico medio aumenta en el per\'iodo fuera de muestra. XGBoost se incluye como ejemplo de modelo degenerado (Sharpe test = $-$0.024).}}
-\end{table}
-
-La Tabla~\ref{tab:overfitting} revela un patr\'on que desaf\'ia la intuici\'on convencional sobre sobreajuste. LSTM+Attention exhibe la menor degradaci\'on en precisi\'on direccional ($-$4.6\%) y, notablemente, su error cuadr\'atico medio \textit{disminuye} en el per\'iodo de prueba ($0.68\times$ el valor de entrenamiento), lo que sugiere que el mecanismo de atenci\'on no memoriza patrones espec\'ificos del entrenamiento sino que captura relaciones que se manifiestan con mayor claridad en datos no observados. CNN-LSTM muestra un patr\'on similar, con degradaci\'on moderada ($-$9.3\%) y ratio de MSE inferior a uno.
-
-Ridge y RandomForest presentan mayor degradaci\'on en precisi\'on direccional ($-$18.6\% y $-$20.9\%, respectivamente) y ratios de MSE superiores a uno (2.55$\times$ y 1.86$\times$), lo que indica un grado de sobreajuste m\'as pronunciado. No obstante, ambos mantienen Sharpe Ratios positivos en el per\'iodo de prueba, lo que sugiere que el sobreajuste degrada el rendimiento sin anularlo completamente.
-
-El caso de XGBoost resulta instructivo como contraejemplo, dado que presenta la menor degradaci\'on en DA ($-$1.6\%) pero un Sharpe de $-$0.024 en el per\'iodo de prueba. Esta aparente paradoja se resuelve al considerar que XGBoost produce predicciones pr\'acticamente constantes (solo 26 valores \'unicos entre 1{,}302 d\'ias de prueba), de modo que la baja degradaci\'on refleja no generalizaci\'on exitosa sino la ausencia de se\~nal significativa en ambos per\'iodos.
-
-\subsubsection{Correcci\'on por comparaciones m\'ultiples}
-
-Con 23 modelos evaluados simult\'aneamente, el riesgo de identificar falsos positivos por comparaciones m\'ultiples es sustancial. Se aplican dos procedimientos de correcci\'on sobre los p-valores del test de Diebold-Mariano.
-
-La correcci\'on de Bonferroni establece un umbral ajustado de $\alpha_{\text{Bonf}} = 0.05 / 23 \approx 0.0022$. Bajo este criterio conservador, ning\'un modelo alcanza significancia estad\'istica, dado que el p-valor m\'as bajo corresponde a LSTM+Attention ($p = 0.011$), que excede el umbral ajustado. Este resultado no invalida la evidencia de superioridad de LSTM+Attention, sino que refleja el car\'acter extremadamente conservador de la correcci\'on de Bonferroni, que controla la probabilidad de \textit{cualquier} falso positivo entre las 23 comparaciones.
-
-Alternativamente, el procedimiento de \citet{benjamini1995controlling} controla la proporci\'on esperada de falsos positivos entre los rechazos (\textit{False Discovery Rate}, FDR) al nivel $q = 0.10$. Este procedimiento, menos conservador que Bonferroni, ordena los p-valores y rechaza $H_0$ para los $k$ menores valores que satisfacen $p_{(k)} \leq \frac{k}{m} \cdot q$. Aplicado a los 23 p-valores del test de Diebold-Mariano, el procedimiento BH tampoco identifica modelos significativos al nivel $q = 0.10$, lo que confirma que, bajo cualquier correcci\'on est\'andar por comparaciones m\'ultiples, la evidencia de superioridad estad\'istica de las estrategias individuales no alcanza los umbrales convencionales.
+Con 23 modelos evaluados simult\'aneamente, la correcci\'on de Bonferroni establece un umbral de $\alpha_{\text{adj}} = 0.05/23 \approx 0.0022$ bajo el cual ning\'un modelo alcanza significancia ($p_{\min} = 0.011$ para LSTM+Attention). El procedimiento de \citet{benjamini1995controlling} tampoco identifica modelos significativos al nivel $q = 0.10$, lo que indica que, bajo correcciones est\'andar por comparaciones m\'ultiples, la evidencia de mejor rendimiento individual no alcanza umbrales convencionales.
 
 % ─────────────────────────────────────────────────────────────────────────────
-\subsection{S\'intesis de la validaci\'on estad\'istica}
+\subsubsection{S\'intesis de la Validaci\'on Estad\'istica}
 \label{subsec:validation_summary}
 
 \begin{table}[htbp]
@@ -192,18 +80,16 @@ Alternativamente, el procedimiento de \citet{benjamini1995controlling} controla 
 \toprule
 \textbf{Modelo} & \textbf{P(S$>$0)} & \textbf{P(S$>$SPY)} & \textbf{DM (5\%)} & \textbf{CW (5\%)} & \textbf{Bonferroni} \\
 \midrule
-LSTM+Attention & 99.7\% & 82.0\% & \cmark & \cmark & $\times$ \\
-Ridge & 96.1\% & 61.6\% & $\times$ & $\times$ & $\times$ \\
-RandomForest & 93.5\% & 50.8\% & $\times$ & $\times$ & $\times$ \\
-CNN-LSTM & 90.7\% & 44.7\% & $\times$ & $\times$ & $\times$ \\
+LSTM+Attention & 99.6\% & 83.1\% & \cmark & \cmark & $\times$ \\
+Ridge & 94.9\% & 60.4\% & $\times$ & $\times$ & $\times$ \\
+RandomForest & 93.3\% & 49.9\% & $\times$ & $\times$ & $\times$ \\
+CNN-LSTM & 89.3\% & 44.4\% & $\times$ & $\times$ & $\times$ \\
 \bottomrule
 \end{tabular}
 \vspace{0.2cm}
 \parbox{0.9\textwidth}{\footnotesize\textit{\cmark{} = significativo al nivel indicado. $\times$ = no significativo. El MCS no se incluye porque no logr\'o eliminar ning\'un modelo del conjunto completo.}}
 \end{table}
 
-La Tabla~\ref{tab:validation_summary} sintetiza los resultados de todos los tests. La validaci\'on estad\'istica proporciona evidencia que, en su conjunto, es consistente con la hip\'otesis de eficiencia d\'ebil de los mercados, matizada por la excepci\'on notable de LSTM+Attention. Este modelo es el \'unico que alcanza significancia estad\'istica en los tests de Diebold-Mariano ($p = 0.011$) y Clark-West ($p = 0.029$) al nivel convencional del 5\%, mantiene un intervalo de confianza \textit{bootstrap} \'integramente positivo, y presenta la menor degradaci\'on de m\'etricas predictivas entre entrenamiento y prueba. La convergencia de m\'ultiples tests independientes sobre el mismo modelo---que opera sobre dimensiones distintas del rendimiento (retornos de estrategia, error de predicci\'on, robustez \textit{bootstrap})---confiere credibilidad a la conclusi\'on de que su superioridad no es atribuible al azar.
+La Tabla~\ref{tab:validation_summary} sintetiza los resultados. LSTM+Attention es el \'unico modelo que alcanza significancia en los tests de Diebold-Mariano y Clark-West al 5\%, mantiene un intervalo \textit{bootstrap} \'integramente positivo y presenta la menor degradaci\'on predictiva, y la coincidencia de varios tests que eval\'uan dimensiones distintas del rendimiento parece indicar que el mejor rendimiento observado en esta muestra no ser\'ia enteramente atribuible al azar.
 
-No obstante, tres resultados atemperan esta conclusi\'on y merecen consideraci\'on. Primero, bajo la correcci\'on de Bonferroni por comparaciones m\'ultiples ($\alpha_{\text{adj}} = 0.0022$), incluso LSTM+Attention pierde significancia ($p = 0.011 > 0.0022$), lo que refleja el costo estad\'istico de evaluar 23 modelos simult\'aneamente. Segundo, el \textit{Model Confidence Set} no logra distinguir entre ninguna de las 24 estrategias evaluadas, dado que la varianza diaria de los retornos de renta variable genera una relaci\'on se\~nal-ruido insuficiente para que el procedimiento iterativo discrimine con 1{,}302 observaciones. Tercero, Ridge, RandomForest y CNN-LSTM, a pesar de generar retornos totales superiores al \textit{benchmark}, no alcanzan significancia estad\'istica en ninguno de los tests individuales al nivel del 5\%.
-
-Estos hallazgos matizan la conclusi\'on de \citet{gu2020}, quienes encontraron superioridad general de los m\'etodos no lineales complejos sobre los modelos lineales en predicci\'on de retornos. En el contexto espec\'ifico de este estudio, solo el mecanismo de atenci\'on de LSTM+Attention produce una ventaja estad\'isticamente detectable, lo que sugiere que la complejidad arquitect\'onica por s\'i sola no garantiza capacidad predictiva superior. La regularizaci\'on $L_2$ de Ridge genera retornos econ\'omicamente significativos pero estad\'isticamente marginales, mientras que los \textit{ensembles} de \'arboles (RandomForest) y las arquitecturas h\'ibridas (CNN-LSTM) no superan los umbrales convencionales de significancia. Este patr\'on es consistente con la advertencia de \citet{lopezdeprado2018} sobre los riesgos inherentes a la evaluaci\'on simult\'anea de m\'ultiples estrategias, donde la correcci\'on por comparaciones m\'ultiples puede erosionar la significancia de rendimientos genuinos.
+No obstante, tres resultados atemperan esta conclusi\'on. Bajo Bonferroni, incluso LSTM+Attention pierde significancia; el MCS no discrimina entre las 24 estrategias dado que la varianza diaria genera una relaci\'on se\~nal-ruido insuficiente con 1{,}302 observaciones; y los tres modelos restantes no alcanzan significancia individual al 5\%. Estos hallazgos matizan la conclusi\'on de \citet{gu2020} sobre la superioridad general de m\'etodos no lineales, puesto que en este contexto solo el modelo con mecanismo de atenci\'on alcanza los umbrales de significancia aplicados, hallazgo consistente con la advertencia de \citet{lopezdeprado2018} sobre los riesgos de evaluar m\'ultiples estrategias simult\'aneamente.

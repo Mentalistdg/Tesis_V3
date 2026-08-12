@@ -7,33 +7,33 @@
 \toprule
 \textbf{Modelo} & \textbf{Categor\'ia} & \textbf{$q_{3x}$ (\%)} & \textbf{$q_{1x}$ (\%)} & \textbf{Interpretaci\'on} \\
 \midrule
-LSTM+Attention & RNN & 5 & 50 & Top 5\% $\rightarrow$ 3x, Top 50\% $\rightarrow$ 1x \\
-Ridge & ML & 20 & 30 & Top 20\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
-RandomForest & ML & 5 & 40 & Top 5\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
-CNN-LSTM & RNN & 20 & 40 & Top 20\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
-DLinear & DeepLearning & 5 & 60 & Top 5\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
-GradientBoosting & ML & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
-CatBoost & GradientBoosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
-Theta & TimeSeries & 15 & 60 & Top 15\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
-SeasonalNaive & TimeSeries & 5 & 60 & Top 5\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
-NBEATS & DeepLearning & 10 & 20 & Top 10\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
-Lasso & ML & 5 & 40 & Top 5\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
-GARCH & Specialized & 5 & 30 & Top 5\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
-LightGBM & GradientBoosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
-NHiTS & DeepLearning & 5 & 60 & Top 5\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
-AutoARIMA & TimeSeries & 10 & 30 & Top 10\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
-TCN & DeepLearning & 5 & 30 & Top 5\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
-TFT & DeepLearning & 20 & 60 & Top 20\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
-XGBoost & GradientBoosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
-ElasticNet & ML & 10 & 60 & Top 10\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
-Prophet & Specialized & 15 & 60 & Top 15\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
-BiLSTM & RNN & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
-ExponentialSmoothing & TimeSeries & 30 & 60 & Top 30\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
-BiGRU & RNN & 30 & 40 & Top 30\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
+LSTM\_Attention & Deep learning & 5 & 50 & Top 5\% $\rightarrow$ 3x, Top 50\% $\rightarrow$ 1x \\
+Ridge & ML cl\'asico & 20 & 30 & Top 20\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
+RandomForest & ML cl\'asico & 5 & 40 & Top 5\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
+CNN\_LSTM & Deep learning & 20 & 40 & Top 20\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
+DLinear & Deep learning & 5 & 60 & Top 5\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+GradientBoosting & Boosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+CatBoost & Boosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+Theta & Series temporales & 15 & 60 & Top 15\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+NBEATS & Deep learning & 10 & 20 & Top 10\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+\rowcolor{naivebg} SeasonalNaive$^\dagger$ & Series temporales & 5 & 60 & Top 5\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+Lasso & ML cl\'asico & 5 & 40 & Top 5\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
+GARCH & Series temporales & 5 & 30 & Top 5\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
+LightGBM & Boosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+NHiTS & Deep learning & 5 & 60 & Top 5\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+AutoARIMA & Series temporales & 10 & 30 & Top 10\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
+TCN & Deep learning & 5 & 30 & Top 5\% $\rightarrow$ 3x, Top 30\% $\rightarrow$ 1x \\
+TFT & Deep learning & 20 & 60 & Top 20\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+Prophet & Series temporales & 15 & 60 & Top 15\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+ElasticNet & ML cl\'asico & 10 & 60 & Top 10\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+XGBoost & Boosting & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+BiLSTM & Deep learning & 5 & 20 & Top 5\% $\rightarrow$ 3x, Top 20\% $\rightarrow$ 1x \\
+ExponentialSmoothing & Series temporales & 30 & 60 & Top 30\% $\rightarrow$ 3x, Top 60\% $\rightarrow$ 1x \\
+BiGRU & Deep learning & 30 & 40 & Top 30\% $\rightarrow$ 3x, Top 40\% $\rightarrow$ 1x \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: $q_{3x}$ = percentil para posici\'on UPRO (3x). $q_{1x}$ = percentil para posici\'on SPY (1x). Predicciones por debajo del percentil $q_{1x}$ resultan en posici\'on Cash (0). Par\'ametros mostrados corresponden a la combinaci\'on m\'as frecuente seleccionada por el Meta-KNN din\'amico; los umbrales reales var\'ian por d\'ia.
+\item Nota: $q_{3x}$ = percentil para posici\'on UPRO (3x). $q_{1x}$ = percentil para posici\'on SPY (1x). Predicciones por debajo del percentil $q_{1x}$ resultan en posici\'on Cash (0). \colorbox{naivebg}{$^\dagger$SeasonalNaive} = \textit{benchmark} de complejidad m\'inima. Par\'ametros mostrados corresponden a la combinaci\'on m\'as frecuente seleccionada por el Meta-KNN din\'amico; los umbrales reales var\'ian por d\'ia.
 \end{tablenotes}
 \end{table}

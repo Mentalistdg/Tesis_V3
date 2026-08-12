@@ -230,7 +230,7 @@ OUTPUT_FILE = "trained_artifacts.pkl"
 CONFIG = {
     'test_size': 0.20,
     'n_cv_splits': 5,
-    'purge_days': 5,
+    'purge_days': 5,   # NO UTILIZADO (legado): nunca se pasa a TimeSeriesSplit
     'random_state': 42,
     'n_jobs': -1,
     'trading_days_year': 252,
@@ -395,6 +395,7 @@ def calculate_directional_accuracy(y_true, y_pred):
     return np.mean(np.sign(y_true) == np.sign(y_pred))
 
 def rmse(y_true, y_pred):
+    """Raiz del error cuadratico medio de las predicciones."""
     return np.sqrt(mean_squared_error(y_true, y_pred))
 
 def batch_predict_darts(model, n_test, past_covariates=None, scaler=None, show_warnings=False):
@@ -804,7 +805,9 @@ print("\n" + "="*80)
 print("PASO 4: Entrenar Modelos SKLEARN")
 print("="*80)
 
-# Preprocessing pipeline
+# Preprocesamiento: imputacion por mediana (NaN de ventanas rolling iniciales)
+# + estandarizacion. Al ir DENTRO del pipeline, el fit ocurre solo con los
+# folds de entrenamiento de cada CV (anti-leakage)
 numeric_transformer = SkPipeline(steps=[
     ('imputer', SimpleImputer(strategy='median')),
     ('scaler', StandardScaler())
@@ -816,11 +819,14 @@ preprocessor = ColumnTransformer(
 )
 
 def create_sklearn_pipeline(model):
+    """Encadena preprocesamiento (imputer + scaler) y modelo en un pipeline sklearn."""
     return SkPipeline(steps=[
         ('preprocessor', preprocessor),
         ('regressor', model)
     ])
 
+# TimeSeriesSplit respeta el orden temporal en la validacion cruzada
+# (cada fold valida solo con datos posteriores a los de ajuste); nunca shuffle
 cv_strategy = TimeSeriesSplit(n_splits=CONFIG['n_cv_splits'])
 
 sklearn_configs = {
@@ -924,6 +930,8 @@ for name, config in sklearn_configs.items():
 
 # Preprocesar datos para CatBoost y PyTorch custom
 # (fuera del try/if para que PyTorch siempre tenga datos escalados)
+# ANTI-LEAKAGE: imputer y scaler se ajustan (fit) SOLO con datos de
+# entrenamiento; a test se le aplica unicamente transform
 imputer = SimpleImputer(strategy='median')
 scaler = StandardScaler()
 
@@ -2080,10 +2088,15 @@ if PYTORCH_AVAILABLE:
         print(f"    [ERROR] {str(e)}")
 
 # =============================================================================
-# QUALITY VALIDATION - Validate all model predictions
+# VALIDACION DE CALIDAD - Revision de las predicciones de todos los modelos
 # =============================================================================
 def validate_predictions(name, test_pred, train_pred, y_test_vals):
-    """Quality gate post-entrenamiento."""
+    """Control de calidad post-entrenamiento: detecta predicciones degeneradas.
+
+    Emite advertencias (no detiene el pipeline) ante cuatro sintomas: colapso
+    (menos de 10 valores unicos), presencia de NaN/Inf, escala anomala frente
+    a la variable objetivo y correlacion negativa con el objetivo.
+    """
     warnings_list = []
     test_pred = np.array(test_pred, dtype=float)
 

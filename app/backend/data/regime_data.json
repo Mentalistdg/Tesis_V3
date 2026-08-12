@@ -10,37 +10,37 @@
   "regime_performance": {
     "Ridge": {
       "bull": {
-        "total_return": -0.05653221178184564,
+        "total_return": -0.05422707759029555,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.5552833178503107,
+        "total_return": 0.5215705124927885,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.787826016344259,
+        "total_return": 0.798696374537057,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": 0.3590631352458624,
+        "total_return": 0.33652385535799856,
         "n_days": 121
       }
     },
     "Lasso": {
       "bull": {
-        "total_return": 0.03944857079756692,
+        "total_return": 0.03963136070095552,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.2546820550892057,
+        "total_return": 0.24486288030448122,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.1536500748038756,
+        "total_return": 0.15182640392895297,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.07679960118636742,
+        "total_return": -0.0769415094349638,
         "n_days": 121
       }
     },
@@ -50,43 +50,43 @@
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.37123582665354893,
+        "total_return": 0.3594677454227735,
         "n_days": 49
       },
       "sideways": {
-        "total_return": -0.1349936184406847,
+        "total_return": -0.14041284290047829,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.11122582702723571,
+        "total_return": -0.11390552157677358,
         "n_days": 121
       }
     },
     "RandomForest": {
       "bull": {
-        "total_return": 0.02442014119072433,
+        "total_return": 0.025225709922461093,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.5549718871163853,
+        "total_return": 0.544534727993319,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.2715104214301469,
+        "total_return": 0.2655275960691812,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": 0.13993957116642974,
+        "total_return": 0.13454108804123344,
         "n_days": 121
       }
     },
     "GradientBoosting": {
       "bull": {
-        "total_return": 0.048083989122796655,
+        "total_return": 0.04967862407787993,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.05147450281585453,
+        "total_return": 0.048460139118701395,
         "n_days": 49
       },
       "sideways": {
@@ -94,61 +94,61 @@
         "n_days": 938
       },
       "high_vol": {
-        "total_return": 0.23498763712538273,
+        "total_return": 0.2326661959173233,
         "n_days": 121
       }
     },
     "XGBoost": {
       "bull": {
-        "total_return": 0.0024744133903131793,
+        "total_return": 0.0054803960550990904,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.3672602554936699,
+        "total_return": 0.34593016530277754,
         "n_days": 49
       },
       "sideways": {
-        "total_return": -0.24290960446670984,
+        "total_return": -0.255101355619779,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": 0.09315977276649812,
+        "total_return": 0.06178662615685715,
         "n_days": 121
       }
     },
     "LightGBM": {
       "bull": {
-        "total_return": 0.045133675349969815,
+        "total_return": 0.04675661536007758,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.033350277994242505,
+        "total_return": 0.026020744060381462,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.18895183659963632,
+        "total_return": 0.18402463245817002,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": 0.03228957472479932,
+        "total_return": 0.029355940492512334,
         "n_days": 121
       }
     },
     "CatBoost": {
       "bull": {
-        "total_return": 0.05554598877228312,
+        "total_return": 0.05575818698979873,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.2379120546869966,
+        "total_return": 0.23242154444305752,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.20977885968703647,
+        "total_return": 0.20618509702914456,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.04268675898794405,
+        "total_return": -0.044684761479752755,
         "n_days": 121
       }
     },
@@ -172,19 +172,19 @@
     },
     "ExponentialSmoothing": {
       "bull": {
-        "total_return": -0.028627614378728405,
+        "total_return": -0.02456889819408903,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.12249486068335114,
+        "total_return": 0.11175694317907903,
         "n_days": 49
       },
       "sideways": {
-        "total_return": -0.24024114350780945,
+        "total_return": -0.22986066974189212,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.02264818048054129,
+        "total_return": -0.04077222285516113,
         "n_days": 121
       }
     },
@@ -208,7 +208,7 @@
     },
     "Prophet": {
       "bull": {
-        "total_return": 0.007517567109473378,
+        "total_return": 0.007712611814028714,
         "n_days": 133
       },
       "bear": {
@@ -216,209 +216,209 @@
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.1329222172057707,
+        "total_return": 0.13584600172188588,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.05496767950553938,
+        "total_return": -0.05621690846649463,
         "n_days": 121
       }
     },
     "SeasonalNaive": {
       "bull": {
-        "total_return": -0.18542978972776958,
+        "total_return": -0.18166621708515462,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.2337603544629807,
+        "total_return": 0.22438066514819788,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.00371857136995013,
+        "total_return": 0.01111391906300474,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": 0.37596886403800855,
+        "total_return": 0.3560590651735016,
         "n_days": 121
       }
     },
     "GARCH": {
       "bull": {
-        "total_return": 0.04154707786403833,
+        "total_return": 0.04161737049233327,
         "n_days": 133
       },
       "bear": {
-        "total_return": -0.06321629353275837,
+        "total_return": -0.0635180523491935,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.13829434913369298,
+        "total_return": 0.1361928959561407,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.01613705089742956,
+        "total_return": -0.017914246022378566,
         "n_days": 121
       }
     },
     "DLinear": {
       "bull": {
-        "total_return": 0.05620199381005686,
+        "total_return": 0.0580585315524067,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.2670508084239649,
+        "total_return": 0.2606638592503825,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.20181287253337965,
+        "total_return": 0.2055428781545181,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.024374846402571704,
+        "total_return": -0.025086126370425066,
         "n_days": 121
       }
     },
     "NBEATS": {
       "bull": {
-        "total_return": -0.06752892159029122,
+        "total_return": -0.06397547902856804,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.4763408671991305,
+        "total_return": 0.47190394339544506,
         "n_days": 49
       },
       "sideways": {
-        "total_return": -0.014574620772044522,
+        "total_return": -0.0101381769605281,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": 0.10801685714350295,
+        "total_return": 0.09944819111493852,
         "n_days": 121
       }
     },
     "NHiTS": {
       "bull": {
-        "total_return": -0.03981231192190082,
+        "total_return": -0.03885421199226036,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.1222904080003373,
+        "total_return": 0.1195083758561255,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.04310009043361851,
+        "total_return": 0.04675659241262897,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": 0.051540374499962294,
+        "total_return": 0.04347507305611886,
         "n_days": 121
       }
     },
     "TCN": {
       "bull": {
-        "total_return": 0.006718281220275069,
+        "total_return": 0.009570538213707236,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.2659126413407136,
+        "total_return": 0.2637282912453618,
         "n_days": 49
       },
       "sideways": {
-        "total_return": -0.2119557033457048,
+        "total_return": -0.20932343019954602,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.043089774580735374,
+        "total_return": -0.04762884826995073,
         "n_days": 121
       }
     },
     "TFT": {
       "bull": {
-        "total_return": -0.09047452355167329,
+        "total_return": -0.08769633032491686,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.3995298019269007,
+        "total_return": 0.37914018381221104,
         "n_days": 49
       },
       "sideways": {
-        "total_return": -0.08686987743803554,
+        "total_return": -0.07169060005457772,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.033433406556602874,
+        "total_return": -0.04776872824416567,
         "n_days": 121
       }
     },
     "CNN_LSTM": {
       "bull": {
-        "total_return": -0.011280639184282681,
+        "total_return": -0.011315458787764965,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.4430067954789909,
+        "total_return": 0.4235978066070074,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 0.16484496053762498,
+        "total_return": 0.16366784075462637,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": 0.19195240690741522,
+        "total_return": 0.17381774393904914,
         "n_days": 121
       }
     },
     "LSTM_Attention": {
       "bull": {
-        "total_return": -0.032863534685941165,
+        "total_return": -0.03227994930089839,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.5460389031468769,
+        "total_return": 0.5341486387429284,
         "n_days": 49
       },
       "sideways": {
-        "total_return": 2.08500304025604,
+        "total_return": 2.1048478944270856,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.033722058438425795,
+        "total_return": -0.041758451821872766,
         "n_days": 121
       }
     },
     "BiLSTM": {
       "bull": {
-        "total_return": 0.03130551009418925,
+        "total_return": 0.03178972507720812,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.7061922112146231,
+        "total_return": 0.6980846766751696,
         "n_days": 49
       },
       "sideways": {
-        "total_return": -0.3084433257453889,
+        "total_return": -0.30781903122534826,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.15320026072443227,
+        "total_return": -0.16056068416284663,
         "n_days": 121
       }
     },
     "BiGRU": {
       "bull": {
-        "total_return": -0.061797560268808005,
+        "total_return": -0.05881386161481461,
         "n_days": 133
       },
       "bear": {
-        "total_return": 0.05128243862040405,
+        "total_return": 0.04510999754273559,
         "n_days": 49
       },
       "sideways": {
-        "total_return": -0.30018400144064405,
+        "total_return": -0.29725758852795003,
         "n_days": 938
       },
       "high_vol": {
-        "total_return": -0.07808985946546376,
+        "total_return": -0.09166260522294456,
         "n_days": 121
       }
     }

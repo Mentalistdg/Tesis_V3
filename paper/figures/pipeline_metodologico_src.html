@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @page { size: 1240px 1754px; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: #ffffff; }
+</style>
+</head>
+<body>
+<div style="width: 1240px; height: 1754px; background: #ffffff; margin: 0 auto; position: relative; overflow: hidden;">
+<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.815); transform-origin: center center; width: 1208px; background: #ffffff; font-family: 'IBM Plex Sans', sans-serif; color: #1f2430; padding: 26px 40px 26px; -webkit-font-smoothing: antialiased;">
+
+  <!-- ===== TITLE ===== -->
+  <div style="border-bottom: 2px solid #1f2430; padding-bottom: 18px; margin-bottom: 14px;">
+    <div style="font-size: 11.5px; letter-spacing: 2.6px; text-transform: uppercase; color: #6b7280; font-weight: 600; margin-bottom: 9px;">Tesis · Magíster en Finanzas · Diagrama de flujo metodológico</div>
+    <h1 style="margin: 0; font-size: 27px; line-height: 1.25; font-weight: 700; letter-spacing: -0.3px; color: #15191f;">Pipeline Metodológico: Predicción y Estrategia Long-Only sobre el S&amp;P 500</h1>
+  </div>
+  <div style="display: flex; gap: 20px; font-size: 12px; color: #6b7280; margin-bottom: 22px; flex-wrap: wrap; align-items: center;">
+    <span style="display: inline-flex; align-items: center; gap: 7px;"><span style="width: 22px; height: 13px; border: 2px solid #b3401f; border-radius: 3px; background: #fbeae3; display: inline-block;"></span>Fortaleza metodológica</span>
+    <span style="display: inline-flex; align-items: center; gap: 7px;"><span style="width: 22px; height: 13px; border: 1.5px dashed #888; border-radius: 3px; background: #fff; display: inline-block;"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px;">script.py</span></span>
+    <span style="display: inline-flex; align-items: center; gap: 7px;"><svg width="22" height="13" viewBox="0 0 22 13" fill="none" stroke="#8b94a2" stroke-width="1.6"><path d="M2 6.5h10"></path><circle cx="16" cy="6.5" r="3.5"></circle></svg>nodo de decisión</span>
+    <span style="margin-left: auto;">Flujo: de arriba hacia abajo</span>
+  </div>
+
+  <!-- ============ PHASE 1 ============ -->
+  <div style="display: flex; align-items: stretch;">
+    <div style="flex: 0 0 168px; background: #eef3f9; border-left: 6px solid #2f5c8a; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 16px; text-align: center;">
+      <div style="width: 38px; height: 38px; border-radius: 50%; background: #2f5c8a; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 10px;">1</div>
+      <div style="color: #2f5c8a; margin-bottom: 8px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"></path><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"></path></svg></div>
+      <div style="font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #2f5c8a; font-weight: 700;">Etapa 1</div>
+      <div style="font-size: 14px; font-weight: 700; color: #16202b; line-height: 1.25; margin-top: 3px;">Datos de entrada</div>
+    </div>
+    <div style="flex: 0 0 960px; padding: 12px 30px;">
+      <div style="display: flex; gap: 16px;">
+        <div style="flex: 1; background: #fff; border: 1.5px solid #2f5c8a; border-radius: 16px 16px 16px 16px / 26px 26px 16px 16px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+          <div style="font-size: 13.5px; font-weight: 700; color: #16202b; margin-bottom: 6px;">92 variables · Bloomberg Terminal</div>
+          <div style="font-size: 12px; color: #44505f; line-height: 1.7;">Índices y ETFs <b>18</b> · Macroeconómicos <b>19</b> · Tasas e interés y curva <b>20</b> · Commodities <b>11</b> · Volatilidad / VIX <b>13</b> · Sentimiento <b>10</b></div>
+        </div>
+        <div style="flex: 1; background: #fff; border: 1.5px solid #2f5c8a; border-radius: 16px 16px 16px 16px / 26px 26px 16px 16px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+          <div style="font-size: 13.5px; font-weight: 700; color: #16202b; margin-bottom: 6px;">Mercado · SPY</div>
+          <div style="font-size: 12px; color: #44505f; line-height: 1.7;">OHLCV del SPY · tasa libre de riesgo (T-Bill 3 meses)</div>
+        </div>
+      </div>
+      <div style="text-align: center; font-size: 11.5px; color: #6b7280; margin-top: 11px;">Período: <b style="color: #44505f;">ene 2000 – dic 2025</b> · <b style="color: #44505f;">6.507</b> observaciones diarias</div>
+      <svg width="900" height="23" viewBox="0 0 900 34" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 4px auto 0;"><line x1="225" y1="2" x2="225" y2="16"></line><line x1="675" y1="2" x2="675" y2="16"></line><line x1="225" y1="16" x2="675" y2="16"></line><line x1="450" y1="16" x2="450" y2="28"></line><polyline points="445,23 450,31 455,23" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 2 ============ -->
+  <div style="display: flex; align-items: stretch;">
+    <div style="flex: 0 0 168px; background: #e9f3f0; border-left: 6px solid #2e7468; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 16px; text-align: center;">
+      <div style="width: 38px; height: 38px; border-radius: 50%; background: #2e7468; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 10px;">2</div>
+      <div style="color: #2e7468; margin-bottom: 8px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H2a2 2 0 010-4h.09A1.65 1.65 0 003.6 8a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H8a1.65 1.65 0 001-1.51V2a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V8a1.65 1.65 0 001.51 1H22a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg></div>
+      <div style="font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #2e7468; font-weight: 700;">Etapa 2</div>
+      <div style="font-size: 14px; font-weight: 700; color: #16241f; line-height: 1.25; margin-top: 3px;">Ingeniería de características</div>
+      <div style="margin-top: 9px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #1f5a51; background: #fff; border: 1px dashed #2e7468; border-radius: 6px; padding: 4px 8px;">build_dataset.py</div>
+    </div>
+    <div style="flex: 0 0 960px; padding: 9px 30px 13px;">
+      <div style="display: flex; gap: 18px; align-items: center;">
+        <div style="flex: 1; background: #fff; border: 1.5px solid #2e7468; border-radius: 12px; padding: 15px 18px; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+          <div style="font-size: 14px; font-weight: 700; color: #16241f; margin-bottom: 7px;">Transforma 92 → <span style="color: #2e7468;">536 características predictivas</span></div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <span style="background: #e9f3f0; border: 1px solid #c2e0d8; border-radius: 14px; padding: 4px 11px; font-size: 11.5px; color: #28332f;">Indicadores técnicos</span>
+            <span style="background: #e9f3f0; border: 1px solid #c2e0d8; border-radius: 14px; padding: 4px 11px; font-size: 11.5px; color: #28332f;">Momentum y retornos</span>
+            <span style="background: #e9f3f0; border: 1px solid #c2e0d8; border-radius: 14px; padding: 4px 11px; font-size: 11.5px; color: #28332f;">Triple Screen de Elder</span>
+            <span style="background: #e9f3f0; border: 1px solid #c2e0d8; border-radius: 14px; padding: 4px 11px; font-size: 11.5px; color: #28332f;">Volatilidad OHLC · Parkinson / Garman-Klass / Rogers-Satchell / Yang-Zhang</span>
+            <span style="background: #e9f3f0; border: 1px solid #c2e0d8; border-radius: 14px; padding: 4px 11px; font-size: 11.5px; color: #28332f;">Cross-asset</span>
+            <span style="background: #e9f3f0; border: 1px solid #c2e0d8; border-radius: 14px; padding: 4px 11px; font-size: 11.5px; color: #28332f;">Rezagos</span>
+            <span style="background: #e9f3f0; border: 1px solid #c2e0d8; border-radius: 14px; padding: 4px 11px; font-size: 11.5px; color: #28332f;">Estadísticos móviles</span>
+          </div>
+        </div>
+        <svg width="34" height="20" viewBox="0 0 34 20" fill="none" stroke="#b3401f" stroke-width="2" stroke-dasharray="4 3"><line x1="0" y1="10" x2="26" y2="10"></line><polyline points="20,5 28,10 20,15" fill="none" stroke-dasharray="0" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+        <div style="flex: 0 0 268px; background: #fbeae3; border: 1.5px solid #b3401f; border-radius: 11px; padding: 13px 15px;">
+          <div style="font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: #b3401f; font-weight: 700; margin-bottom: 5px; display: flex; align-items: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>★ Sin fuga de datos</div>
+          <div style="font-size: 12px; color: #5a2415; line-height: 1.5;">Solo <b>ventanas hacia atrás</b>; único <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px;">shift(-1)</span> = variable objetivo (retorno en exceso del día siguiente).</div>
+        </div>
+      </div>
+      <svg width="900" height="19" viewBox="0 0 900 30" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 2px auto 0;"><line x1="450" y1="0" x2="450" y2="22"></line><polyline points="444,15 450,24 456,15" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 3 ============ -->
+  <div style="display: flex; align-items: stretch;">
+    <div style="flex: 0 0 168px; background: #f7f1e3; border-left: 6px solid #99762e; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 16px; text-align: center;">
+      <div style="width: 38px; height: 38px; border-radius: 50%; background: #99762e; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 10px;">3</div>
+      <div style="color: #99762e; margin-bottom: 8px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 01-9 9"></path></svg></div>
+      <div style="font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #99762e; font-weight: 700;">Etapa 3</div>
+      <div style="font-size: 14px; font-weight: 700; color: #2c2410; line-height: 1.25; margin-top: 3px;">División temporal 80 / 20</div>
+      <div style="font-size: 10.5px; color: #7a611f; margin-top: 4px;">cronológica, sin aleatorizar</div>
+    </div>
+    <div style="flex: 0 0 960px; padding: 9px 30px 13px;">
+      <svg width="900" height="19" viewBox="0 0 900 30" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="450" y1="0" x2="450" y2="10"></line><line x1="225" y1="10" x2="675" y2="10"></line><line x1="225" y1="10" x2="225" y2="26"></line><line x1="675" y1="10" x2="675" y2="26"></line><polyline points="219,20 225,28 231,20" stroke-linecap="round" stroke-linejoin="round"></polyline><polyline points="669,20 675,28 681,20" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+      <div style="display: flex; gap: 16px;">
+        <div style="flex: 1; background: #fff; border: 1.5px solid #99762e; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;"><span style="font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #99762e; font-weight: 700;">Entrenamiento · 80%</span><span style="font-size: 11.5px; color: #7a611f;">5.205 días</span></div>
+          <div style="font-size: 15px; color: #2c2410; font-weight: 600;">ene 2000 – sep 2020</div>
+          <div style="font-size: 11px; color: #7a611f; margin-top: 4px;">→ ajuste de modelos y del Meta-KNN</div>
+        </div>
+        <div style="flex: 1; background: #fff; border: 1.5px solid #99762e; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;"><span style="font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #99762e; font-weight: 700;">Prueba · 20%</span><span style="font-size: 11.5px; color: #7a611f;">1.302 obs.</span></div>
+          <div style="font-size: 15px; color: #2c2410; font-weight: 600;">oct 2020 – dic 2025</div>
+          <div style="font-size: 11px; color: #7a611f; margin-top: 4px;">→ evaluación out-of-sample y backtest</div>
+        </div>
+      </div>
+      <svg width="900" height="19" viewBox="0 0 900 30" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 2px auto 0;"><line x1="225" y1="0" x2="225" y2="14"></line><line x1="675" y1="0" x2="675" y2="14"></line><line x1="225" y1="14" x2="675" y2="14"></line><line x1="450" y1="14" x2="450" y2="24"></line><polyline points="444,18 450,26 456,18" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 4 ============ -->
+  <div style="display: flex; align-items: stretch;">
+    <div style="flex: 0 0 168px; background: #efebf7; border-left: 6px solid #5a4a8a; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 16px; text-align: center;">
+      <div style="width: 38px; height: 38px; border-radius: 50%; background: #5a4a8a; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 10px;">4</div>
+      <div style="color: #5a4a8a; margin-bottom: 8px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="1.8"></circle><circle cx="5" cy="12" r="1.8"></circle><circle cx="5" cy="18" r="1.8"></circle><circle cx="13" cy="9" r="1.8"></circle><circle cx="13" cy="15" r="1.8"></circle><circle cx="20" cy="12" r="1.8"></circle><path d="M6.6 6.7l4.8 1.6M6.6 11.5l4.8-2M6.6 13l4.8 1M6.6 17.3l4.8-1.8M14.6 9.6l3.8 1.6M14.6 14.4l3.8-1.6"></path></svg></div>
+      <div style="font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #5a4a8a; font-weight: 700;">Etapa 4</div>
+      <div style="font-size: 14px; font-weight: 700; color: #221c33; line-height: 1.25; margin-top: 3px;">Entrenamiento de 23 modelos</div>
+      <div style="margin-top: 9px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #463a6e; background: #fff; border: 1px dashed #5a4a8a; border-radius: 6px; padding: 4px 8px;">train_models.py</div>
+    </div>
+    <div style="flex: 0 0 960px; padding: 6px 30px 13px;">
+      <svg width="900" height="23" viewBox="0 0 900 34" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="450" y1="0" x2="450" y2="12"></line><line x1="107.25" y1="12" x2="792.75" y2="12"></line><line x1="107.25" y1="12" x2="107.25" y2="30"></line><line x1="335.75" y1="12" x2="335.75" y2="30"></line><line x1="564.25" y1="12" x2="564.25" y2="30"></line><line x1="792.75" y1="12" x2="792.75" y2="30"></line><polyline points="101.25,24 107.25,32 113.25,24" stroke-linecap="round" stroke-linejoin="round"></polyline><polyline points="329.75,24 335.75,32 341.75,24" stroke-linecap="round" stroke-linejoin="round"></polyline><polyline points="558.25,24 564.25,32 570.25,24" stroke-linecap="round" stroke-linejoin="round"></polyline><polyline points="786.75,24 792.75,32 798.75,24" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+        <div style="background: #fff; border: 1.5px solid #5a4a8a; border-radius: 11px; padding: 12px 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: #5a4a8a; margin-bottom: 7px; display: flex; justify-content: space-between;">ML clásico <span style="background: #efebf7; border-radius: 12px; padding: 1px 8px;">4</span></div>
+          <div style="font-size: 12px; color: #3a3450; line-height: 1.55;">Ridge<br>Lasso<br>ElasticNet<br>RandomForest</div>
+        </div>
+        <div style="background: #fff; border: 1.5px solid #5a4a8a; border-radius: 11px; padding: 12px 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: #5a4a8a; margin-bottom: 7px; display: flex; justify-content: space-between;">Boosting <span style="background: #efebf7; border-radius: 12px; padding: 1px 8px;">4</span></div>
+          <div style="font-size: 12px; color: #3a3450; line-height: 1.55;">GradientBoosting<br>XGBoost<br>LightGBM<br>CatBoost</div>
+        </div>
+        <div style="background: #fff; border: 1.5px solid #5a4a8a; border-radius: 11px; padding: 12px 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: #5a4a8a; margin-bottom: 7px; display: flex; justify-content: space-between;">Series temporales <span style="background: #efebf7; border-radius: 12px; padding: 1px 8px;">6</span></div>
+          <div style="font-size: 12px; color: #3a3450; line-height: 1.55;">AutoARIMA<br>ExponentialSmoothing<br>Theta<br>Prophet<br>SeasonalNaive<br>GARCH</div>
+        </div>
+        <div style="background: #fff; border: 1.5px solid #5a4a8a; border-radius: 11px; padding: 12px 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: #5a4a8a; margin-bottom: 7px; display: flex; justify-content: space-between;">Deep learning <span style="background: #efebf7; border-radius: 12px; padding: 1px 8px;">9</span></div>
+          <div style="font-size: 12px; color: #3a3450; line-height: 1.55;">DLinear<br>N-BEATS<br>N-HiTS<br>TCN<br>TFT<br>CNN-LSTM<br>LSTM+Attention<br>BiLSTM<br>BiGRU</div>
+        </div>
+      </div>
+      <svg width="900" height="23" viewBox="0 0 900 34" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="107.25" y1="0" x2="107.25" y2="16"></line><line x1="335.75" y1="0" x2="335.75" y2="16"></line><line x1="564.25" y1="0" x2="564.25" y2="16"></line><line x1="792.75" y1="0" x2="792.75" y2="16"></line><line x1="107.25" y1="16" x2="792.75" y2="16"></line><line x1="450" y1="16" x2="450" y2="22"></line></svg>
+      <div style="background: #5a4a8a; color: #fff; border-radius: 11px; padding: 11px 18px; text-align: center; font-size: 13.5px; font-weight: 600; margin: 0 auto;">23 predicciones continuas del retorno en exceso · una por modelo, por día</div>
+      <svg width="900" height="19" viewBox="0 0 900 30" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 2px auto 0;"><line x1="450" y1="0" x2="450" y2="22"></line><polyline points="444,15 450,24 456,15" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 5 ============ -->
+  <div style="display: flex; align-items: stretch;">
+    <div style="flex: 0 0 168px; background: #f8ecec; border-left: 6px solid #9a4747; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 16px; text-align: center;">
+      <div style="width: 38px; height: 38px; border-radius: 50%; background: #9a4747; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 10px;">5</div>
+      <div style="color: #9a4747; margin-bottom: 8px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg></div>
+      <div style="font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #9a4747; font-weight: 700;">Etapa 5</div>
+      <div style="font-size: 14px; font-weight: 700; color: #321818; line-height: 1.25; margin-top: 3px;">Conversión a posiciones y backtest</div>
+      <div style="margin-top: 9px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #7a3636; background: #fff; border: 1px dashed #9a4747; border-radius: 6px; padding: 4px 8px; max-width: 134px; text-align: center; line-height: 1.35;">optimize_and_<br>backtest.py</div>
+    </div>
+    <div style="flex: 0 0 960px; padding: 9px 30px 13px;">
+      <div style="background: #fff; border: 1.5px solid #9a4747; border-radius: 11px; padding: 11px 16px; display: flex; gap: 12px; align-items: center; margin: 0 auto;"><span style="flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; background: #9a4747; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">a</span><span style="font-size: 13px; color: #2f2222;">Cada predicción → <b>percentil rolling de 63 días</b></span></div>
+      <svg width="900" height="17" viewBox="0 0 900 26" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="450" y1="0" x2="450" y2="18"></line><polyline points="444,11 450,20 456,11" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+      <div style="background: #fbeae3; border: 1.5px solid #b3401f; border-radius: 11px; padding: 13px 16px; display: flex; gap: 12px; align-items: flex-start; margin: 0 auto;"><span style="flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; background: #b3401f; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">b</span><div><div style="font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: #b3401f; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 9"></polyline></svg>★ Fortaleza · Meta-KNN no-oráculo</div><div style="font-size: 13px; color: #5a2415; line-height: 1.5;"><b>Meta-KNN</b> (K=5, ponderado por distancia) elige día a día los umbrales <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;">(q_extreme, q_moderate)</span>, entrenado <b>solo con datos de entrenamiento</b> — sin <i>data snooping</i>.</div></div></div>
+      <svg width="900" height="17" viewBox="0 0 900 26" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="450" y1="0" x2="450" y2="18"></line><polyline points="444,11 450,20 456,11" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+      <div style="background: #fff; border: 1.5px solid #9a4747; border-radius: 11px; padding: 11px 16px; display: flex; gap: 12px; align-items: center; margin: 0 auto;"><span style="flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; background: #9a4747; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">c</span><span style="font-size: 13px; color: #2f2222;"><b>Filtro de calidad de señal:</b> si las predicciones son casi constantes (σ rolling &lt; 0,001) → <b>CASH</b></span></div>
+      <svg width="900" height="17" viewBox="0 0 900 26" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="450" y1="0" x2="450" y2="18"></line><polyline points="444,11 450,20 456,11" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+      <div style="background: #fff; border: 1.5px solid #9a4747; border-radius: 11px; padding: 15px 20px 22px; margin: 0 auto; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+        <div style="display: flex; align-items: center; gap: 12px;"><span style="flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; background: #9a4747; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">d</span><span style="font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: #9a4747; font-weight: 700;">Mapeo a posiciones discretas Long-Only</span></div>
+        <div style="display: flex; justify-content: center; margin-top: 12px;"><div style="width: 122px; height: 122px; background: #fff; border: 2px solid #9a4747; border-radius: 12px; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,.07);"><div style="transform: rotate(-45deg); width: 130px; text-align: center; font-size: 12px; font-weight: 700; color: #321818;">Percentil<br>del día</div></div></div>
+      <svg width="760" height="22" viewBox="0 0 760 32" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="380" y1="0" x2="380" y2="10"></line><line x1="122" y1="10" x2="638" y2="10"></line><line x1="122" y1="10" x2="122" y2="28"></line><line x1="380" y1="10" x2="380" y2="28"></line><line x1="638" y1="10" x2="638" y2="28"></line><polyline points="116,22 122,30 128,22" stroke-linecap="round" stroke-linejoin="round"></polyline><polyline points="374,22 380,30 386,22" stroke-linecap="round" stroke-linejoin="round"></polyline><polyline points="632,22 638,30 644,22" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; max-width: 760px; margin: 0 auto;">
+        <div style="text-align: center;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6b3050; margin-bottom: 7px;">percentil ≥ 100 − q_extreme</div><div style="background: #f4eaf0; border: 1.5px solid #b06; border-color: #c08; border-radius: 26px; padding: 11px; "><div style="font-size: 16px; font-weight: 700; color: #7a1d56;">UPRO</div><div style="font-size: 11px; color: #7a3a63;">3× apalancado · +3</div></div></div>
+        <div style="text-align: center;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #44506b; margin-bottom: 7px;">percentil ≥ 100 − q_moderate</div><div style="background: #eef0f6; border: 1.5px solid #5b6c8f; border-radius: 26px; padding: 11px;"><div style="font-size: 16px; font-weight: 700; color: #2b3a55;">SPY</div><div style="font-size: 11px; color: #50607d;">1× · +1</div></div></div>
+        <div style="text-align: center;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a5a58; margin-bottom: 7px;">en otro caso</div><div style="background: #f1f1f0; border: 1.5px solid #9a9a98; border-radius: 26px; padding: 11px;"><div style="font-size: 16px; font-weight: 700; color: #3a3a38;">CASH</div><div style="font-size: 11px; color: #6a6a68;">0</div></div></div>
+      </div>
+      </div>
+      <svg width="760" height="22" viewBox="0 0 760 32" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="122" y1="0" x2="122" y2="14"></line><line x1="380" y1="0" x2="380" y2="14"></line><line x1="638" y1="0" x2="638" y2="14"></line><line x1="122" y1="14" x2="638" y2="14"></line><line x1="380" y1="14" x2="380" y2="24"></line><polyline points="374,18 380,26 386,18" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+      <div style="background: #fff; border: 1.5px solid #9a4747; border-radius: 11px; padding: 13px 16px; display: flex; gap: 12px; align-items: flex-start; margin: 0 auto;"><span style="flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; background: #9a4747; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">e</span><div style="flex: 1;"><div style="font-size: 13px; color: #2f2222; line-height: 1.5;"><b>Backtest con costos reales:</b> expense ratios (UPRO 0,91% · SPY 0,09%), bid-ask spreads (5 / 2 bps) y <i>volatility drag</i> de ETFs apalancados.</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #7a3636; background: #f8ecec; border-radius: 6px; padding: 7px 11px; margin-top: 8px; display: inline-block;">Retorno neto = rf + posición × (retorno mercado − rf) − costos</div></div></div>
+      <svg width="900" height="19" viewBox="0 0 900 30" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 2px auto 0;"><line x1="450" y1="0" x2="450" y2="22"></line><polyline points="444,15 450,24 456,15" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 6 ============ -->
+  <div style="display: flex; align-items: stretch;">
+    <div style="flex: 0 0 168px; background: #eaf1ea; border-left: 6px solid #3d6b40; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 16px; text-align: center;">
+      <div style="width: 38px; height: 38px; border-radius: 50%; background: #3d6b40; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 10px;">6</div>
+      <div style="color: #3d6b40; margin-bottom: 8px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"></path><path d="M7 4h10v5a5 5 0 01-10 0V4z"></path><path d="M7 5H4v2a3 3 0 003 3M17 5h3v2a3 3 0 01-3 3"></path></svg></div>
+      <div style="font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #3d6b40; font-weight: 700;">Etapa 6</div>
+      <div style="font-size: 14px; font-weight: 700; color: #18261a; line-height: 1.25; margin-top: 3px;">Resultados y validación</div>
+    </div>
+    <div style="flex: 0 0 960px; padding: 9px 30px 13px;">
+      <div style="background: #3d6b40; color: #fff; border-radius: 11px; padding: 11px 18px; text-align: center; font-size: 13.5px; font-weight: 600; margin: 0 auto;">4 de 23 modelos superan al benchmark <span style="opacity: .85;">SPY Buy &amp; Hold (+101,3%)</span></div>
+      <svg width="900" height="23" viewBox="0 0 900 34" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="450" y1="0" x2="450" y2="12"></line><line x1="107.25" y1="12" x2="792.75" y2="12"></line><line x1="107.25" y1="12" x2="107.25" y2="30"></line><line x1="335.75" y1="12" x2="335.75" y2="30"></line><line x1="564.25" y1="12" x2="564.25" y2="30"></line><line x1="792.75" y1="12" x2="792.75" y2="30"></line><polyline points="101.25,24 107.25,32 113.25,24" stroke-linecap="round" stroke-linejoin="round"></polyline><polyline points="329.75,24 335.75,32 341.75,24" stroke-linecap="round" stroke-linejoin="round"></polyline><polyline points="558.25,24 564.25,32 570.25,24" stroke-linecap="round" stroke-linejoin="round"></polyline><polyline points="786.75,24 792.75,32 798.75,24" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+        <div style="background: #fff; border: 1.5px solid #3d6b40; border-top: 4px solid #3d6b40; border-radius: 10px; padding: 13px 14px; text-align: center;"><div style="font-size: 13px; font-weight: 700; color: #18261a; margin-bottom: 6px;">LSTM+Attention</div><div style="font-size: 25px; font-weight: 700; color: #3d6b40; letter-spacing: -0.5px;">+395%</div><div style="font-size: 12px; color: #5a6b5a; margin-top: 2px;">Sharpe 1,32</div></div>
+        <div style="background: #fff; border: 1.5px solid #3d6b40; border-top: 4px solid #5b8a5e; border-radius: 10px; padding: 13px 14px; text-align: center;"><div style="font-size: 13px; font-weight: 700; color: #18261a; margin-bottom: 6px;">Ridge</div><div style="font-size: 25px; font-weight: 700; color: #3d6b40; letter-spacing: -0.5px;">+253%</div><div style="font-size: 12px; color: #5a6b5a; margin-top: 2px;">Sharpe 0,86</div></div>
+        <div style="background: #fff; border: 1.5px solid #3d6b40; border-top: 4px solid #7aa37c; border-radius: 10px; padding: 13px 14px; text-align: center;"><div style="font-size: 13px; font-weight: 700; color: #18261a; margin-bottom: 6px;">RandomForest</div><div style="font-size: 25px; font-weight: 700; color: #3d6b40; letter-spacing: -0.5px;">+128%</div><div style="font-size: 12px; color: #5a6b5a; margin-top: 2px;">Sharpe 0,65</div></div>
+        <div style="background: #fff; border: 1.5px solid #3d6b40; border-top: 4px solid #9bbf9d; border-radius: 10px; padding: 13px 14px; text-align: center;"><div style="font-size: 13px; font-weight: 700; color: #18261a; margin-bottom: 6px;">CNN-LSTM</div><div style="font-size: 25px; font-weight: 700; color: #3d6b40; letter-spacing: -0.5px;">+122%</div><div style="font-size: 12px; color: #5a6b5a; margin-top: 2px;">Sharpe 0,57</div></div>
+      </div>
+      <svg width="900" height="23" viewBox="0 0 900 34" fill="none" stroke="#8b94a2" stroke-width="2" style="display: block; margin: 0 auto;"><line x1="107.25" y1="0" x2="107.25" y2="16"></line><line x1="335.75" y1="0" x2="335.75" y2="16"></line><line x1="564.25" y1="0" x2="564.25" y2="16"></line><line x1="792.75" y1="0" x2="792.75" y2="16"></line><line x1="107.25" y1="16" x2="792.75" y2="16"></line><line x1="450" y1="16" x2="450" y2="26"></line><polyline points="444,20 450,28 456,20" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+      <div style="background: #fff; border: 1.5px solid #3d6b40; border-radius: 11px; padding: 13px 16px;">
+        <div style="font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: #3d6b40; font-weight: 700; margin-bottom: 9px;">Validación estadística de la robustez</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <span style="background: #eaf1ea; border: 1px solid #c9ddc9; border-radius: 16px; padding: 5px 13px; font-size: 12px; color: #243425;">Bootstrap del Sharpe</span>
+          <span style="background: #eaf1ea; border: 1px solid #c9ddc9; border-radius: 16px; padding: 5px 13px; font-size: 12px; color: #243425;">Test de Diebold-Mariano</span>
+          <span style="background: #eaf1ea; border: 1px solid #c9ddc9; border-radius: 16px; padding: 5px 13px; font-size: 12px; color: #243425;">Test de Clark-West</span>
+          <span style="background: #eaf1ea; border: 1px solid #c9ddc9; border-radius: 16px; padding: 5px 13px; font-size: 12px; color: #243425;">Model Confidence Set</span>
+          <span style="background: #eaf1ea; border: 1px solid #c9ddc9; border-radius: 16px; padding: 5px 13px; font-size: 12px; color: #243425;">Comparaciones múltiples · Bonferroni · FDR</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</body>
+</html>

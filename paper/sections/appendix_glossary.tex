@@ -1,0 +1,154 @@
+% =============================================================================
+% APENDICE F: GLOSARIO DE TERMINOS
+% (orden alfabetico por palabra clave; 47 terminos tras ampliacion julio 2026)
+% =============================================================================
+
+\section{Glosario de T\'erminos}
+\label{app:glossary}
+
+Este ap\'endice re\'une las definiciones de los t\'erminos t\'ecnicos empleados a lo largo del trabajo. Los t\'erminos resaltados en el texto contienen hiperv\'inculos que conducen a esta secci\'on.
+
+\begin{description}[style=nextline, leftmargin=1.5cm]
+
+\item[\hypertarget{glos:advance_decline}{\textit{Advance-Decline Line}}]
+Acumula diariamente la diferencia entre el n\'umero de acciones que suben y las que bajan, proporcionando una medida tendencial de la amplitud del mercado. Su divergencia respecto al \'indice de precios, por ejemplo cuando este marca nuevos m\'aximos mientras la l\'inea desciende, se interpreta como se\~nal de debilitamiento interno del movimiento.
+
+\item[\hypertarget{glos:backtesting}{\textit{Backtesting}}]
+Procedimiento de simulaci\'on hist\'orica que aplica una estrategia de inversi\'on a datos pasados para evaluar c\'omo habr\'ia funcionado en condiciones reales de mercado. La validez del ejercicio depende de que la simulaci\'on respete estrictamente la secuencia temporal de la informaci\'on, es decir, que en ning\'un momento se utilicen datos futuros para tomar decisiones presentes, condici\'on conocida como ausencia de \textit{data leakage}.
+
+\item[\hypertarget{glos:bootstrap}{\textit{Bootstrap}}]
+T\'ecnica de remuestreo estad\'istico que genera miles de series alternativas extrayendo observaciones al azar, con reemplazo, de la muestra original. Aplicada a los retornos de una estrategia, permite estimar la distribuci\'on emp\'irica de una m\'etrica como el \textit{Sharpe ratio} y construir intervalos de confianza sin asumir normalidad en los datos.
+
+\item[\hypertarget{glos:breadth}{\textit{Breadth} (amplitud de mercado)}]
+Mide qu\'e proporci\'on de las acciones individuales participa en un movimiento del \'indice. Un mercado que sube con alta amplitud (muchas acciones subiendo) se considera m\'as sano que uno impulsado por pocas acciones de gran capitalizaci\'on.
+
+\item[\hypertarget{glos:butterfly}{\textit{Butterfly spread}}]
+Medida de la curvatura de la curva de rendimiento, definida como $(Y_{2} + Y_{10}) - 2 \cdot Y_{5}$, donde $Y_n$ es el rendimiento al plazo $n$. Un valor positivo indica una curva c\'oncava (``joroba'' en el plazo medio); un valor negativo, una curva convexa.
+
+\item[\hypertarget{glos:calmar_ratio}{\textit{Calmar Ratio}}]
+Raz\'on entre el retorno anualizado de una estrategia y el valor absoluto de su \textit{maximum drawdown}. Responde a una pregunta concreta, cu\'anto retorno anual genera la estrategia por cada unidad de p\'erdida m\'axima sufrida; un valor superior a 1 indica que el crecimiento anual t\'ipico excede la peor ca\'ida observada.
+
+\item[\hypertarget{glos:carr}{CARR (\textit{Conditional Autoregressive Range})}]
+An\'alogo al modelo GARCH pero aplicado al rango en lugar de a los retornos al cuadrado. Captura la persistencia emp\'irica del rango, dado que d\'ias de rango amplio tienden a ser seguidos por d\'ias de rango amplio.
+
+\item[\hypertarget{glos:contango}{\textit{Contango} / \textit{Backwardation}}]
+\textit{Contango} (VIX3M $>$ VIX spot) refleja condiciones normales de mercado; \textit{backwardation} (VIX3M $<$ VIX spot) se\~nala estr\'es agudo, dado que la volatilidad de corto plazo supera las expectativas a mediano plazo.
+
+\item[\hypertarget{glos:core_pce}{\textit{Core PCE}}]
+\textit{Personal Consumption Expenditures} excluyendo alimentos y energ\'ia. Es la medida de inflaci\'on preferida por la Reserva Federal para decisiones de pol\'itica monetaria, por ser menos vol\'atil que el IPC.
+
+\item[\hypertarget{glos:cds}{\textit{Credit Default Swap} (CDS)}]
+Contrato derivado que funciona como un seguro contra el incumplimiento de pago de un emisor de deuda. Los \'indices CDX agregan \textit{spreads} de CDS de m\'ultiples emisores, ofreciendo una medida amplia del riesgo crediticio corporativo.
+
+\item[\hypertarget{glos:cross_asset}{An\'alisis \textit{cross-asset}}]
+Estudio de las correlaciones y din\'amicas entre mercados diferentes (acciones, bonos, materias primas, divisas) para extraer informaci\'on que un an\'alisis de cada mercado por separado no capturar\'ia.
+
+\item[\hypertarget{glos:data_snooping}{\textit{Data snooping}}]
+Sesgo que surge al ajustar o seleccionar un modelo, sus par\'ametros o sus umbrales utilizando informaci\'on del per\'iodo de prueba, lo que infla artificialmente el rendimiento aparente fuera de muestra. Evitarlo exige que toda decisi\'on metodol\'ogica se tome exclusivamente con datos de entrenamiento.
+
+\item[\hypertarget{glos:directional_accuracy}{\textit{Directional Accuracy} (DA)}]
+Proporci\'on de d\'ias en que la predicci\'on de un modelo acierta el signo del retorno del d\'ia siguiente, sin considerar su magnitud. Aunque es una de las m\'etricas m\'as difundidas para evaluar predictores financieros, este trabajo documenta que un DA elevado no garantiza rentabilidad, dado que la m\'etrica ignora la asimetr\'ia entre la magnitud de los aciertos y la de los errores.
+
+\item[\hypertarget{glos:doji}{\textit{Doji}}]
+Vela japonesa cuyo cuerpo (la distancia entre apertura y cierre) es inferior al 10\% del rango total del d\'ia. Refleja equilibrio entre compradores y vendedores y frecuentemente precede cambios de tendencia.
+
+\item[\hypertarget{glos:donchian}{Canales de Donchian}]
+Desarrollados por Richard Donchian en la d\'ecada de 1960, definen un canal formado por el m\'aximo m\'as alto y el m\'inimo m\'as bajo de los \'ultimos $n$ d\'ias. Las rupturas del canal se interpretan como se\~nales de continuaci\'on de tendencia.
+
+\item[\hypertarget{glos:drawdown}{\textit{Drawdown}}]
+Ca\'ida acumulada desde un m\'aximo hist\'orico del portafolio hasta el punto m\'as bajo subsiguiente, expresada como porcentaje. El \textit{maximum drawdown} mide la peor p\'erdida que un inversor habr\'ia experimentado de haber ingresado en el punto m\'as alto, y constituye una m\'etrica fundamental de riesgo porque captura la magnitud de las p\'erdidas extremas que indicadores basados en promedios, como la desviaci\'on est\'andar, no reflejan.
+
+\item[\hypertarget{glos:drift}{\textit{Drift} (deriva)}]
+Tendencia determinista de una serie temporal, por ejemplo, el rendimiento esperado positivo de largo plazo del mercado accionario. Cuando existe \textit{drift}, algunos estimadores de volatilidad lo confunden con dispersi\'on aleatoria, sobreestimando la volatilidad real.
+
+\item[\hypertarget{glos:expense_ratio}{\textit{Expense ratio}}]
+Costo anual de gesti\'on de un ETF, expresado como porcentaje de los activos bajo administraci\'on. Equivalente a 0.91\% anual para UPRO y 0.09\% para SPY.
+
+\item[\hypertarget{glos:factores_estilo}{Factores de estilo (\textit{asset pricing})}]
+Derivan de la observaci\'on emp\'irica de que ciertas caracter\'isticas sistem\'aticas de las acciones, como su valoraci\'on relativa (\textit{value}), su tama\~no de mercado (\textit{size}) o su \textit{momentum} reciente, explican una parte significativa de la variaci\'on en retornos esperados. La rotaci\'on entre estos factores es un indicador reconocido de cambios en el r\'egimen de mercado.
+
+\item[\hypertarget{glos:fibonacci}{Niveles de Fibonacci}]
+Los niveles 23.6\%, 38.2\%, 50\%, 61.8\% y 78.6\% derivan de la raz\'on \'aurea y se utilizan ampliamente en an\'alisis t\'ecnico como niveles probables de soporte y resistencia durante correcciones de precio.
+
+\item[\hypertarget{glos:gap_overnight}{\textit{Gap overnight}}]
+Diferencia entre el precio de apertura de una sesi\'on y el precio de cierre de la sesi\'on anterior. Refleja la reacci\'on del mercado a noticias y eventos ocurridos fuera del horario de negociaci\'on.
+
+\item[\hypertarget{glos:ichimoku}{Ichimoku Kinko Hyo}]
+Sistema de an\'alisis t\'ecnico desarrollado por el periodista japon\'es Goichi Hosoda en la d\'ecada de 1960. A diferencia de la mayor\'ia de indicadores occidentales, que miden una sola dimensi\'on (tendencia, \textit{momentum} o volatilidad), Ichimoku integra las tres en una estructura visual unificada.
+
+\item[\hypertarget{glos:ig_hy}{\textit{Investment Grade} / \textit{High Yield}}]
+\textit{Investment Grade} (grado de inversi\'on) designa emisores con calificaci\'on crediticia BBB$-$ o superior, considerados de bajo riesgo de impago. \textit{High Yield} (alto rendimiento) designa emisores por debajo de BBB$-$, que ofrecen mayores rendimientos como compensaci\'on por su mayor riesgo.
+
+\item[\hypertarget{glos:large_small_caps}{\textit{Large caps} / \textit{Small caps}}]
+Empresas de gran y peque\~na capitalizaci\'on burs\'atil, donde la capitalizaci\'on corresponde al valor total de mercado de la compa\~n\'ia (precio de la acci\'on multiplicado por las acciones en circulaci\'on). El diferencial de rendimiento entre ambos grupos, aproximado en este estudio mediante IWM frente a SPY, captura el factor tama\~no documentado en la literatura de \textit{asset pricing} y funciona como indicador del apetito por riesgo.
+
+\item[\hypertarget{glos:learning_rate}{Tasa de aprendizaje (\textit{learning rate})}]
+Controla la magnitud del ajuste que el modelo realiza a sus par\'ametros en cada iteraci\'on de entrenamiento. Valores peque\~nos producen un aprendizaje m\'as lento pero estable; valores grandes aceleran la convergencia pero arriesgan inestabilidad.
+
+\item[\hypertarget{glos:meta_knn}{Meta-KNN}]
+Meta-modelo basado en \textit{K-Nearest Neighbors} que, para cada d\'ia del per\'iodo de prueba, identifica los episodios hist\'oricos del entrenamiento en que el modelo de predicci\'on se comport\'o de forma m\'as similar al momento presente y aplica los umbrales de posicionamiento que mejor funcionaron en dichos episodios. Permite adaptar los umbrales al r\'egimen de mercado sin utilizar informaci\'on futura.
+
+\item[\hypertarget{glos:momentum}{\textit{Momentum}}]
+Tendencia emp\'irica de los activos con buen rendimiento reciente a seguir rindiendo bien en el corto plazo, y viceversa. Este fen\'omeno, documentado por \citet{jegadeesh1993}, constituye una de las anomal\'ias m\'as robustas frente a la hip\'otesis de eficiencia de mercado.
+
+\item[\hypertarget{glos:new_highs_lows}{\textit{New Highs--New Lows}}]
+Diferencia diaria entre el n\'umero de acciones que alcanzan m\'aximos de 52 semanas y las que tocan m\'inimos del mismo per\'iodo. Como medida de amplitud, complementa a los \'indices ponderados por capitalizaci\'on, ya que un mercado que sube mientras este indicador se deteriora sugiere que el avance descansa en pocas acciones grandes, se\~nal hist\'oricamente asociada a techos de mercado.
+
+\item[\hypertarget{glos:ohlcv}{OHLCV}]
+Acr\'onimo de \textit{Open, High, Low, Close, Volume}, los cinco campos est\'andar de un registro de precio diario. Estos campos constituyen la materia prima de buena parte de la ingenier\'ia de caracter\'isticas del estudio, dado que de ellos se derivan los indicadores t\'ecnicos, los estimadores de volatilidad basados en rango y las medidas de microestructura de cada sesi\'on.
+
+\item[\hypertarget{glos:on_the_run}{\textit{On-the-run} (bonos)}]
+Emisi\'on m\'as reciente del Tesoro para un plazo dado. Su alta liquidez puede distorsionar el rendimiento observado respecto al nivel ``real'' de la curva. Los \'indices gen\'ericos de Bloomberg promedian emisiones cercanas a cada vencimiento, ofreciendo una medida m\'as estable.
+
+\item[\hypertarget{glos:percentil_movil}{Percentil m\'ovil (\textit{rolling percentile})}]
+Posici\'on relativa de una observaci\'on dentro de la distribuci\'on de sus \'ultimos $n$ valores, expresada entre 0 y 100. En este sistema, cada predicci\'on diaria se compara con las 63 predicciones previas del mismo modelo, de modo que la se\~nal refleja cu\'an optimista es el modelo respecto a su propio comportamiento reciente y no respecto a una escala absoluta, lo que permite comparar modelos con escalas de predicci\'on muy distintas.
+
+\item[\hypertarget{glos:precio_tipico}{Precio t\'ipico / MFI}]
+El precio t\'ipico se define como $(High + Low + Close) / 3$. El \textit{Money Flow Index} (MFI) multiplica este precio por el volumen para obtener el ``flujo de dinero'', cuya proporci\'on positiva/negativa genera un oscilador entre 0 y 100.
+
+\item[\hypertarget{glos:profit_factor}{\textit{Profit factor}}]
+Raz\'on entre la suma de todas las ganancias y la suma de todas las p\'erdidas generadas por una estrategia en un per\'iodo dado. Un valor superior a 1 indica que el sistema genera m\'as dinero del que pierde; valores por debajo de 1 se\~nalan que las p\'erdidas superan a las ganancias. Se complementa con el \textit{win rate} para evaluar la calidad de las operaciones.
+
+\item[\hypertarget{glos:proxy}{\textit{Proxy}}]
+Variable observable que se utiliza como aproximaci\'on de un concepto que no es directamente medible. En este estudio, XLF (sector financiero) y XLK (sector tecnol\'ogico) se emplean como \textit{proxies} de \textit{value} y \textit{growth}, respectivamente.
+
+\item[\hypertarget{glos:put_call}{Ratio \textit{put/call}}]
+Mide el volumen de opciones de venta (\textit{puts}) relativo al volumen de opciones de compra (\textit{calls}). Un ratio elevado indica sentimiento pesimista (m\'as inversores comprando protecci\'on a la baja); un ratio bajo indica optimismo.
+
+\item[\hypertarget{glos:sharpe_ratio}{\textit{Sharpe Ratio}}]
+Medida cl\'asica de rentabilidad ajustada por riesgo, definida como el exceso de retorno de una estrategia sobre la tasa libre de riesgo dividido por la desviaci\'on est\'andar de sus retornos, habitualmente anualizada \citep{sharpe1966mutual}. Permite comparar estrategias con niveles de riesgo distintos; un valor m\'as alto indica mayor compensaci\'on por cada unidad de volatilidad total asumida.
+
+\item[\hypertarget{glos:sortino_ratio}{\textit{Sortino Ratio}}]
+Variante del \textit{Sharpe ratio} que divide el exceso de retorno \'unicamente por la desviaci\'on est\'andar de los retornos negativos \citep{sortino1991}. Al penalizar solo la volatilidad a la baja, distingue entre estrategias cuya variabilidad proviene de ganancias y aquellas cuya variabilidad proviene de p\'erdidas, distinci\'on que el \textit{Sharpe} tradicional no realiza.
+
+\item[\hypertarget{glos:spread}{\textit{Spread} (diferencial)}]
+Diferencia entre dos tasas de inter\'es o rendimientos. El \textit{spread} de cr\'edito, por ejemplo, mide la prima que exige el mercado por prestar a un emisor corporativo frente a un bono del Tesoro de igual plazo; cuanto mayor el \textit{spread}, mayor el riesgo crediticio percibido.
+
+\item[\hypertarget{glos:spread_bidask}{\textit{Spread bid-ask}}]
+Diferencia entre el precio de compra y el precio de venta de un activo. Representa un costo impl\'icito de cada transacci\'on, estimado en 0.05\% para UPRO y 0.02\% para SPY.
+
+\item[\hypertarget{glos:squeeze}{\textit{Squeeze} (compresi\'on)}]
+Ocurre cuando las Bandas de Bollinger se contraen dentro de los canales de Keltner, indicando que la volatilidad es inusualmente baja. Hist\'oricamente, los per\'iodos de compresi\'on preceden movimientos direccionales fuertes.
+
+\item[\hypertarget{glos:swap}{Tasa \textit{swap} de inter\'es}]
+Tasa fija que se intercambia por una tasa variable en un contrato de derivados (\textit{interest rate swap}). La tasa \textit{swap} a 10 a\~nos refleja las expectativas del mercado sobre tasas de inter\'es futuras y riesgo crediticio bancario.
+
+\item[\hypertarget{glos:talib}{TA-Lib (\textit{Technical Analysis Library})}]
+Librer\'ia est\'andar de la industria financiera cuyos indicadores est\'an dise\~nados para operar exclusivamente sobre datos hist\'oricos, sin incorporar observaciones futuras.
+
+\item[\hypertarget{glos:tick_trin}{TICK / TRIN (\textit{Arms Index})}]
+El TICK mide la diferencia instant\'anea entre acciones cotizando al alza y a la baja. El TRIN relaciona la raz\'on de acciones que suben/bajan con la raz\'on de volumen al alza/a la baja; valores $<1$ indican presiones alcistas y $>1$ presiones bajistas.
+
+\item[\hypertarget{glos:treasury}{T-Bills / T-Notes / T-Bonds}]
+\textit{Treasury Bills} (T-Bills) son instrumentos de deuda a corto plazo (hasta 1 a\~no) emitidos por el Tesoro de EE.UU., considerados libres de riesgo crediticio. Los \textit{T-Notes} (2--10 a\~nos) y \textit{T-Bonds} (20--30 a\~nos) son sus equivalentes a mayor plazo.
+
+\item[\hypertarget{glos:true_range}{\textit{True Range}}]
+M\'aximo entre (i)~rango intrad\'ia ($H - L$), (ii)~distancia del m\'aximo al cierre anterior, y (iii)~distancia del m\'inimo al cierre anterior. Captura la volatilidad real incluyendo \textit{gaps} entre sesiones.
+
+\item[\hypertarget{glos:turnover}{\textit{Turnover}}]
+Frecuencia con la que una estrategia modifica sus posiciones en un per\'iodo determinado. Un \textit{turnover} elevado implica mayor actividad de negociaci\'on y, en consecuencia, mayores costos de transacci\'on (\textit{spreads} de compra-venta, comisiones e impacto de mercado) que pueden erosionar significativamente los retornos brutos de la estrategia.
+
+\item[\hypertarget{glos:vol_drag}{\textit{Volatility drag}}]
+P\'erdida sistem\'atica que sufren los ETFs apalancados por su rebalanceo diario. Formalmente, $\text{drag} \approx \frac{1}{2}(L^2 - L) \cdot \sigma^2$, donde $L$ es el factor de apalancamiento y $\sigma^2$ la varianza diaria del subyacente.
+
+\end{description}

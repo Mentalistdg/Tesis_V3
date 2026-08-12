@@ -174,19 +174,31 @@ def compute_trading_stats(positions, strategy_returns, rf):
 # [4] UPRO BUY & HOLD BENCHMARK (para Tabla 5 / tab:benchmarks)
 # ============================================================================
 
-def compute_upro_buyhold(market_returns, rf):
+def compute_upro_buyhold(market_returns, rf, vol_window=21):
     """
     Calcula el benchmark UPRO 3x Buy & Hold.
 
-    Formula: rf + 3*(mkt - rf) - expense_daily - bid_ask_entrada
-    No se aplica vol_drag (ya esta implicito en el compounding diario 3x).
+    Formula diaria: rf + 3*(mkt - rf) - expense_daily - vol_drag - bid_ask_entrada.
+    El vol_drag usa la volatilidad realizada rolling (21d, backward-only), igual que
+    el tramo UPRO de la estrategia, para una comparacion consistente.
     Solo se cobra 1 trade de entrada (bid-ask 5bps) al inicio.
     """
     expense_daily = INSTRUMENTS['UPRO']['expense_ratio'] / 252
     bid_ask = INSTRUMENTS['UPRO']['bid_ask']
 
+    market_returns = np.asarray(market_returns, dtype=float)
+    n = len(market_returns)
+
+    # Volatilidad realizada backward-only (mismo metodo que la estrategia)
+    realized_vol = np.full(n, 0.01)
+    for i in range(n):
+        w = market_returns[max(0, i - vol_window):i]
+        if len(w) >= 5:
+            realized_vol[i] = np.std(w)
+    vol_drag = 0.5 * 6 * realized_vol ** 2
+
     upro_gross = rf + 3.0 * (market_returns - rf)
-    upro_returns = upro_gross - expense_daily
+    upro_returns = upro_gross - expense_daily - vol_drag
     upro_returns[0] -= bid_ask  # Solo 1 trade de entrada
 
     return compute_benchmark_metrics(upro_returns, rf, "UPRO_3x_BH")
@@ -220,7 +232,7 @@ def compute_6040_portfolio(spy_prices, bond_prices, rf, dates):
             eq_spy = 0.6 * tv
             eq_bond = 0.4 * tv
             cur_month = dt[i].month
-        eq_spy *= (1 + spy_ret[i])
+        eq_spy *= (1 + spy_ret[i] - 0.0009 / 252)  # pata SPY neta de expense
         eq_bond *= (1 + bond_ret[i])
         port_eq[i] = eq_spy + eq_bond
 
@@ -374,7 +386,9 @@ def main():
     # ------------------------------------------------------------------
     print("[6] SPY Buy & Hold (del JSON)")
     print("-" * 90)
-    spy_metrics = compute_benchmark_metrics(fwd_test_full, rf_test_full, "SPY_BH")
+    # SPY B&H neto del expense ratio (0.09%/anio), consistente con la estrategia.
+    spy_bh_net_full = np.asarray(fwd_test_full, dtype=float) - 0.0009 / 252
+    spy_metrics = compute_benchmark_metrics(spy_bh_net_full, rf_test_full, "SPY_BH")
     print(f"    SPY B&H:")
     print(f"      Retorno: {spy_metrics['total_return_pct']:+.1f}%")
     print(f"      Sharpe:  {spy_metrics['sharpe']:.4f}")

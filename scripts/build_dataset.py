@@ -685,7 +685,8 @@ def calculate_momentum_features(df):
 
 def calculate_volume_features(df):
     """
-    Features basados en volumen.
+    Features basados en volumen: volumen relativo a sus medias moviles de
+    20 y 63 dias, como proxy de actividad de mercado atipica.
     """
     features = {}
     volume = df['SPY_VOLUME']
@@ -1310,7 +1311,9 @@ def calculate_range_garch_features(df):
 
 def calculate_microstructure_features(df):
     """
-    Features de microestructura adicionales.
+    Features de microestructura de cada sesion: gaps overnight (magnitud,
+    direccion y si se llenan), anatomia de velas (cuerpo, sombras, doji),
+    posicion del cierre dentro del rango diario y producto rango-volumen.
     """
     features = {}
 
@@ -1377,12 +1380,12 @@ def calculate_cross_asset_features(df):
 
     spy_ret = df['SPY_CLOSE'].pct_change()
 
-    # Correlaciones con otros activos
+    # Correlaciones moviles del SPY con cinco activos de referencia
     cross_assets = {
-        'TLT': 'I7',    # GT10 Govt yield (proxy for bond correlation via yield changes)
-        'GLD': 'P3',    # Gold
-        'OIL': 'P1',    # Oil
-        'DXY': 'M9',    # Dollar
+        'TLT': 'I7',    # Rendimiento Tesoro 10a (proxy de correlacion con bonos)
+        'GLD': 'P3',    # Oro
+        'OIL': 'P1',    # Petroleo
+        'DXY': 'M9',    # Indice dolar
         'VIX': 'V1',    # VIX
     }
 
@@ -1482,7 +1485,9 @@ def calculate_credit_features(df):
 
 def calculate_sector_features(df):
     """
-    Features de dispersion sectorial.
+    Features de dispersion sectorial: amplitud (proporcion de sectores del
+    S&P 500 en positivo) y dispersion de retornos entre XLF, XLK, XLE, XLV,
+    XLI y XLU, como indicadores de rotacion y salud interna del mercado.
     """
     features = {}
 
@@ -1922,12 +1927,12 @@ def calculate_additional_vix_features(df):
     if 'yield_curve_inverted' in df.columns:
         features['vix_x_curve_inverted'] = vix * df['yield_curve_inverted']
 
-    # Volatility surface features
-    if 'V5' in df.columns:  # V5 = VXEEM (emerging markets vol), NOT VVIX
-        features['vvix_vix_ratio'] = df['V5'] / (vix + 1e-10)  # NOTE: misnomer, actually VXEEM/VIX ratio
+    # Features de superficie de volatilidad
+    if 'V5' in df.columns:  # V5 = VXEEM (vol de mercados emergentes), NO es VVIX
+        features['vvix_vix_ratio'] = df['V5'] / (vix + 1e-10)  # NOTA: nombre heredado; en realidad es el ratio VXEEM/VIX
 
-    # V6 = VXEFA (developed markets vol, range ~10-50), NOT SKEW Index
-    # NOTE: threshold 130 never triggers for VXEFA — this feature is always 0
+    # V6 = VXEFA (vol de mercados desarrollados, rango ~10-50), NO es el indice SKEW
+    # NOTA: el umbral 130 nunca se activa para VXEFA, por lo que esta feature es siempre 0
     if 'V6' in df.columns:
         features['skew_high'] = (df['V6'] > 130).astype(int)
 

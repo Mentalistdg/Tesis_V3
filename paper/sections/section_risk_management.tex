@@ -1,225 +1,61 @@
 % =============================================================================
-% SECCION: MARCO DE GESTION DE RIESGO
+% SECCION: GESTION DE RIESGO
 % =============================================================================
 
-\section{Marco de Gesti\'on de Riesgo}
+\subsection{Gesti\'on de Riesgo}
 \label{sec:risk_management}
 
-Una estrategia rentable no basta para justificar su implementaci\'on, dado que la gesti\'on de riesgo es lo que distingue una estrategia acad\'emicamente interesante de una operativamente viable. En esta secci\'on se presenta un marco integral de an\'alisis de riesgo aplicado a los cuatro modelos que superaron al \textit{benchmark} SPY Buy \& Hold durante el per\'iodo de prueba---LSTM+Attention, Ridge, RandomForest y CNN-LSTM---con el objetivo de evaluar si sus retornos superiores compensan adecuadamente los riesgos asumidos. Cada m\'etrica se define formalmente y se acompa\~na de una comparaci\'on entre los cuatro modelos y el \textit{benchmark}, lo que permite identificar diferencias sistem\'aticas en los perfiles de riesgo que subyacen a estrategias con retornos aparentemente comparables.
+Una rentabilidad elevada solo resulta valiosa si el riesgo asumido para obtenerla se mantiene dentro de l\'imites razonables, dado que exposiciones excesivas pueden comprometer la viabilidad de una estrategia por m\'as atractivos que parezcan sus retornos. Por ello, en esta secci\'on se examina el perfil de riesgo de los cuatro modelos ganadores (LSTM+Attention, Ridge, RandomForest y CNN-LSTM), con el prop\'osito de valorar en qu\'e medida los retornos registrados guardan proporci\'on con los riesgos asumidos durante el per\'iodo de prueba.
 
-\subsection{M\'etricas de Riesgo Ajustado}
+\subsubsection{M\'etricas de Riesgo Ajustado}
 \label{subsec:risk_adjusted_metrics}
 
-Las m\'etricas de riesgo ajustado permiten comparar estrategias con distintos niveles de volatilidad al normalizar el retorno por alguna medida de riesgo. A continuaci\'on se presentan tres ratios ampliamente utilizados en la literatura de gesti\'on de portafolios, cada uno con una perspectiva distinta sobre qu\'e constituye ``riesgo''.
-
-\subsubsection{Sharpe Ratio}
-
-El \textit{Sharpe Ratio} \citep{sharpe1966mutual} mide el exceso de retorno por unidad de volatilidad total:
-
-\begin{equation}
-\text{Sharpe} = \frac{E[R_p - R_f]}{\sigma_p} \cdot \sqrt{252}
-\label{eq:sharpe}
-\end{equation}
-
-donde $R_p$ es el retorno diario del portafolio, $R_f$ la tasa libre de riesgo, y $\sigma_p$ la desviaci\'on est\'andar de los retornos. El factor $\sqrt{252}$ anualiza la m\'etrica asumiendo 252 d\'ias de \textit{trading}.
+Se emplean tres ratios ampliamente utilizados en gesti\'on de portafolios. El \textit{Sharpe Ratio} \citep{sharpe1966mutual} mide el exceso de retorno por unidad de volatilidad total ($\text{Sharpe} = E[R_p - R_f] / \sigma_p \cdot \sqrt{252}$). El \hyperlink{glos:sortino_ratio}{\textit{Sortino Ratio}} \citep{sortino1991} reemplaza $\sigma_p$ por la desviaci\'on est\'andar exclusivamente negativa $\sigma_d$, penalizando \'unicamente la volatilidad a la baja. El \hyperlink{glos:calmar_ratio}{\textit{Calmar Ratio}} relaciona el retorno anualizado con el m\'aximo \hyperlink{glos:drawdown}{\textit{drawdown}} hist\'orico ($\text{Calmar} = \text{CAGR} / |\text{Max DD}|$); un valor superior a 1.0 indica que el retorno anualizado supera la peor ca\'ida observada.
 
 \begin{table}[htbp]
 \centering
-\caption{Sharpe Ratio de los modelos que superan al benchmark}
-\label{tab:sharpe_comparison}
+\caption{M\'etricas de riesgo ajustado de los modelos que superan al benchmark}
+\label{tab:risk_adjusted_metrics}
 \small
-\begin{tabular}{@{}lr@{}}
+\begin{tabular}{@{}lrrr@{}}
 \toprule
-\textbf{Modelo} & \textbf{Sharpe Ratio} \\
+\textbf{Modelo} & \textbf{Sharpe} & \textbf{Sortino} & \textbf{Calmar} \\
 \midrule
-LSTM+Attention & 1.327 \\
-Ridge & 0.881 \\
-RandomForest & 0.666 \\
-CNN-LSTM & 0.599 \\
+LSTM+Attention & 1.319 & 2.606 & 1.770 \\
+Ridge & 0.856 & 1.250 & 0.868 \\
+RandomForest & 0.651 & 1.337 & 1.153 \\
+CNN-LSTM & 0.572 & 1.100 & 0.466 \\
 \midrule
-SPY (B\&H) & 0.663 \\
+SPY (B\&H) & 0.657 & 0.944 & 0.571 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Como muestra la Tabla~\ref{tab:sharpe_comparison}, el LSTM+Attention alcanza un Sharpe de 1.327, lo que duplica el valor del \textit{benchmark} (0.663) e indica que cada unidad de volatilidad asumida genera el doble de exceso de retorno que una inversi\'on pasiva en el \'indice. Ridge, con un Sharpe de 0.881, se posiciona como el segundo modelo m\'as eficiente en t\'erminos de riesgo ajustado, mientras que RandomForest (0.666) y CNN-LSTM (0.599) se ubican en torno al nivel del \textit{benchmark}, lo que sugiere que su ventaja proviene m\'as de la magnitud absoluta de los retornos que de una eficiencia superior en el uso del riesgo.
+La Tabla~\ref{tab:risk_adjusted_metrics} muestra una jerarqu\'ia consistente. LSTM+Attention registra un Sharpe de 1.319 frente al 0.657 del \textit{benchmark}, y su Sortino (2.606) es pr\'acticamente el doble de su Sharpe, lo que indica que la volatilidad proviene desproporcionadamente del lado positivo, patr\'on consistente con una estrategia que permanece en efectivo la mayor parte del tiempo y genera retornos concentrados en d\'ias de exposici\'on apalancada. LSTM+Attention y RandomForest son los \'unicos que superan el umbral de Calmar $> 1.0$, mientras que CNN-LSTM, pese a superar al \textit{benchmark} en retorno total (+122\%), presenta un Calmar (0.466) inferior al del SPY (0.571), dado que su \textit{drawdown} m\'aximo ($-35.9\%$) excede significativamente el del \'indice ($-25.4\%$).
 
-\subsubsection{Sortino Ratio}
-
-El \textit{Sortino Ratio} \citep{sortino1991} mejora sobre el Sharpe al considerar \'unicamente la volatilidad negativa (\textit{downside risk}), lo que resulta m\'as adecuado para estrategias con distribuciones de retorno asim\'etricas:
-
-\begin{equation}
-\text{Sortino} = \frac{E[R_p - R_f]}{\sigma_d} \cdot \sqrt{252}
-\label{eq:sortino}
-\end{equation}
-
-donde $\sigma_d$ es la desviaci\'on est\'andar calculada exclusivamente sobre los retornos que caen por debajo de la tasa libre de riesgo.
-
-\begin{table}[htbp]
-\centering
-\caption{Sortino Ratio de los modelos que superan al benchmark}
-\label{tab:sortino_comparison}
-\small
-\begin{tabular}{@{}lr@{}}
-\toprule
-\textbf{Modelo} & \textbf{Sortino Ratio} \\
-\midrule
-LSTM+Attention & 2.631 \\
-RandomForest & 1.380 \\
-Ridge & 1.291 \\
-CNN-LSTM & 1.161 \\
-\midrule
-SPY (B\&H) & 0.953 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-La Tabla~\ref{tab:sortino_comparison} permite evaluar la relaci\'on entre el Sharpe y el Sortino de cada modelo, que revela informaci\'on importante sobre la asimetr\'ia de sus retornos. En el caso del LSTM+Attention, el Sortino (2.631) es pr\'acticamente el doble de su Sharpe (1.327), lo que indica que la volatilidad de este modelo proviene desproporcionadamente del lado positivo de la distribuci\'on---es decir, que sus d\'ias de ganancia son m\'as dispersos que sus d\'ias de p\'erdida. Este patr\'on es consistente con una estrategia que permanece en efectivo la mayor parte del tiempo (55.1\%) y genera retornos concentrados en los d\'ias donde asume exposici\'on apalancada. RandomForest presenta un fen\'omeno similar, con un Sortino de 1.380 que supera al de Ridge (1.291) pese a tener un Sharpe inferior, lo que sugiere que RandomForest exhibe un perfil de riesgo a la baja m\'as contenido.
-
-\subsubsection{Calmar Ratio}
-
-El \textit{Calmar Ratio} relaciona el retorno anualizado con el m\'aximo \textit{drawdown} hist\'orico, capturando la eficiencia de la estrategia en t\'erminos del peor escenario observado:
-
-\begin{equation}
-\text{Calmar} = \frac{\text{CAGR}}{|\text{Max Drawdown}|}
-\label{eq:calmar}
-\end{equation}
-
-Un Calmar superior a 1.0 indica que el retorno anualizado supera la m\'axima p\'erdida experimentada desde un pico, un umbral frecuentemente citado como deseable en contextos de gesti\'on institucional.
-
-\begin{table}[htbp]
-\centering
-\caption{Calmar Ratio de los modelos que superan al benchmark}
-\label{tab:calmar_comparison}
-\small
-\begin{tabular}{@{}lr@{}}
-\toprule
-\textbf{Modelo} & \textbf{Calmar Ratio} \\
-\midrule
-LSTM+Attention & 1.788 \\
-RandomForest & 1.196 \\
-Ridge & 0.894 \\
-CNN-LSTM & 0.488 \\
-\midrule
-SPY (B\&H) & 0.576 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Los resultados de la Tabla~\ref{tab:calmar_comparison} revelan diferencias sustanciales en la relaci\'on retorno-drawdown entre modelos. LSTM+Attention y RandomForest son los \'unicos que superan el umbral de 1.0, lo que significa que por cada punto porcentual de drawdown m\'aximo sufrido, estos modelos generan m\'as de un punto de retorno anualizado. El caso de CNN-LSTM es particularmente revelador, dado que pese a superar al \textit{benchmark} en retorno total (+129\%), su Calmar de 0.488 es inferior al del propio SPY B\&H (0.576), ya que su \textit{drawdown} m\'aximo ($-35.6\%$) excede significativamente el del \'indice ($-25.4\%$). Este resultado subraya la importancia de evaluar el rendimiento no solo en t\'erminos absolutos sino en relaci\'on con el riesgo extremo asumido.
-
-\subsection{Value at Risk (VaR) y Expected Shortfall}
+\subsubsection{Riesgo de Cola y \textit{Drawdown}}
 \label{subsec:var_cvar}
 
-Las m\'etricas de riesgo de cola cuantifican las p\'erdidas potenciales en escenarios adversos y constituyen un complemento esencial a las m\'etricas de riesgo ajustado, que por su naturaleza promedio pueden subestimar eventos extremos.
-
-El \textit{Value at Risk} (VaR) hist\'orico se calcula mediante percentiles emp\'iricos de la distribuci\'on de retornos acumulados sobre ventanas m\'oviles de $N$ d\'ias:
+Las m\'etricas de riesgo de cola cuantifican las p\'erdidas potenciales en escenarios adversos. El VaR hist\'orico se calcula mediante percentiles emp\'iricos sobre ventanas m\'oviles de $N$ d\'ias.
 
 \begin{equation}
 \text{VaR}_{\alpha}^{(N)} = -\text{Percentil}_{\alpha}\Big(\prod_{j=0}^{N-1}(1 + R_{t-j}) - 1\Big)
 \label{eq:var}
 \end{equation}
 
-Este enfoque, a diferencia de la aproximaci\'on param\'etrica $\text{VaR}_1 \times \sqrt{N}$ que asume normalidad, captura directamente la no-normalidad y la autocorrelaci\'on de los retornos---propiedades especialmente relevantes para estrategias que emplean apalancamiento 3x.
+El \textit{Expected Shortfall} (CVaR) mide la p\'erdida promedio condicional en las ventanas que exceden el VaR, satisfaciendo la propiedad de subaditividad que lo convierte en una medida coherente de riesgo \citep{lopezdeprado2018}. Los resultados a horizontes de 30 y 90 d\'ias (Tabla~\ref{tab:var_cvar}) muestran que LSTM+Attention presenta un VaR a 30 d\'ias ($-6.18\%$) inferior al del SPY ($-7.81\%$) y un VaR a 90 d\'ias ($-3.77\%$) que es cercano a un tercio del \textit{benchmark} ($-10.80\%$), lo que sugiere que la selectividad temporal reduce el riesgo de p\'erdidas sostenidas. En contraste, Ridge y CNN-LSTM exhiben CVaR a 90 d\'ias de $-21.88\%$ y $-23.05\%$, superando al SPY ($-13.85\%$). RandomForest exhibe el perfil m\'as conservador (VaR 90d de $-0.67\%$).
 
-El \textit{Expected Shortfall} o CVaR mide la p\'erdida promedio condicional en las ventanas que exceden el VaR, capturando con mayor precisi\'on el riesgo de cola:
+La Tabla~\ref{tab:drawdown_detail} complementa este an\'alisis. LSTM+Attention experimenta su m\'aximo \textit{drawdown} ($-20.5\%$) durante la volatilidad arancelaria de abril 2025 y se recupera en un \'unico d\'ia gracias a la posici\'on apalancada 3x durante el fuerte rebote de comienzos de abril de 2025. Ridge y CNN-LSTM registran ca\'idas del 31.8\% y 35.9\% durante el mercado bajista de 2022, con tiempos de recuperaci\'on de 56 y 566 d\'ias respectivamente. Los 566 d\'ias de CNN-LSTM reflejan las consecuencias duraderas del posicionamiento agresivo durante el per\'iodo observado. RandomForest exhibe el perfil m\'as conservador ($-15.0\%$, recuperaci\'on en 23 d\'ias).
 
-\begin{equation}
-\text{CVaR}_{\alpha}^{(N)} = -E\Big[R^{(N)}_t \;\Big|\; R^{(N)}_t < -\text{VaR}_{\alpha}^{(N)}\Big]
-\label{eq:cvar}
-\end{equation}
-
-El CVaR es preferido en contextos regulatorios al satisfacer la propiedad de subaditividad que el VaR no cumple, lo que lo convierte en una medida coherente de riesgo \citep{lopezdeprado2018}. Se presentan los resultados a dos horizontes complementarios---30 d\'ias (mensual) y 90 d\'ias (trimestral)---que corresponden a los marcos temporales est\'andar de reporte en gesti\'on institucional de portafolios.
-
-\begin{table}[htbp]
-\centering
-\caption{Value at Risk y Expected Shortfall al 95\% por horizonte temporal}
-\label{tab:var_cvar}
-\small
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-\textbf{Modelo} & \textbf{VaR 95\% (30d)} & \textbf{CVaR 95\% (30d)} & \textbf{VaR 95\% (90d)} & \textbf{CVaR 95\% (90d)} \\
-\midrule
-LSTM+Attention & $-5.91\%$ & $-10.20\%$ & $-3.33\%$ & $-6.11\%$ \\
-Ridge & $-10.85\%$ & $-19.40\%$ & $-13.36\%$ & $-21.47\%$ \\
-RandomForest & $-3.86\%$ & $-5.61\%$ & $-0.43\%$ & $-2.71\%$ \\
-CNN-LSTM & $-8.93\%$ & $-14.80\%$ & $-15.81\%$ & $-22.60\%$ \\
-\midrule
-SPY (B\&H) & $-7.80\%$ & $-10.82\%$ & $-10.77\%$ & $-13.83\%$ \\
-\bottomrule
-\end{tabular}
-\vspace{0.2cm}
-\parbox{0.9\textwidth}{\footnotesize\textit{Nota: VaR y CVaR calculados sobre retornos acumulados en ventanas m\'oviles de 30 y 90 d\'ias de operaci\'on (1,272 y 1,212 ventanas respectivamente).}}
-\end{table}
-
-Los resultados de la Tabla~\ref{tab:var_cvar} revelan un hallazgo notable, dado que el LSTM+Attention presenta un VaR a 30 d\'ias ($-5.91\%$) significativamente inferior al del \textit{benchmark} SPY ($-7.80\%$), lo que indica que en el 95\% de los meses de operaci\'on la estrategia genera p\'erdidas menores que una inversi\'on pasiva en el \'indice, pese a producir un retorno total cuatro veces mayor. Esta ventaja se amplifica en el horizonte trimestral, donde el VaR a 90 d\'ias del LSTM+Attention ($-3.33\%$) es menos de un tercio del correspondiente al SPY ($-10.77\%$), lo que sugiere que la selectividad temporal del modelo---alternar entre efectivo y exposici\'on apalancada seg\'un la convicci\'on de la se\~nal---no solo genera retornos superiores sino que adem\'as reduce el riesgo de p\'erdidas sostenidas a horizontes relevantes para la gesti\'on de portafolios.
-
-En contraste, Ridge y CNN-LSTM exhiben riesgo de cola sustancialmente superior al \textit{benchmark} en ambos horizontes. Ridge presenta un CVaR a 90 d\'ias de $-21.47\%$, lo que significa que en el peor 5\% de los trimestres la p\'erdida promedio supera el 21\%---un nivel que podr\'ia resultar inaceptable para mandatos conservadores. CNN-LSTM muestra un patr\'on a\'un m\'as severo, con un VaR a 90 d\'ias de $-15.81\%$ que supera al del propio SPY, evidenciando que su exposici\'on agresiva durante mercados bajistas prolongados genera un riesgo de cola que no compensa adecuadamente su retorno. RandomForest, por su parte, exhibe el perfil de riesgo de cola m\'as conservador del grupo, con un VaR a 90 d\'ias de apenas $-0.43\%$, consecuencia directa de su alta proporci\'on de d\'ias en efectivo y su selectividad extrema.
-
-\subsection{An\'alisis de \textit{Drawdown}}
-\label{subsec:drawdown_analysis}
-
-El \textit{drawdown} mide la ca\'ida acumulada desde un m\'aximo hist\'orico del portafolio:
-
-\begin{equation}
-DD_t = \frac{P_t - \max_{s \leq t}(P_s)}{\max_{s \leq t}(P_s)}
-\label{eq:drawdown}
-\end{equation}
-
-donde $P_t$ es el valor del portafolio en el momento $t$. El tiempo de recuperaci\'on se define como el n\'umero de d\'ias de operaci\'on necesarios para alcanzar un nuevo m\'aximo tras el punto m\'as bajo del \textit{drawdown}:
-
-\begin{equation}
-T_{\text{recovery}} = \min\{t' > t_{DD} : P_{t'} \geq \max_{s \leq t_{DD}}(P_s)\}
-\label{eq:recovery}
-\end{equation}
-
-\begin{table}[htbp]
-\centering
-\caption{An\'alisis de m\'aximo \textit{drawdown} por modelo}
-\label{tab:drawdown_detail}
-\small
-\begin{tabular}{@{}lrllrr@{}}
-\toprule
-\textbf{Modelo} & \textbf{MaxDD} & \textbf{Pico} & \textbf{Valle} & \textbf{Duraci\'on} & \textbf{Recuperaci\'on} \\
-\midrule
-LSTM+Attention & $-20.5\%$ & 2025-02-18 & 2025-04-07 & 34 d\'ias & 1 d\'ia \\
-Ridge & $-31.8\%$ & 2021-09-14 & 2022-03-07 & 120 d\'ias & 49 d\'ias \\
-RandomForest & $-14.7\%$ & 2022-04-01 & 2022-05-19 & 33 d\'ias & 23 d\'ias \\
-CNN-LSTM & $-35.6\%$ & 2022-03-24 & 2022-07-15 & 77 d\'ias & 543 d\'ias \\
-\midrule
-SPY (B\&H) & $-25.4\%$ & 2021-12-31 & 2022-10-11 & 195 d\'ias & 318 d\'ias \\
-\bottomrule
-\end{tabular}
-\vspace{0.2cm}
-\parbox{0.9\textwidth}{\footnotesize\textit{Nota: Duraci\'on = d\'ias de operaci\'on desde el pico hasta el valle. Recuperaci\'on = d\'ias desde el valle hasta alcanzar un nuevo m\'aximo.}}
-\end{table}
-
-La Tabla~\ref{tab:drawdown_detail} revela diferencias profundas en la din\'amica de riesgo de cada modelo. El LSTM+Attention experimenta su m\'aximo \textit{drawdown} ($-20.5\%$) durante el episodio de volatilidad arancelaria de abril de 2025, un per\'iodo distinto al mercado bajista de 2022 que afect\'o a los dem\'as modelos, y se recupera en un \'unico d\'ia de operaci\'on gracias a que el modelo mantuvo una posici\'on apalancada 3x durante la sesi\'on de rebote posterior al anuncio de pausa arancelaria del 9 de abril de 2025---una de las mayores alzas diarias en la historia del S\&P 500. Este resultado, si bien extraordinario en su velocidad, refleja la capacidad del modelo para mantener convicci\'on durante episodios de estr\'es extremo.
-
-Ridge y CNN-LSTM, en contraste, registran sus \textit{drawdowns} m\'as severos durante el mercado bajista prolongado de 2022 (enero--octubre), con ca\'idas del 31.8\% y 35.6\% respectivamente. La diferencia en tiempos de recuperaci\'on es particularmente informativa---Ridge se recupera en 49 d\'ias de operaci\'on, mientras que CNN-LSTM requiere 543 d\'ias---m\'as de dos a\~nos de \textit{trading}---lo que sugiere que su posicionamiento agresivo durante la ca\'ida de 2022 tuvo consecuencias duraderas sobre la curva de capital. RandomForest exhibe el perfil de \textit{drawdown} m\'as conservador, con una ca\'ida m\'axima de apenas $-14.7\%$ (inferior incluso al \textit{benchmark}) y una recuperaci\'on en 23 d\'ias, consistente con su alta proporci\'on de d\'ias en efectivo y su baja exposici\'on al instrumento apalancado 3x.
-
-El propio SPY B\&H requiri\'o 318 d\'ias de operaci\'on para recuperarse de su \textit{drawdown} m\'aximo del 25.4\% durante 2022, lo que contextualiza la severidad de ese episodio de mercado y pone en perspectiva el desempe\~no de los modelos que lograron contener sus ca\'idas por debajo de dicho nivel.
-
-\subsection{Participaci\'on en Movimientos del Mercado}
+\subsubsection{Ratios de Captura de Mercado}
 \label{subsec:capture_ratios}
 
-Una pregunta central para evaluar cualquier estrategia activa es en qu\'e medida sus retornos provienen de participar en las subidas del mercado y, de forma complementaria, cu\'anto de las ca\'idas absorbe. El \textit{Upside/Downside Capture Ratio}, ampliamente utilizado en la evaluaci\'on de fondos de inversi\'on, descompone esta relaci\'on de manera directa e intuitiva.
-
-El \textit{Upside Capture} mide qu\'e proporci\'on de los retornos del mercado en d\'ias alcistas es capturada por la estrategia, mientras que el \textit{Downside Capture} mide la proporci\'on absorbida en d\'ias bajistas:
+El \textit{Upside/Downside Capture Ratio} descompone qu\'e proporci\'on de los retornos del mercado en d\'ias alcistas y bajistas captura cada estrategia.
 
 \begin{equation}
 \text{Upside Capture} = \frac{\overline{R_p \mid R_m > 0}}{\overline{R_m \mid R_m > 0}} \times 100, \qquad \text{Downside Capture} = \frac{\overline{R_p \mid R_m < 0}}{\overline{R_m \mid R_m < 0}} \times 100
 \label{eq:capture}
 \end{equation}
-
-donde $R_p$ y $R_m$ son los retornos diarios de la estrategia y del mercado respectivamente. Un inversor pasivo en el SPY exhibe, por definici\'on, un \textit{Upside Capture} y un \textit{Downside Capture} de 100\%, dado que participa plenamente en todos los movimientos del \'indice. La relaci\'on entre ambas m\'etricas se sintetiza en el \textit{Capture Ratio}:
-
-\begin{equation}
-\text{Capture Ratio} = \frac{\text{Upside Capture}}{\text{Downside Capture}}
-\label{eq:capture_ratio}
-\end{equation}
-
-Un \textit{Capture Ratio} superior a 1.0 indica que la estrategia captura, en t\'erminos proporcionales, m\'as de las subidas del mercado que de sus ca\'idas---una asimetr\'ia que constituye la esencia de la gesti\'on activa exitosa. Cuanto mayor sea este ratio, m\'as eficiente es el modelo en participar selectivamente en los movimientos favorables del mercado.
 
 \begin{table}[htbp]
 \centering
@@ -230,38 +66,18 @@ Un \textit{Capture Ratio} superior a 1.0 indica que la estrategia captura, en t\
 \toprule
 \textbf{Modelo} & \textbf{Upside Capture} & \textbf{Downside Capture} & \textbf{Capture Ratio} \\
 \midrule
-LSTM+Attention & 90.2\% & 67.1\% & 1.34$\times$ \\
-Ridge & 99.8\% & 84.0\% & 1.19$\times$ \\
-RandomForest & 45.7\% & 32.8\% & 1.39$\times$ \\
-CNN-LSTM & 70.4\% & 61.4\% & 1.15$\times$ \\
+LSTM+Attention & 90.1\% & 67.2\% & 1.34$\times$ \\
+Ridge & 99.5\% & 84.3\% & 1.18$\times$ \\
+RandomForest & 45.5\% & 33.0\% & 1.38$\times$ \\
+CNN-LSTM & 70.1\% & 61.8\% & 1.14$\times$ \\
 \midrule
 SPY (B\&H) & 100.0\% & 100.0\% & 1.00$\times$ \\
 \bottomrule
 \end{tabular}
 \vspace{0.2cm}
-\parbox{0.9\textwidth}{\footnotesize\textit{Nota: Calculado sobre los 1,302 d\'ias del per\'iodo de prueba (710 d\'ias alcistas, 589 d\'ias bajistas, 3 d\'ias neutros). SPY B\&H = 100\% por definici\'on.}}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: Calculado sobre los 1{,}301 retornos diarios evaluados del per\'iodo de prueba (710 d\'ias alcistas, 589 d\'ias bajistas, 2 d\'ias neutros). SPY B\&H = 100\% por definici\'on.}}
 \end{table}
 
-Como muestra la Tabla~\ref{tab:capture_ratios}, el LSTM+Attention exhibe un \textit{Upside Capture} de 90.2\% y un \textit{Downside Capture} de 67.1\%, lo que significa que captura en promedio nueve d\'ecimas de cada alza del mercado pero absorbe solo dos tercios de cada ca\'ida. Esta brecha de 23.1 puntos porcentuales, aunque puede parecer modesta en t\'erminos diarios, se amplifica de manera exponencial a trav\'es del inter\'es compuesto a lo largo de los 1,302 d\'ias del per\'iodo de prueba, dado que capturar sistem\'aticamente un 90\% de los d\'ias alcistas (710 sesiones) mientras se amortigua un tercio del impacto en los d\'ias bajistas (589 sesiones) es precisamente el mecanismo que transforma un \textit{Directional Accuracy} inferior al 50\% en un retorno total del +400\%. El modelo logra esta asimetr\'ia pese a permanecer en efectivo el 55.1\% del tiempo, lo que indica que la calidad de la selecci\'on temporal---cu\'ando asumir exposici\'on y con qu\'e magnitud---importa sustancialmente m\'as que la cantidad de tiempo invertido en el mercado. Cabe destacar que esta protecci\'on parcial frente a las ca\'idas es consistente con las m\'etricas de riesgo de cola presentadas en la Secci\'on~\ref{subsec:var_cvar}, donde el VaR a 30 d\'ias del LSTM+Attention ($-5.91\%$) resulta inferior al del SPY ($-7.80\%$) y su VaR a 90 d\'ias ($-3.33\%$) es menos de un tercio del correspondiente al \textit{benchmark} ($-10.77\%$), dado que el \textit{Downside Capture} de 67.1\% act\'ua como un amortiguador natural del riesgo de cola al reducir la exposici\'on efectiva durante per\'iodos adversos.
+Como muestra la Tabla~\ref{tab:capture_ratios}, LSTM+Attention captura en promedio el 90.1\% de las alzas y participa del 67.2\% de las ca\'idas. Esta brecha de 22.9 puntos se acumula a trav\'es del inter\'es compuesto a lo largo del per\'iodo de prueba, lo que podr\'ia ayudar a explicar por qu\'e un \textit{Directional Accuracy} inferior al 50\% llega a asociarse con el mejor retorno del estudio. RandomForest exhibe el \textit{Capture Ratio} m\'as alto (1.38$\times$) gracias a una participaci\'on muy selectiva (45.5\% alzas, 33.0\% ca\'idas), lo que produce el \textit{drawdown} m\'as contenido del grupo pero tambi\'en el retorno m\'as modesto. CNN-LSTM presenta la menor asimetr\'ia (8 puntos de brecha, 1.14$\times$), consistente con su \textit{drawdown} m\'as profundo y su Calmar m\'as bajo, ya documentados.
 
-La comparaci\'on entre los cuatro modelos revela un espectro de estrategias de participaci\'on. Ridge, con el \textit{Upside Capture} m\'as alto (99.8\%), captura pr\'acticamente la totalidad de las alzas pero a costa de absorber el 84.0\% de las ca\'idas, lo que explica su mayor riesgo de cola (CVaR 95\% de $-4.37\%$, peor d\'ia de $-17.63\%$). En el extremo opuesto, RandomForest exhibe el \textit{Capture Ratio} m\'as alto del grupo (1.39$\times$) gracias a una participaci\'on muy selectiva (45.7\% de alzas, 32.8\% de ca\'idas), lo que produce el \textit{drawdown} m\'as contenido ($-14.7\%$) pero tambi\'en el retorno m\'as modesto (+131\%). CNN-LSTM presenta la menor asimetr\'ia (brecha de apenas 9 puntos, \textit{Capture Ratio} de 1.15$\times$), lo que se traduce en el \textit{drawdown} m\'as profundo ($-35.6\%$) y el Calmar m\'as bajo (0.488) del grupo.
-
-En s\'intesis, el an\'alisis del \textit{Capture Ratio} complementa la paradoja del \textit{Directional Accuracy} documentada en la Secci\'on~\ref{sec:da_paradox}, dado que los modelos rentables no se distinguen por predecir correctamente la direcci\'on del mercado con mayor frecuencia, sino por generar una asimetr\'ia sistem\'atica entre su participaci\'on en alzas y en ca\'idas que, acumulada a lo largo del per\'iodo de prueba, produce retornos sustancialmente superiores al \textit{benchmark}.
-
-\subsection{Control de Riesgo Impl\'icito en la Estrategia}
-\label{subsec:implicit_risk_control}
-
-La estrategia \textit{Long-Only} implementada incorpora mecanismos naturales de control de riesgo que emergen del propio dise\~no del sistema de posicionamiento, sin requerir reglas expl\'icitas de \textit{stop-loss} o l\'imites de exposici\'on predefinidos.
-
-Cuando las predicciones del modelo no superan el umbral $q_{1x}$ determinado por el Meta-KNN, la estrategia asigna el 100\% del capital a efectivo (tasa libre de riesgo), lo que act\'ua como un mecanismo de protecci\'on impl\'icito basado en la confianza del modelo:
-
-\begin{equation}
-\text{Position}_t = \begin{cases}
-3x & \text{si } \hat{r}_t > P_{100-q_{3x}} \\
-1x & \text{si } P_{100-q_{1x}} < \hat{r}_t \leq P_{100-q_{3x}} \\
-0 & \text{si } \hat{r}_t \leq P_{100-q_{1x}}
-\end{cases}
-\end{equation}
-
-El LSTM+Attention permanece en efectivo el 55.1\% del tiempo y asigna la m\'axima exposici\'on apalancada al 12.2\% de los d\'ias, mientras que Ridge---pese a generar menor retorno---se mantiene en efectivo el 62.3\% del tiempo. Esta selectividad temporal act\'ua como un \textit{stop-loss} impl\'icito que protege el capital durante per\'iodos de incertidumbre, dado que si el modelo no detecta una oportunidad de alta convicci\'on la posici\'on por defecto es la preservaci\'on de capital. El uso del instrumento apalancado UPRO (3x) se reserva exclusivamente para predicciones en el percentil superior $q_{3x}$, limitando la exposici\'on a apalancamiento a los momentos donde el modelo exhibe mayor certeza direccional.
-
+El an\'alisis del \textit{Capture Ratio} complementa la paradoja del \textit{Directional Accuracy} documentada en la Secci\'on~\ref{sec:da_paradox}, dado que los modelos con mayor rentabilidad en esta muestra no parecen distinguirse por predecir correctamente la direcci\'on del mercado con mayor frecuencia, sino por registrar una asimetr\'ia entre su participaci\'on en alzas y en ca\'idas. La estrategia \textit{Long-Only} implementada incorpora un control de riesgo que se deriva del propio dise\~no del sistema de posicionamiento; cuando las predicciones no superan el umbral $q_{\text{mod}}$, la posici\'on por defecto es 100\% en efectivo, lo que operar\'ia como un \textit{stop-loss} impl\'icito, ya que reduce la exposici\'on durante per\'iodos de incertidumbre sin requerir reglas expl\'icitas predefinidas.

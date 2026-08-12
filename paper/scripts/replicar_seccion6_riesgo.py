@@ -293,12 +293,16 @@ def main():
     print("[2] Metricas SPY Buy & Hold...")
     print("-" * 90)
 
-    spy_equity = np.cumprod(1 + fwd_test)
-    spy_ratios = compute_ratios(fwd_test, rf_test)
-    spy_var = compute_var_cvar(fwd_test)
+    # SPY B&H neto del expense ratio del ETF (0.09%/anio), igual costo que paga el
+    # tramo SPY de la estrategia, para una comparacion consistente. fwd_test queda
+    # crudo (retorno real de mercado); solo el benchmark agrega el expense.
+    spy_bh_net = fwd_test - 0.0009 / 252
+    spy_equity = np.cumprod(1 + spy_bh_net)
+    spy_ratios = compute_ratios(spy_bh_net, rf_test)
+    spy_var = compute_var_cvar(spy_bh_net)
     spy_dd = compute_drawdown_details(spy_equity, test_dates)
-    spy_var_30d = compute_var_cvar_rolling(fwd_test, 30)
-    spy_var_90d = compute_var_cvar_rolling(fwd_test, 90)
+    spy_var_30d = compute_var_cvar_rolling(spy_bh_net, 30)
+    spy_var_90d = compute_var_cvar_rolling(spy_bh_net, 90)
     spy_capture = {
         "upside_capture_pct": 100.0, "downside_capture_pct": 100.0,
         "capture_ratio": 1.0, "n_up_days": n_up, "n_down_days": n_down,

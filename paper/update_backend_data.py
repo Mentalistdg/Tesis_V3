@@ -159,8 +159,10 @@ def main():
     n_years = n_days / 252
     print(f"    Models: {len(detail_models)}, Days: {n_days}")
 
-    # Benchmark
-    spy_equity = np.cumprod(1 + y_test)
+    # Benchmark: SPY B&H neto del expense ratio (0.09%/ano), consistente con el
+    # paper y con optimize_and_backtest.py (spy_bh_net = fwd - expense/252)
+    spy_daily_net = y_test - INSTRUMENTS['SPY']['expense_ratio'] / 252
+    spy_equity = np.cumprod(1 + spy_daily_net)
     spy_return = float(spy_equity[-1] - 1)
     spy_cagr = float((1 + spy_return) ** (252 / n_days) - 1)
     rf_annual = float(np.mean(rf_test) * 252)

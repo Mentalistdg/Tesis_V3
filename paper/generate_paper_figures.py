@@ -8,11 +8,9 @@ de la app.
 
 Figuras generadas:
 - figures/equity_curves_top5.pdf
-- figures/pnl_distribution_ridge.pdf
+- figures/pnl_distribution_lstm_attention.pdf
 - figures/turnover_vs_return.pdf
-- figures/regime_distribution.pdf
-- figures/position_distribution.pdf
-- figures/drawdown_analysis.pdf
+- figures/da_vs_return_paradox.pdf
 ================================================================================
 """
 
@@ -52,6 +50,17 @@ FIGURES_DIR = os.path.join(SCRIPT_DIR, "figures")
 
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
+# Nombres de modelos para mostrar (coinciden con la nomenclatura del paper)
+DISPLAY_NAMES = {
+    'LSTM_Attention': 'LSTM+Attention',
+    'CNN_LSTM': 'CNN-LSTM',
+    'NBEATS': 'N-BEATS',
+    'NHiTS': 'N-HiTS',
+}
+
+def disp(name):
+    return DISPLAY_NAMES.get(name, name)
+
 print("=" * 80)
 print("GENERADOR DE FIGURAS PARA EL PAPER")
 print("=" * 80)
@@ -64,7 +73,6 @@ print(f"Timestamp: {datetime.now()}")
 #   - models_summary.json: metricas agregadas de los 23 modelos + benchmark
 #   - daily_data.json: arrays diarios (equity, drawdown, positions, returns) por modelo
 #   - market_data.json: equity curve y retornos de SPY B&H
-#   - regime_data.json: clasificacion y rendimiento por regimen de mercado
 # =============================================================================
 print("\n[1] Cargando datos JSON...")
 
@@ -76,9 +84,6 @@ with open(os.path.join(APP_DATA_DIR, "daily_data.json"), 'r') as f:
 
 with open(os.path.join(APP_DATA_DIR, "market_data.json"), 'r') as f:
     market_data = json.load(f)
-
-with open(os.path.join(APP_DATA_DIR, "regime_data.json"), 'r') as f:
-    regime_data = json.load(f)
 
 models = summary_data['models']
 benchmark = summary_data['benchmark']
@@ -110,7 +115,7 @@ for i, model in enumerate(top5_models):
         data = daily_data[model_name]
         dates = [datetime.strptime(d, '%Y-%m-%d') for d in data['dates']]
         equity = np.array(data['equity_curve']) * INITIAL_CAPITAL
-        ax.plot(dates, equity, label=f"{model_name} (+{model['total_return']*100:.0f}%)",
+        ax.plot(dates, equity, label=f"{disp(model_name)} (+{model['total_return']*100:.0f}%)",
                 color=colors[i], linewidth=1.5)
 
 # Plot benchmark SPY
@@ -218,7 +223,7 @@ scatter = ax.scatter(n_trades, returns, c=returns, cmap='RdYlGn', s=100, alpha=0
 # Add labels for notable points
 for i, name in enumerate(names):
     if returns[i] > 100 or returns[i] < 0 or n_trades[i] > 800:
-        ax.annotate(name, (n_trades[i], returns[i]), fontsize=8,
+        ax.annotate(disp(name), (n_trades[i], returns[i]), fontsize=8,
                     xytext=(5, 5), textcoords='offset points')
 
 # Add horizontal line at SPY return
@@ -244,192 +249,7 @@ print(f"    turnover_vs_return.pdf generada")
 
 
 # =============================================================================
-# FIGURA 4: DISTRIBUCION DE REGIMENES (regime_distribution.pdf)
-# =============================================================================
-# Contenido: (izq) Pie chart con distribucion de regimenes, (der) bar chart de rendimiento
-# Fuente: regime_data.json (regime_counts, regime_performance)
-# Regimenes: Bull, Bear, Sideways, High Vol (clasificados en ventanas de 60 dias)
-# =============================================================================
-print("\n[5] Generando figura de regimenes...")
-
-regime_counts = regime_data['regime_counts']
-# Exclude 'unknown'
-regimes = {k: v for k, v in regime_counts.items() if k != 'unknown'}
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-
-# Pie chart
-colors_regime = {'bull': '#2a9d8f', 'bear': '#e63946', 'sideways': '#457b9d', 'high_vol': '#f4a261'}
-labels = [f'{k.title()}\n({v} days)' for k, v in regimes.items()]
-ax1.pie(regimes.values(), labels=labels, autopct='%1.1f%%',
-        colors=[colors_regime[k] for k in regimes.keys()],
-        explode=[0.02]*len(regimes), startangle=90)
-ax1.set_title('Market Regime Distribution\n(Oct 2020 - Dec 2025)')
-
-# Bar chart of performance by regime for top models
-top3 = ['LSTM_Attention', 'Ridge', 'CNN_LSTM']
-regime_perf = regime_data['regime_performance']
-
-x = np.arange(len(regimes))
-width = 0.25
-
-for i, model in enumerate(top3):
-    if model in regime_perf:
-        perf = [regime_perf[model].get(r, {}).get('total_return', 0) * 100 for r in regimes.keys()]
-        ax2.bar(x + i*width, perf, width, label=model)
-
-ax2.set_xlabel('Market Regime')
-ax2.set_ylabel('Return (%)')
-ax2.set_title('Model Performance by Regime')
-ax2.set_xticks(x + width)
-ax2.set_xticklabels([k.title() for k in regimes.keys()])
-ax2.legend()
-ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
-
-plt.tight_layout()
-plt.savefig(os.path.join(FIGURES_DIR, "regime_distribution.pdf"))
-plt.close()
-print(f"    regime_distribution.pdf generada")
-
-
-# =============================================================================
-# FIGURA 5: DISTRIBUCION DE POSICIONES (position_distribution.pdf)
-# =============================================================================
-# Contenido: Stacked horizontal bar chart de % tiempo en UPRO/SPY/Cash para Top 10
-# Fuente: models_summary.json (pct_3x, pct_1x, pct_cash)
-# =============================================================================
-print("\n[6] Generando figura de posiciones...")
-
-fig, ax = plt.subplots(figsize=(12, 6))
-
-# Top 10 models by return
-top10 = sorted(models, key=lambda x: x['total_return'], reverse=True)[:10]
-model_names = [m['model'] for m in top10]
-
-pct_3x = [m['pct_3x'] for m in top10]
-pct_1x = [m['pct_1x'] for m in top10]
-pct_cash = [m['pct_cash'] for m in top10]
-
-x = np.arange(len(model_names))
-width = 0.6
-
-ax.barh(x, pct_3x, width, label='UPRO (3x)', color='#2a9d8f')
-ax.barh(x, pct_1x, width, left=pct_3x, label='SPY (1x)', color='#457b9d')
-ax.barh(x, pct_cash, width, left=[a+b for a,b in zip(pct_3x, pct_1x)], label='Cash', color='#d4d4d4')
-
-ax.set_xlabel('Time Allocation (%)')
-ax.set_ylabel('Model')
-ax.set_title('Position Distribution: Top 10 Models')
-ax.set_yticks(x)
-ax.set_yticklabels(model_names)
-ax.legend(loc='lower right')
-ax.set_xlim(0, 100)
-
-# Add vertical line at 50%
-ax.axvline(x=50, color='black', linestyle=':', alpha=0.5)
-
-plt.tight_layout()
-plt.savefig(os.path.join(FIGURES_DIR, "position_distribution.pdf"))
-plt.close()
-print(f"    position_distribution.pdf generada")
-
-
-# =============================================================================
-# FIGURA 6: DRAWDOWN ANALYSIS (drawdown_analysis.pdf)
-# =============================================================================
-# Contenido: (arriba) Equity curve LSTM_Attention vs SPY, (abajo) drawdown en %
-# Fuente: daily_data.json (equity_curve, drawdown para LSTM_Attention), market_data.json
-# Nota: Anotacion del MaxDD con flecha en el punto de mayor caida
-# =============================================================================
-print("\n[7] Generando figura de drawdown...")
-
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
-
-# Top model drawdown — LSTM_Attention (best performer)
-lstm_dd_data = daily_data.get('LSTM_Attention', None)
-if lstm_dd_data:
-    dates = [datetime.strptime(d, '%Y-%m-%d') for d in lstm_dd_data['dates']]
-    equity = np.array(lstm_dd_data['equity_curve'])
-    drawdown = np.array(lstm_dd_data['drawdown']) * 100
-
-    # Upper plot: Equity curve
-    ax1.plot(dates, equity * INITIAL_CAPITAL, color='#e63946', linewidth=1.5, label='LSTM Attention')
-    ax1.plot(dates, np.array(market_data['equity_curve']) * INITIAL_CAPITAL,
-             color='gray', linewidth=1.5, linestyle='--', label='SPY B&H')
-    ax1.set_ylabel('Portfolio Value ($)')
-    ax1.set_title('LSTM Attention: Equity Curve and Drawdown Analysis')
-    ax1.legend(loc='upper left')
-
-    # Lower plot: Drawdown
-    ax2.fill_between(dates, drawdown, 0, alpha=0.7, color='#e63946')
-    ax2.plot(dates, drawdown, color='#e63946', linewidth=0.5)
-    ax2.set_ylabel('Drawdown (%)')
-    ax2.set_xlabel('Date')
-
-    # Mark maximum drawdown
-    min_dd_idx = np.argmin(drawdown)
-    ax2.annotate(f'Max DD: {drawdown[min_dd_idx]:.1f}%',
-                 xy=(dates[min_dd_idx], drawdown[min_dd_idx]),
-                 xytext=(dates[min_dd_idx], drawdown[min_dd_idx] - 10),
-                 arrowprops=dict(arrowstyle='->', color='black'),
-                 fontsize=9)
-
-    ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
-    ax2.xaxis.set_major_locator(mdates.YearLocator())
-
-plt.tight_layout()
-plt.savefig(os.path.join(FIGURES_DIR, "drawdown_analysis.pdf"))
-plt.close()
-print(f"    drawdown_analysis.pdf generada")
-
-
-# =============================================================================
-# FIGURA 7: SHARPE VS MAX DRAWDOWN (sharpe_vs_maxdd.pdf)
-# =============================================================================
-# Contenido: Scatter plot de MaxDD vs Sharpe para 23 modelos, coloreado por retorno
-# Fuente: models_summary.json (sharpe, max_drawdown, total_return)
-# Incluye: SPY B&H como estrella, lineas de cuadrante en Sharpe=0.5 y DD=-30%
-# =============================================================================
-print("\n[8] Generando figura Sharpe vs Max DD...")
-
-fig, ax = plt.subplots(figsize=(8, 6))
-
-sharpes = [m['sharpe'] for m in models]
-max_dds = [m['max_drawdown'] * 100 for m in models]
-names = [m['model'] for m in models]
-returns = [m['total_return'] * 100 for m in models]
-
-scatter = ax.scatter(max_dds, sharpes, c=returns, cmap='RdYlGn', s=100,
-                     alpha=0.7, edgecolors='black', linewidth=0.5)
-
-# Add labels for notable points
-for i, name in enumerate(names):
-    if sharpes[i] > 0.5 or sharpes[i] < 0 or max_dds[i] < -50:
-        ax.annotate(name, (max_dds[i], sharpes[i]), fontsize=8,
-                    xytext=(5, 5), textcoords='offset points')
-
-# Add benchmark
-ax.scatter([benchmark['max_drawdown']*100], [benchmark['sharpe']],
-           marker='*', s=200, c='gray', edgecolors='black', label='SPY B&H')
-
-ax.set_xlabel('Maximum Drawdown (%)')
-ax.set_ylabel('Sharpe Ratio')
-ax.set_title('Risk-Return Tradeoff: Sharpe Ratio vs Maximum Drawdown')
-ax.legend()
-
-# Add quadrant lines
-ax.axhline(y=0.5, color='gray', linestyle=':', alpha=0.5)
-ax.axvline(x=-30, color='gray', linestyle=':', alpha=0.5)
-
-plt.colorbar(scatter, label='Total Return (%)')
-plt.tight_layout()
-plt.savefig(os.path.join(FIGURES_DIR, "sharpe_vs_maxdd.pdf"))
-plt.close()
-print(f"    sharpe_vs_maxdd.pdf generada")
-
-
-# =============================================================================
-# FIGURA 8: DA VS RETURN - LA PARADOJA (da_vs_return_paradox.pdf)
+# FIGURA 4: DA VS RETURN - LA PARADOJA (da_vs_return_paradox.pdf)
 # =============================================================================
 # Contenido: (izq) Scatter de DA% vs Retorno% con correlacion rho, (der) bar chart DA vs DA@3x
 # Fuente: models_summary.json (directional_accuracy, total_return), daily_data.json (positions),
@@ -437,7 +257,7 @@ print(f"    sharpe_vs_maxdd.pdf generada")
 # DA@3x = hit rate en dias con posicion==3: mide la precision en las apuestas mas agresivas
 # Nota: Modelos con DA@3x > 50% pero DA general < 50% son los mejores (paradoja)
 # =============================================================================
-print("\n[9] Generando figura DA vs Return...")
+print("\n[5] Generando figura DA vs Return...")
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
@@ -450,12 +270,32 @@ names = [m['model'] for m in models]
 scatter = ax1.scatter(da_values, returns, c=returns, cmap='RdYlGn', s=120,
                      alpha=0.7, edgecolors='black', linewidth=0.5)
 
-# Add labels for key models
-key_models = ['LSTM_Attention', 'Ridge', 'RandomForest', 'CNN_LSTM', 'GARCH', 'ExponentialSmoothing']
+# Add labels for key models with per-model offsets to avoid overlap
+display_names = {
+    'LSTM_Attention': 'LSTM+Attention',
+    'Ridge': 'Ridge',
+    'RandomForest': 'RandomForest',
+    'CNN_LSTM': 'CNN-LSTM',
+    'GARCH': 'GARCH',
+    'ExponentialSmoothing': 'ExpSmoothing',
+    'BiGRU': 'BiGRU',
+}
+label_offsets = {
+    'LSTM_Attention': (8, -18),
+    'Ridge': (-45, 10),
+    'RandomForest': (8, 10),
+    'CNN_LSTM': (-65, -5),
+    'GARCH': (8, 5),
+    'ExponentialSmoothing': (8, 8),
+    'BiGRU': (8, 5),
+}
+key_models = set(display_names.keys())
 for i, name in enumerate(names):
     if name in key_models or returns[i] > 200 or returns[i] < -10:
-        ax1.annotate(name, (da_values[i], returns[i]), fontsize=8,
-                    xytext=(5, 5), textcoords='offset points')
+        offset = label_offsets.get(name, (5, 5))
+        dname = display_names.get(name, name)
+        ax1.annotate(dname, (da_values[i], returns[i]), fontsize=7,
+                    xytext=offset, textcoords='offset points')
 
 # Add horizontal line at SPY return
 ax1.axhline(y=benchmark['total_return']*100, color='gray', linestyle='--',
@@ -472,7 +312,8 @@ ax1.plot(x_line, p(x_line), "r--", alpha=0.5, linewidth=2,
 ax1.set_xlabel('Directional Accuracy (%)')
 ax1.set_ylabel('Retorno Total (%)')
 ax1.set_title('La Paradoja del Directional Accuracy')
-ax1.legend(loc='upper left')
+ax1.set_ylim(-60, 450)
+ax1.legend(loc='upper right', fontsize=8)
 
 # Add vertical line at 50%
 ax1.axvline(x=50, color='black', linestyle=':', alpha=0.3)
@@ -519,25 +360,35 @@ if da_3x_data:
 
     da_gen = [d['da_general'] for d in da_3x_data]
     da_3x_vals = [d['da_3x'] for d in da_3x_data]
-    model_labels = [d['model'] for d in da_3x_data]
+
+    # Short display names for x-axis
+    short_names = {
+        'LSTM_Attention': 'LSTM+Att.',
+        'RandomForest': 'RF',
+        'CNN_LSTM': 'CNN-LSTM',
+        'ExponentialSmoothing': 'ExpSmooth.',
+        'Ridge': 'Ridge',
+        'BiGRU': 'BiGRU',
+    }
+    model_labels = [short_names.get(d['model'], d['model']) for d in da_3x_data]
 
     bars1 = ax2.bar(x - width/2, da_gen, width, label='DA General', color='#457b9d', alpha=0.8)
-    bars2 = ax2.bar(x + width/2, da_3x_vals, width, label='DA@3x (Alta Convicci\u00f3n)', color='#2a9d8f', alpha=0.8)
+    bars2 = ax2.bar(x + width/2, da_3x_vals, width, label='DA@3x', color='#2a9d8f', alpha=0.8)
 
     ax2.set_xlabel('Modelo')
     ax2.set_ylabel('Directional Accuracy (%)')
-    ax2.set_title('DA General vs DA@3x: Lo Que Realmente Importa')
+    ax2.set_title('DA General vs DA@3x')
     ax2.set_xticks(x)
-    ax2.set_xticklabels(model_labels, rotation=45, ha='right')
-    ax2.legend()
-    ax2.axhline(y=50, color='black', linestyle=':', alpha=0.3, label='Random (50%)')
+    ax2.set_xticklabels(model_labels, rotation=30, ha='right', fontsize=8)
+    ax2.legend(fontsize=8)
+    ax2.axhline(y=50, color='black', linestyle=':', alpha=0.3)
 
     # Add return annotations on top of bars
     for i, d in enumerate(da_3x_data):
         color = '#2a9d8f' if d['return'] > 100 else '#e63946' if d['return'] < 0 else '#457b9d'
         ax2.annotate(f"{d['return']:+.0f}%",
-                    xy=(i, max(d['da_general'], d['da_3x']) + 1),
-                    ha='center', fontsize=8, fontweight='bold', color=color)
+                    xy=(i, max(d['da_general'], d['da_3x']) + 2),
+                    ha='center', fontsize=7, fontweight='bold', color=color)
 
 plt.tight_layout()
 plt.savefig(os.path.join(FIGURES_DIR, "da_vs_return_paradox.pdf"))

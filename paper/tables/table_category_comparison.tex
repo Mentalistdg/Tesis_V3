@@ -2,20 +2,18 @@
 \centering
 \caption{Rendimiento Promedio por Categor\'ia de Modelo}
 \label{tab:category_comparison}
-\begin{tabular}{@{}lrrrrrr@{}}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-\textbf{Categor\'ia} & \textbf{N} & \textbf{Ret. Prom.} & \textbf{Mejor Ret.} & \textbf{Sharpe Prom.} & \textbf{DD Prom.} & \textbf{Mejor Modelo} \\
+\textbf{Categor\'ia} & \textbf{N} & \textbf{Ret. Prom.} & \textbf{Mejor Ret.} & \textbf{Sharpe Prom.} & \textbf{Mejor Modelo} \\
 \midrule
-RNN & 4 & \textcolor{ForestGreen}{125.7\%} & 400.0\% & 0.347 & 42.3\% & LSTM+Attention \\
-ML & 5 & \textcolor{ForestGreen}{102.0\%} & 263.2\% & 0.461 & 22.7\% & Ridge \\
-DeepLearning & 5 & \textcolor{ForestGreen}{33.5\%} & 67.9\% & 0.125 & 37.2\% & DLinear \\
-GradientBoosting & 3 & \textcolor{ForestGreen}{29.4\%} & 47.4\% & 0.104 & 32.8\% & CatBoost \\
-TimeSeries & 4 & \textcolor{ForestGreen}{23.2\%} & 44.6\% & 0.216 & 26.3\% & Theta \\
-Specialized & 2 & \textcolor{ForestGreen}{17.4\%} & 27.2\% & -0.016 & 16.8\% & GARCH \\
+ML cl\'asico & 4 & \textcolor{ForestGreen}{106.4\%} & 252.5\% & 0.403 & Ridge \\
+Deep learning & 9 & \textcolor{ForestGreen}{72.6\%} & 395.4\% & 0.215 & LSTM\_Attention \\
+Boosting & 4 & \textcolor{ForestGreen}{36.2\%} & 66.3\% & 0.217 & GradientBoosting \\
+Series temporales & 6 & \textcolor{ForestGreen}{20.8\%} & 44.4\% & 0.134 & Theta \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Nota: N = n\'umero de modelos en la categor\'ia. ML = Machine Learning cl\'asico, GradientBoosting = XGBoost/LightGBM/CatBoost, DeepLearning = redes Darts, RNN = LSTM/GRU, TimeSeries = AutoARIMA/ExponentialSmoothing/Theta/SeasonalNaive.
+\item Nota: N = n\'umero de modelos en la categor\'ia. ML cl\'asico = Ridge/Lasso/ElasticNet/RandomForest; Boosting = GradientBoosting (sklearn) y las librer\'ias XGBoost/LightGBM/CatBoost; Series temporales = AutoARIMA/ETS/Theta/SeasonalNaive/Prophet/GARCH; Deep learning = redes Darts (DLinear/N-BEATS/N-HiTS/TCN/TFT) y arquitecturas \textit{custom} en PyTorch (CNN-LSTM/LSTM+Attention/BiLSTM/BiGRU).
 \end{tablenotes}
 \end{table}

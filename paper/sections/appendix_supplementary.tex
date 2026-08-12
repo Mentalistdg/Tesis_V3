@@ -1,0 +1,290 @@
+% =============================================================================
+% APENDICE E: TABLAS Y FIGURAS COMPLEMENTARIAS
+% (E.1-E.3 antiguas movidas en julio 2026: variables -> apendice A,
+%  caracteristicas -> apendice B, ejemplos de estrategia -> apendice D)
+% =============================================================================
+
+\section{Tablas y Figuras Complementarias}
+\label{sec:appendix_supplementary}
+
+Este ap\'endice re\'une las tablas de soporte y figuras complementarias referenciadas en el cuerpo del trabajo, organizadas seg\'un la secci\'on a la que complementan.
+
+% ---------------------------------------------------------------------------
+% Revisi\'on de Literatura
+% ---------------------------------------------------------------------------
+
+\subsection{Figuras Complementarias de la Revisi\'on de Literatura}
+\label{sec:appendix_lit_figures}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/Law.png}
+\caption{Distribuci\'on del arcoseno, donde la probabilidad de que un camino aleatorio permanezca en territorio de precios altos o bajos es mucho mayor que la de oscilar sim\'etricamente alrededor del precio inicial, generando tendencias persistentes de manera natural. Adaptado de \citet{cmt2020}.}
+\label{fig:arcsine}
+\end{figure}
+
+% ---------------------------------------------------------------------------
+% Resultados Emp\'iricos
+% ---------------------------------------------------------------------------
+
+\subsection{Tablas y Figuras de Resultados Emp\'iricos}
+\label{sec:appendix_results_tables}
+
+\input{tables/table_position_distribution}
+
+\begin{table}[H]
+\centering
+\caption{Estad\'isticas de Trading por Modelo (Top 5)}
+\label{tab:trading_stats}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{N Trades} & \textbf{Win Rate} & \textbf{Avg Win} & \textbf{Avg Loss} & \textbf{Profit Factor} \\
+\midrule
+LSTM+Attention & 465 & 53.9\% & +1.5\% & $-$1.2\% & 1.52 \\
+Ridge & 409 & 55.8\% & +1.9\% & $-$1.8\% & 1.35 \\
+RandomForest & 175 & 52.8\% & +1.6\% & $-$1.2\% & 1.49 \\
+CNN-LSTM & 633 & 51.4\% & +1.4\% & $-$1.1\% & 1.29 \\
+DLinear & 788 & 53.6\% & +0.9\% & $-$0.9\% & 1.16 \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: N Trades = cambios de posici\'on. Win Rate, Avg Win, Avg Loss y Profit Factor calculados sobre d\'ias activos (posici\'on $\neq$ 0). Profit Factor = $|$Avg Win / Avg Loss$|$.}}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Modelos Ganadores vs M\'ultiples Benchmarks}
+\label{tab:benchmarks}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Estrategia} & \textbf{Ret. Total} & \textbf{Sharpe} & \textbf{Max DD} & \textbf{Calmar} \\
+\midrule
+LSTM+Attention & +395\% & 1.32 & $-$20.5\% & 1.77 \\
+Ridge & +253\% & 0.86 & $-$31.8\% & 0.87 \\
+RandomForest & +128\% & 0.65 & $-$15.0\% & 1.15 \\
+CNN-LSTM & +122\% & 0.57 & $-$35.9\% & 0.47 \\
+\midrule
+SPY Buy \& Hold & +101.3\% & 0.66 & $-$25.4\% & 0.57 \\
+UPRO 3x (B\&H) & +122.8\% & 0.26 & $-$69.0\% & 0.24 \\
+60/40 Portfolio & +70.6\% & 0.67 & $-$21.1\% & 0.52 \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: UPRO 3x B\&H incluye \textit{expense ratio} (0.91\%/a\~no) y \textit{bid-ask spread}; el \textit{volatility decay} est\'a impl\'icito en la composici\'on diaria de retornos 3$\times$. 60/40 = 60\% SPY + 40\% LF98TRUU Index (Bloomberg US Aggregate Bond Total Return) con rebalanceo mensual.}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/pnl_distribution_lstm_attention.pdf}
+\caption{Distribuci\'on de retornos diarios en exceso sobre la tasa libre de riesgo del modelo LSTM+Attention. Histograma calculado sobre los d\'ias activos (posici\'on $\neq$ 0). Verde = d\'ias ganadores, Rojo = d\'ias perdedores. L\'inea vertical en 0\%.}
+\label{fig:pnl_distribution}
+\end{figure}
+
+% ---------------------------------------------------------------------------
+% Gesti\'on de Riesgo
+% ---------------------------------------------------------------------------
+
+\subsection{Tablas de Gesti\'on de Riesgo}
+\label{sec:appendix_risk_tables}
+
+\begin{table}[H]
+\centering
+\caption{Value at Risk y Expected Shortfall al 95\% por horizonte temporal}
+\label{tab:var_cvar}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{VaR 95\% (30d)} & \textbf{CVaR 95\% (30d)} & \textbf{VaR 95\% (90d)} & \textbf{CVaR 95\% (90d)} \\
+\midrule
+LSTM+Attention & $-6.18\%$ & $-10.39\%$ & $-3.77\%$ & $-6.51\%$ \\
+Ridge & $-11.25\%$ & $-19.71\%$ & $-14.33\%$ & $-21.88\%$ \\
+RandomForest & $-3.87\%$ & $-5.75\%$ & $-0.67\%$ & $-3.18\%$ \\
+CNN-LSTM & $-9.02\%$ & $-14.84\%$ & $-16.29\%$ & $-23.05\%$ \\
+\midrule
+SPY (B\&H) & $-7.81\%$ & $-10.83\%$ & $-10.80\%$ & $-13.85\%$ \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: VaR y CVaR calculados sobre retornos acumulados en ventanas m\'oviles de 30 y 90 d\'ias de operaci\'on (1,272 y 1,212 ventanas respectivamente).}}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{An\'alisis de m\'aximo \textit{drawdown} por modelo}
+\label{tab:drawdown_detail}
+\small
+\begin{tabular}{@{}lrllrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{MaxDD} & \textbf{Pico} & \textbf{Valle} & \textbf{Duraci\'on} & \textbf{Recuperaci\'on} \\
+\midrule
+LSTM+Attention & $-20.5\%$ & 2025-02-18 & 2025-04-07 & 34 d\'ias & 1 d\'ia \\
+Ridge & $-31.8\%$ & 2021-09-14 & 2022-03-07 & 120 d\'ias & 56 d\'ias \\
+RandomForest & $-15.0\%$ & 2022-04-01 & 2022-05-19 & 33 d\'ias & 23 d\'ias \\
+CNN-LSTM & $-35.9\%$ & 2022-03-24 & 2022-07-15 & 77 d\'ias & 566 d\'ias \\
+\midrule
+SPY (B\&H) & $-25.4\%$ & 2021-12-31 & 2022-10-11 & 195 d\'ias & 318 d\'ias \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: Duraci\'on = d\'ias de operaci\'on desde el pico hasta el valle. Recuperaci\'on = d\'ias desde el valle hasta alcanzar un nuevo m\'aximo.}}
+\end{table}
+
+% ---------------------------------------------------------------------------
+% Validaci\'on Estad\'istica
+% ---------------------------------------------------------------------------
+
+\subsection{Tablas de Validaci\'on Estad\'istica}
+\label{sec:appendix_validation_tables}
+
+\begin{table}[H]
+\centering
+\caption{Intervalos de confianza del Sharpe Ratio (\textit{bootstrap} 95\%, $B = 5{,}000$)}
+\label{tab:sharpe_ci}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Sharpe} & \textbf{IC 95\% Inf} & \textbf{IC 95\% Sup} & \textbf{P(S$>$0)} & \textbf{P(S$>$SPY)} \\
+\midrule
+LSTM+Attention & 1.319 & 0.375 & 2.424 & 99.6\% & 83.1\% \\
+Ridge & 0.856 & $-$0.121 & 2.115 & 94.9\% & 60.4\% \\
+RandomForest & 0.651 & $-$0.218 & 1.480 & 93.3\% & 49.9\% \\
+CNN-LSTM & 0.572 & $-$0.292 & 1.485 & 89.3\% & 44.4\% \\
+\midrule
+SPY (B\&H) & 0.657 & $-$0.253 & 1.730 & 91.4\% & -- \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: P(S$>$0) = probabilidad de Sharpe positivo. P(S$>$SPY) = probabilidad de superar el Sharpe del benchmark. Intervalos calculados con 5{,}000 iteraciones bootstrap, semilla 42.}}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Test de Diebold-Mariano (retornos de estrategia vs SPY \textit{Buy \& Hold})}
+\label{tab:dm_test}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Estad\'istico DM} & \textbf{p-valor (1 cola)} & \textbf{Significativo (5\%)} \\
+\midrule
+LSTM+Attention & 2.296 & 0.0108 & S\'i \\
+Ridge & 1.275 & 0.1012 & No \\
+RandomForest & 0.363 & 0.3584 & No \\
+CNN-LSTM & 0.325 & 0.3725 & No \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: $DM > 0$ indica que la estrategia genera retornos superiores al \textit{benchmark}. Correcci\'on Newey-West con 5 rezagos. Hip\'otesis alternativa unidireccional (estrategia $>$ \textit{benchmark}).}}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Test de Clark-West (predicciones vs media hist\'orica del entrenamiento)}
+\label{tab:cw_test}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{CW Stat} & \textbf{p-valor (1 cola)} & \textbf{Conclusi\'on} \\
+\midrule
+LSTM+Attention & 1.901 & 0.029 & Rechaza $H_0$ (5\%) \\
+Ridge & 1.215 & 0.112 & No rechaza \\
+CNN-LSTM & 0.641 & 0.261 & No rechaza \\
+RandomForest & $-$0.336 & 0.631 & No rechaza \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: $H_0$ establece que el modelo no posee capacidad predictiva superior a la media hist\'orica. Test de una cola. Correcci\'on Newey-West con 5 rezagos.}}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Degradaci\'on de m\'etricas predictivas entre entrenamiento y prueba}
+\label{tab:overfitting}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{DA Train} & \textbf{DA Test} & \textbf{Degradaci\'on DA} & \textbf{MSE Test/Train} \\
+\midrule
+LSTM+Attention & 0.492 & 0.470 & $-$4.6\% & 0.68$\times$ \\
+CNN-LSTM & 0.501 & 0.455 & $-$9.3\% & 0.87$\times$ \\
+Ridge & 0.575 & 0.468 & $-$18.6\% & 2.55$\times$ \\
+RandomForest & 0.580 & 0.459 & $-$20.9\% & 1.86$\times$ \\
+\midrule
+XGBoost & 0.552 & 0.543 & $-$1.6\% & 0.89$\times$ \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: DA = \textit{directional accuracy} (proporci\'on de predicciones con signo correcto). MSE Test/Train $> 1$ indica que el error cuadr\'atico medio aumenta en el per\'iodo fuera de muestra. XGBoost se incluye como ejemplo de modelo degenerado (Sharpe test = $-$0.024).}}
+\end{table}
+
+% ---------------------------------------------------------------------------
+% Costos de Transacci\'on
+% ---------------------------------------------------------------------------
+
+\subsection{Tablas y Figuras de Costos de Transacci\'on}
+\label{sec:appendix_cost_tables}
+
+\begin{table}[H]
+\centering
+\caption{Par\'ametros de Costo por Instrumento}
+\label{tab:tx_costs_detail}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Instrumento} & \textbf{Bid-Ask} & \textbf{Expense Ratio} & \textbf{Round-Trip} \\
+\midrule
+UPRO (3x Long) & 5 bps & 0.91\%/a\~no & 10 bps \\
+SPY (1x Long) & 2 bps & 0.09\%/a\~no & 4 bps \\
+Cash & 0 bps & 0\% & 0 bps \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: Round-trip = bid-ask de entrada + bid-ask de salida. Expense ratio aplicado diariamente como ratio anual / 252.}}
+\end{table}
+
+\input{tables/table_cost_breakdown}
+
+\begin{table}[H]
+\centering
+\caption{Validaci\'on de Par\'ametros de Costo, Estudio vs.\ Mercado Real}
+\label{tab:cost_validation}
+\small
+\begin{tabular}{@{}llllr@{}}
+\toprule
+\textbf{Par\'ametro} & \textbf{Este estudio} & \textbf{Mercado real} & \textbf{Fuente} & \textbf{Ratio} \\
+\midrule
+Expense ratio UPRO & 0.91\%/a\~no & 0.89\%/a\~no & ProShares\textsuperscript{a} & 1.02$\times$ \\
+Expense ratio SPY & 0.09\%/a\~no & 0.0945\%/a\~no & State Street\textsuperscript{b} & 0.95$\times$ \\
+Bid-ask UPRO & 5 bps & 2 bps & ProShares\textsuperscript{a} (mediana 30d) & 2.50$\times$ \\
+Bid-ask SPY & 2 bps & $\approx$0 bps & State Street\textsuperscript{b} (mediana 30d) & $>$2.5$\times$ \\
+$\sigma$ diaria (vol drag) & realizada 21d & 0.95--1.26\% & S\&P 500 hist\'orico & $\sim$1.0$\times$ \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: \textsuperscript{a}ProShares reporta un expense ratio de 0.89\% bajo un fee waiver contractual vigente hasta septiembre 2026. \textsuperscript{b}State Street reporta un gross expense ratio de 0.0945\% y una mediana de bid-ask spread de 0.00\% a 30 d\'ias. Datos consultados en julio 2026 desde las p\'aginas oficiales de los emisores.}}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Sensibilidad del Retorno a Costos de Transacci\'on}
+\label{tab:cost_sensitivity}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Modelo} & \textbf{Ret.\ Base} & \textbf{+50\% Costos} & \textbf{+100\% Costos} & \textbf{Break-even} & \textbf{Tx/P\&L} \\
+\midrule
+LSTM+Attention & +395\% & +328\% & +261\% & 3.9$\times$ & 25.4\% \\
+Ridge & +253\% & +194\% & +135\% & 3.2$\times$ & 31.7\% \\
+RandomForest & +128\% & +116\% & +103\% & 6.3$\times$ & 15.8\% \\
+CNN-LSTM & +122\% & +83\% & +44\% & 2.6$\times$ & 39.0\% \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: Aproximaci\'on lineal donde el retorno ajustado $\approx$ (P\&L bruto $-$ costos $\times$ multiplicador) / capital inicial. Break-even = P\&L bruto / costos totales, es decir, el multiplicador m\'aximo de costos antes de que la estrategia genere p\'erdidas. Tx/P\&L = costos totales como porcentaje del P\&L bruto.}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/turnover_vs_return.pdf}
+\caption{Relaci\'on entre \textit{turnover} (n\'umero de \textit{trades}) y retorno neto. Cada punto representa un modelo. La l\'inea punteada representa la regresi\'on lineal ($R^2 = 0.00$).}
+\label{fig:turnover_return}
+\end{figure}

@@ -1,74 +1,74 @@
 {
   "bootstrap": {
     "SPY_BH": {
-      "sharpe": 0.6629861173005531,
-      "ci_lower": -0.24816336887690038,
-      "ci_upper": 1.736706943326682,
-      "prob_positive": 91.58
+      "sharpe": 0.6569748555135515,
+      "ci_lower": -0.25311051004676,
+      "ci_upper": 1.7299823855755732,
+      "prob_positive": 91.42
     },
     "LSTM_Attention": {
-      "sharpe": 1.3271268183896578,
-      "ci_lower": 0.38686806877880403,
-      "ci_upper": 2.3942534498895713,
-      "prob_positive": 99.7,
-      "prob_beat_spy": 82.02000000000001,
-      "lo2002_se": 0.0378187496495935,
-      "ar1_rho": -0.0072471651333233505
+      "sharpe": 1.3191713139173302,
+      "ci_lower": 0.3752297603220712,
+      "ci_upper": 2.424043099660242,
+      "prob_positive": 99.62,
+      "prob_beat_spy": 83.06,
+      "lo2002_se": 0.03771759162113668,
+      "ar1_rho": -0.00708659250371884
     },
     "Ridge": {
-      "sharpe": 0.8811513817931617,
-      "ci_lower": -0.08949846622077133,
-      "ci_upper": 2.187435381396231,
-      "prob_positive": 96.08,
-      "prob_beat_spy": 61.6,
-      "lo2002_se": 0.034684910074968475,
-      "ar1_rho": 0.09058437115362904
+      "sharpe": 0.8560508434948739,
+      "ci_lower": -0.12105254029254754,
+      "ci_upper": 2.114741057654165,
+      "prob_positive": 94.94,
+      "prob_beat_spy": 60.4,
+      "lo2002_se": 0.034396716121432774,
+      "ar1_rho": 0.09070091300414893
     },
     "RandomForest": {
-      "sharpe": 0.6664498905804943,
-      "ci_lower": -0.20117517755779304,
-      "ci_upper": 1.4991385176582193,
-      "prob_positive": 93.47999999999999,
-      "prob_beat_spy": 50.839999999999996,
-      "lo2002_se": 0.028868195834322565,
-      "ar1_rho": -0.10553491894663306
+      "sharpe": 0.6509081262087971,
+      "ci_lower": -0.21796928385913508,
+      "ci_upper": 1.4804532791887384,
+      "prob_positive": 93.32000000000001,
+      "prob_beat_spy": 49.86,
+      "lo2002_se": 0.02874771922525249,
+      "ar1_rho": -0.10617756984570609
     },
     "CNN_LSTM": {
-      "sharpe": 0.5990334383114008,
-      "ci_lower": -0.30241641287714033,
-      "ci_upper": 1.4913267709361975,
-      "prob_positive": 90.68,
-      "prob_beat_spy": 44.66,
-      "lo2002_se": 0.030532780490083632,
-      "ar1_rho": 0.024016463855725728
+      "sharpe": 0.5715636250106052,
+      "ci_lower": -0.2923366494478473,
+      "ci_upper": 1.4847453506587778,
+      "prob_positive": 89.25999999999999,
+      "prob_beat_spy": 44.36,
+      "lo2002_se": 0.030329324556118517,
+      "ar1_rho": 0.024561366794555263
     }
   },
   "diebold_mariano": {
     "LSTM_Attention": {
-      "dm_statistic": 2.2995649468480326,
-      "p_value_one_sided": 0.01073643995611695,
-      "p_value_two_sided": 0.0214728799122339,
+      "dm_statistic": 2.2958885204216744,
+      "p_value_one_sided": 0.010841128143207035,
+      "p_value_two_sided": 0.02168225628641407,
       "significant_5pct": true,
       "significant_1pct": false
     },
     "Ridge": {
-      "dm_statistic": 1.3186065351908318,
-      "p_value_one_sided": 0.09365034388068971,
-      "p_value_two_sided": 0.18730068776137943,
+      "dm_statistic": 1.2747627378171593,
+      "p_value_one_sided": 0.10119661664393853,
+      "p_value_two_sided": 0.20239323328787706,
       "significant_5pct": false,
       "significant_1pct": false
     },
     "RandomForest": {
-      "dm_statistic": 0.38684648016618517,
-      "p_value_one_sided": 0.34943493238983736,
-      "p_value_two_sided": 0.6988698647796747,
+      "dm_statistic": 0.36281451927654806,
+      "p_value_one_sided": 0.3583717225329853,
+      "p_value_two_sided": 0.7167434450659707,
       "significant_5pct": false,
       "significant_1pct": false
     },
     "CNN_LSTM": {
-      "dm_statistic": 0.3757713583525131,
-      "p_value_one_sided": 0.35354344130377857,
-      "p_value_two_sided": 0.7070868826075571,
+      "dm_statistic": 0.3253435413454419,
+      "p_value_one_sided": 0.3724605402482689,
+      "p_value_two_sided": 0.7449210804965378,
       "significant_5pct": false,
       "significant_1pct": false
     }
@@ -128,7 +128,7 @@
     ],
     "n_eliminated": 0,
     "elimination_order": [],
-    "final_p_value": 0.2247
+    "final_p_value": 0.2147
   },
   "overfitting": {
     "LSTM_Attention": {
@@ -222,8 +222,8 @@
       "LightGBM": false,
       "BiLSTM": false,
       "NHiTS": false,
-      "ElasticNet": false,
       "GARCH": false,
+      "ElasticNet": false,
       "AutoARIMA": false,
       "ExponentialSmoothing": false,
       "Prophet": false,

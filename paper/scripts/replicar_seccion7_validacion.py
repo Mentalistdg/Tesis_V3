@@ -40,6 +40,7 @@ import numpy as np
 import pickle
 import json
 import os
+import zlib
 from scipy import stats
 
 SEED = 42
@@ -356,6 +357,11 @@ def main():
     rf_train = np.array(metadata["risk_free_train"])
     n_test = len(fwd_test)
 
+    # SPY B&H neto del expense ratio del ETF (igual costo que el tramo SPY de la
+    # estrategia) para comparaciones consistentes de Sharpe/DM/MCS. fwd_test queda
+    # crudo como retorno real de mercado (usado por Clark-West y como market real).
+    spy_bh_net = fwd_test - 0.0009 / 252
+
     print(f"    Periodo test: {n_test} dias, train: {len(fwd_train)} dias")
     print()
 
@@ -367,7 +373,7 @@ def main():
     print("[2] Bootstrap Sharpe Confidence Intervals (5,000 iter)...")
     print("-" * 90)
 
-    spy_boot = bootstrap_sharpe(fwd_test, rf_test)
+    spy_boot = bootstrap_sharpe(spy_bh_net, rf_test)
     spy_sharpes_dist = spy_boot["bootstrap_sharpes"]
 
     print(f"    SPY B&H: Sharpe={spy_boot['sharpe_point']:.3f}, "
@@ -387,7 +393,10 @@ def main():
         strat_ret = strat_ret[:n]
         rf = rf_test[:n]
 
-        boot = bootstrap_sharpe(strat_ret, rf, seed=SEED + hash(model_name) % 10000)
+        # Semilla determinista por modelo: zlib.crc32 es estable entre procesos,
+        # a diferencia de hash() que esta aleatorizado por PYTHONHASHSEED.
+        model_seed = SEED + zlib.crc32(model_name.encode("utf-8")) % 10000
+        boot = bootstrap_sharpe(strat_ret, rf, seed=model_seed)
         prob_beat_spy = float(np.mean(boot["bootstrap_sharpes"] > spy_sharpes_dist) * 100)
         se, rho1 = lo2002_se(strat_ret, boot["sharpe_point"])
 
@@ -424,7 +433,7 @@ def main():
             continue
         strat_ret = np.array(detail["models"][model_name]["strategy_returns"])
         n = min(len(strat_ret), len(fwd_test))
-        dm = diebold_mariano_returns(strat_ret[:n], fwd_test[:n])
+        dm = diebold_mariano_returns(strat_ret[:n], spy_bh_net[:n])
         dm_results[model_name] = dm
         all_dm_pvalues[model_name] = dm["p_value_one_sided"]
 
@@ -481,7 +490,7 @@ def main():
         strat_ret = np.array(detail["models"][model_name]["strategy_returns"])
         n = min(len(strat_ret), n_test)
         model_losses[model_name] = -strat_ret[:n]
-    model_losses["SPY_BH"] = -fwd_test
+    model_losses["SPY_BH"] = -spy_bh_net
 
     print(f"    Ejecutando MCS con {len(model_losses)} modelos...")
     mcs = model_confidence_set(model_losses, alpha=0.10, n_boot=3000)

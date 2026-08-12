@@ -2,25 +2,21 @@
 % SECCION: LA PARADOJA DEL DIRECTIONAL ACCURACY
 % =============================================================================
 
-\section{La Paradoja del \textit{Directional Accuracy}}
+\subsection{La Paradoja del \textit{Directional Accuracy}}
 \label{sec:da_paradox}
 
-Uno de los hallazgos m\'as llamativos de este estudio es la desconexi\'on entre el \textit{Directional Accuracy} (DA)---la m\'etrica m\'as usada para evaluar predicciones de direcci\'on---y la rentabilidad, dado que el DA resulta ser un predictor poco confiable del rendimiento de una estrategia.
+En los datos analizados se observa una desconexi\'on entre el \textit{Directional Accuracy} (DA), la m\'etrica m\'as usada para evaluar predicciones de direcci\'on, y la rentabilidad, de modo que el DA no resulta un predictor confiable del rendimiento de una estrategia.
 
-\subsection{El Hallazgo Contraintuitivo}
+\subsubsection{Discrepancia entre Precisi\'on Direccional y Rentabilidad}
 \label{subsec:counterintuitive}
 
-\subsubsection{Intuici\'on Na\"ive vs Realidad}
-
-Intuitivamente, un modelo que acierta m\'as la direcci\'on del mercado deber\'ia generar mayores retornos. Los resultados, sin embargo, contradicen esta expectativa.
+Intuitivamente, un modelo que acierta m\'as la direcci\'on del mercado deber\'ia generar mayores retornos. Los resultados, sin embargo, no se alinean con esta expectativa.
 
 \begin{equation}
 \rho(\text{DA}, \text{Return}) = -0.37
 \end{equation}
 
-La correlaci\'on entre \textit{Directional Accuracy} y retorno total es \textbf{moderadamente negativa}, indicando que modelos con mayor DA no necesariamente generan mejores retornos.
-
-\subsubsection{Evidencia Emp\'irica}
+La correlaci\'on entre \textit{Directional Accuracy} y retorno total, computada sobre los 23 modelos y de car\'acter ilustrativo dado el tama\~no muestral reducido, es moderadamente negativa, lo que sugiere que modelos con mayor DA no generan necesariamente mejores retornos.
 
 La Tabla~\ref{tab:da_paradox} presenta casos ilustrativos de esta paradoja.
 
@@ -32,13 +28,13 @@ La Tabla~\ref{tab:da_paradox} presenta casos ilustrativos de esta paradoja.
 \toprule
 \textbf{Modelo} & \textbf{DA General} & \textbf{Retorno Total} & \textbf{Categor\'ia} \\
 \midrule
-GARCH & 54.3\% & +27.2\% & Alto DA, Retorno Modesto \\
-Theta & 54.6\% & +44.6\% & Alto DA, Retorno Modesto \\
-ExponentialSmoothing & 51.3\% & $-$14.5\% & Alto DA, Retorno Negativo \\
+GARCH & 54.3\% & +26.6\% & Alto DA, Retorno Modesto \\
+Theta & 54.6\% & +44.4\% & Alto DA, Retorno Modesto \\
+ExponentialSmoothing & 51.3\% & $-$15.4\% & Alto DA, Retorno Negativo \\
 \midrule
-LSTM+Attention & 47.0\% & +400\% & DA Bajo, Mejor Retorno \\
-Ridge & 46.8\% & +263\% & DA Bajo, Alto Retorno \\
-CNN-LSTM & 45.5\% & +129\% & DA Bajo, Alto Retorno \\
+LSTM+Attention & 47.0\% & +395\% & DA Bajo, Mejor Retorno \\
+Ridge & 46.8\% & +253\% & DA Bajo, Alto Retorno \\
+CNN-LSTM & 45.5\% & +122\% & DA Bajo, Alto Retorno \\
 \bottomrule
 \end{tabular}
 
@@ -55,14 +51,10 @@ CNN-LSTM & 45.5\% & +129\% & DA Bajo, Alto Retorno \\
 
 La Figura~\ref{fig:da_paradox} ilustra gr\'aficamente esta relaci\'on inversa entre precisi\'on direccional y rentabilidad.
 
-\subsection{Explicaci\'on de la Paradoja}
+\subsubsection{Factores de Rentabilidad no Capturados por el \textit{Directional Accuracy}}
 \label{subsec:paradox_explanation}
 
-\subsubsection{El DA Trata Todos los D\'ias como Iguales}
-
-El DA asigna el mismo peso a cada predicci\'on, sin distinguir entre la magnitud del movimiento, el tama\~no de la posici\'on o el momento del ciclo de mercado.
-
-\textbf{Ejemplo ilustrativo.}
+El DA asigna el mismo peso a cada predicci\'on, sin distinguir entre la magnitud del movimiento, el tama\~no de la posici\'on o el momento del ciclo de mercado. El siguiente ejemplo ilustra esta limitaci\'on.
 
 \begin{center}
 \small
@@ -77,38 +69,36 @@ El DA asigna el mismo peso a cada predicci\'on, sin distinguir entre la magnitud
 \end{tabular}
 \end{center}
 
-\noindent DA = 66.7\% (2/3 aciertos), pero el P\&L acumulado es \textbf{negativo}---la p\'erdida del d\'ia~3 ($-3.0\%$) supera las ganancias combinadas de los d\'ias~1 y~2 ($+0.2\%$).
+\noindent DA = 66.7\% (2/3 aciertos), pero el P\&L acumulado es \textbf{negativo}, dado que la p\'erdida del d\'ia~3 ($-3.0\%$) supera las ganancias combinadas de los d\'ias~1 y~2 ($+0.2\%$).
 
-\subsubsection{Lo Que Realmente Importa---Asimetr\'ia Condicional}
+La rentabilidad de una estrategia de \textit{trading} depende de tres factores que el DA no captura. En primer lugar, \textit{cu\'ando} se acierta, dado que acertar en d\'ias de movimientos grandes importa m\'as que acertar en d\'ias tranquilos, ya que el P\&L se determina por la magnitud del movimiento, no por haber acertado la direcci\'on. En segundo lugar, \textit{cu\'anto} se expone, ya que el tama\~no de la posici\'on cuando se acierta frente al tama\~no cuando se falla determina la contribuci\'on neta de cada predicci\'on al resultado. En tercer lugar, la asimetr\'ia entre ganancias y p\'erdidas, donde el ratio entre la ganancia promedio y la p\'erdida promedio por \textit{trade} (\hyperlink{glos:profit_factor}{\textit{Profit Factor}}) puede compensar una tasa de aciertos moderada si las ganancias son sustancialmente mayores que las p\'erdidas.
 
-La rentabilidad de una estrategia de \textit{trading} depende de tres factores que el DA no captura. En primer lugar, \textit{cu\'ando} se acierta---acertar en d\'ias de movimientos grandes importa m\'as que acertar en d\'ias tranquilos, dado que el P\&L se determina por la magnitud del movimiento, no por haber acertado la direcci\'on. En segundo lugar, \textit{cu\'anto} se expone---el tama\~no de la posici\'on cuando se acierta frente al tama\~no cuando se falla determina la contribuci\'on neta de cada predicci\'on al resultado. En tercer lugar, la asimetr\'ia entre ganancias y p\'erdidas---el ratio entre la ganancia promedio y la p\'erdida promedio por \textit{trade} (\textit{Profit Factor}) puede compensar una tasa de aciertos moderada si las ganancias son sustancialmente mayores que las p\'erdidas.
-
-\subsection{El Indicador DA@3x: Una M\'etrica M\'as Relevante}
+\subsubsection{Definici\'on del Indicador DA@3x}
 \label{subsec:da_3x}
 
-Se propone el indicador \textbf{DA@3x} (\textit{Directional Accuracy} en posiciones apalancadas) como una m\'etrica m\'as predictiva de rentabilidad.
+Se propone el indicador \textbf{DA@3x} (\textit{Directional Accuracy} en posiciones apalancadas) como una m\'etrica que podr\'ia resultar m\'as informativa sobre la rentabilidad en este contexto.
 
 \begin{equation}
 \text{DA@3x} = \frac{\displaystyle\sum_{t=1}^{T} \mathbf{1}\bigl[\text{pos}_t = 3 \;\wedge\; r_t^{\text{mkt}} > 0\bigr]}{\displaystyle\sum_{t=1}^{T} \mathbf{1}\bigl[\text{pos}_t = 3\bigr]}
 \end{equation}
 
-donde $\mathbf{1}[\cdot]$ es la funci\'on indicadora, $\text{pos}_t$ es la posici\'on asignada en el d\'ia $t$ y $r_t^{\text{mkt}}$ es el retorno del mercado en ese d\'ia. El numerador cuenta los d\'ias en los que el modelo mantiene la posici\'on apalancada m\'axima (UPRO, 3x) y el mercado efectivamente sube; el denominador cuenta el total de d\'ias en posici\'on 3x. As\'i, el DA@3x mide exclusivamente la precisi\'on del modelo en sus decisiones de mayor convicci\'on---aquellas en las que la exposici\'on y, por tanto, el impacto sobre el portafolio son m\'aximos. La Tabla~\ref{tab:da_vs_da3x} compara ambas m\'etricas para los modelos m\'as representativos.
+donde $\mathbf{1}[\cdot]$ es la funci\'on indicadora, $\text{pos}_t$ es la posici\'on asignada en el d\'ia $t$ y $r_t^{\text{mkt}}$ es el retorno del mercado en ese d\'ia. El numerador cuenta los d\'ias en los que el modelo mantiene la posici\'on apalancada m\'axima (UPRO, 3x) y el mercado efectivamente sube; el denominador cuenta el total de d\'ias en posici\'on 3x. As\'i, el DA@3x mide exclusivamente la precisi\'on del modelo en sus decisiones de mayor convicci\'on, es decir, aquellas en las que la exposici\'on y, por tanto, el impacto sobre el portafolio son m\'aximos. La Tabla~\ref{tab:da_vs_da3x} compara ambas m\'etricas para los modelos m\'as representativos.
 
 \begin{table}[htbp]
 \centering
-\caption{DA General vs DA@3x: El Predictor de Rentabilidad}
+\caption{Comparaci\'on entre DA General y DA@3x por modelo}
 \label{tab:da_vs_da3x}
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
 \textbf{Modelo} & \textbf{DA General} & \textbf{DA@3x} & \textbf{\% Tiempo 3x} & \textbf{Retorno} \\
 \midrule
-LSTM+Attention & 47.0\% & 62.3\% & 12.2\% & +400\% \\
-Ridge & 46.8\% & 58.5\% & 20.8\% & +263\% \\
-RandomForest & 45.9\% & 51.5\% & 5.2\% & +131\% \\
-CNN-LSTM & 45.5\% & 58.6\% & 12.1\% & +129\% \\
+LSTM+Attention & 47.0\% & 62.3\% & 12.2\% & +395\% \\
+Ridge & 46.8\% & 58.5\% & 20.8\% & +253\% \\
+RandomForest & 45.9\% & 51.5\% & 5.2\% & +128\% \\
+CNN-LSTM & 45.5\% & 58.6\% & 12.1\% & +122\% \\
 \midrule
-GARCH & 54.3\% & 63.6\% & 1.7\% & +27.2\% \\
-Theta & 54.6\% & 53.3\% & 2.3\% & +44.6\% \\
+GARCH & 54.3\% & 63.6\% & 1.7\% & +26.6\% \\
+Theta & 54.6\% & 53.3\% & 2.3\% & +44.4\% \\
 \bottomrule
 \end{tabular}
 
@@ -116,46 +106,11 @@ Theta & 54.6\% & 53.3\% & 2.3\% & +44.6\% \\
 \parbox{0.9\textwidth}{\footnotesize\textit{Nota: DA@3x = hit rate cuando el modelo est\'a en posici\'on 3x (UPRO). \% Tiempo 3x indica qu\'e fracci\'on del per\'iodo el modelo estuvo en posici\'on apalancada.}}
 \end{table}
 
-Los modelos rentables se distinguen por tres caracter\'isticas interrelacionadas. En primer lugar, exhiben un DA@3x superior a su DA general---LSTM+Attention registra un 47.0\% de DA general pero un 62.3\% de DA@3x, lo que significa que acierta con mayor frecuencia precisamente cuando asume mayor exposici\'on. En segundo lugar, son selectivos en el uso del apalancamiento---LSTM+Attention reserva la posici\'on 3x para el 12.2\% del tiempo, activ\'andola ante se\~nales de alta confianza. En tercer lugar, protegen el capital en per\'iodos de incertidumbre, permaneciendo en efectivo cuando la se\~nal no es concluyente---un 55\% del tiempo en el caso de LSTM+Attention. En contraste, GARCH presenta un DA@3x del 63.6\%---el m\'as alto del estudio---pero apenas asigna la posici\'on 3x el 1.7\% del tiempo, limitando severamente su capacidad de generar retornos a pesar de su elevada precisi\'on condicional. Theta (54.6\% DA general vs 53.3\% DA@3x) ejemplifica el caso opuesto, donde su precisi\'on direccional se concentra en movimientos de mercado de peque\~na magnitud que no compensan los errores en los d\'ias cr\'iticos.
+En esta muestra, los modelos con mejor rendimiento comparten tres caracter\'isticas interrelacionadas. En primer lugar, exhiben un DA@3x superior a su DA general; LSTM+Attention registra un 47.0\% de DA general pero un 62.3\% de DA@3x, lo que indica que, en el per\'iodo de prueba, su tasa de aciertos es mayor cuando asume mayor exposici\'on. En segundo lugar, son selectivos en el uso del apalancamiento; LSTM+Attention reserva la posici\'on 3x para el 12.2\% del tiempo, activ\'andola cuando las predicciones alcanzan los percentiles m\'as extremos. En tercer lugar, permanecen en efectivo cuando la se\~nal del modelo no alcanza los umbrales requeridos para tomar posici\'on, un 55\% del tiempo en el caso de LSTM+Attention. En contraste, GARCH presenta un DA@3x del 63.6\% (el m\'as alto del estudio), pero apenas asigna la posici\'on 3x el 1.7\% del tiempo, lo que limita su capacidad de generar retornos, a pesar de una precisi\'on condicional alta sobre un n\'umero reducido de observaciones. Theta (54.6\% DA general vs 53.3\% DA@3x) ejemplifica el caso opuesto, donde su precisi\'on direccional se concentra en movimientos de mercado de peque\~na magnitud que no compensan los errores en los d\'ias cr\'iticos.
 
-\subsection{Implicaciones para el Dise\~no de Estrategias}
+\subsubsection{Implicaciones para el Dise\~no de Estrategias}
 \label{subsec:strategy_implications}
 
-\subsubsection{No Optimizar por DA}
+Este hallazgo tiene implicaciones directas para el dise\~no de estrategias, dado que optimizar un modelo para maximizar el DA puede resultar contraproducente, ya que favorece modelos que aciertan frecuentemente en movimientos peque\~nos a costa de fallar en los d\'ias de mayor impacto. Resulta preferible evaluar los modelos mediante m\'etricas que capturen la asimetr\'ia condicional, como el \textit{Sharpe Ratio}, el \textit{Profit Factor} o el DA@3x propuesto en este estudio. El caso de LSTM+Attention resulta ilustrativo, ya que su DA general del 47.0\% lo descalificar\'ia bajo evaluaciones convencionales, pero su DA@3x del 62.3\% y su permanencia en efectivo el 55\% del tiempo coinciden con el retorno m\'as alto del estudio (+395\%), lo que sugiere que la rentabilidad observada se asocia m\'as con la concentraci\'on de aciertos en momentos de alta asimetr\'ia que con su frecuencia.
 
-Este hallazgo tiene implicaciones importantes para el dise\~no de estrategias de \textit{trading}.
-
-\begin{tcolorbox}[colback=gray!5!white,colframe=gray!75!black,title=Implicaci\'on Clave]
-Optimizar un modelo para maximizar \textit{Directional Accuracy} puede ser contraproducente. En su lugar, se debe optimizar por m\'etricas que capturen la asimetr\'ia entre ganancias y p\'erdidas condicionales al tama\~no de la posici\'on.
-\end{tcolorbox}
-
-\subsubsection{M\'etricas Alternativas Recomendadas}
-
-En lugar de DA, resulta preferible evaluar los modelos de \textit{trading} mediante m\'etricas que capturen la asimetr\'ia condicional del rendimiento. El \textit{Sharpe Ratio} captura el \textit{trade-off} riesgo-retorno; el \textit{Profit Factor} mide el ratio entre ganancia promedio y p\'erdida promedio por \textit{trade}; el DA@3x eval\'ua el \textit{hit rate} en posiciones de alta convicci\'on; y el retorno neto constituye la m\'etrica final que integra todos los factores anteriores.
-
-\subsubsection{El Valor de la Selectividad}
-
-El \'exito del modelo LSTM+Attention ilustra el valor de la selectividad de manera elocuente. Su DA general del 47.0\%---por debajo del azar---lo descalificar\'ia bajo cualquier evaluaci\'on convencional basada en precisi\'on direccional. Sin embargo, cuando concentra su exposici\'on en posiciones apalancadas, su DA@3x asciende al 62.3\%, significativamente superior. El modelo concentra su exposici\'on en momentos de alta confianza y, lo que es igualmente importante, permanece en efectivo el 55\% del tiempo. El resultado neto---un retorno del +400\%, el mejor de todos los modelos evaluados---demuestra que la rentabilidad de una estrategia de \textit{trading} depende menos de la frecuencia de aciertos que de su concentraci\'on en los momentos de mayor asimetr\'ia favorable.
-
-\subsection{Conexi\'on con la Literatura}
-\label{subsec:literature_connection}
-
-Este hallazgo es consistente con varios resultados fundamentales de la literatura sobre \textit{trading} y gesti\'on de portafolios.
-
-\textbf{\citet{lopezdeprado2018}} argumenta que las m\'etricas tradicionales de evaluaci\'on de modelos predictivos---como $R^2$, \textit{accuracy} o, en este caso, el \textit{Directional Accuracy}---son inadecuadas para evaluar estrategias de \textit{trading}, donde lo que importa no es la frecuencia de aciertos sino la rentabilidad ajustada por riesgo. El autor se\~nala espec\'ificamente que la miner\'ia de datos y el testeo m\'ultiple pueden producir modelos con alta precisi\'on aparente que fracasan en la implementaci\'on real, un fen\'omeno que los resultados de este estudio ilustran de manera inversa, dado que modelos con DA inferior al 50\% generan los mejores retornos porque concentran su exposici\'on en los momentos de mayor asimetr\'ia favorable.
-
-\textbf{El criterio de Kelly} \citep{kelly1956} formaliza matem\'aticamente la intuici\'on que subyace a la paradoja del DA. La fracci\'on \'optima del capital a exponer en cada operaci\'on depende no solo de la probabilidad de ganar, sino tambi\'en del cociente entre la ganancia esperada y la p\'erdida esperada. Un agente con una tasa de aciertos del 47\%---como el LSTM+Attention---puede maximizar su riqueza a largo plazo si las ganancias en los d\'ias acertados superan sustancialmente las p\'erdidas en los d\'ias err\'oneos. El sistema de posicionamiento por percentiles implementado en este estudio opera precisamente bajo esta l\'ogica, asignando la m\'axima exposici\'on (3x) solo cuando la convicci\'on predictiva es elevada y reduciendo la exposici\'on o retir\'andose a efectivo en los dem\'as casos.
-
-\textbf{La paradoja de Grossman-Stiglitz} \citep{grossman1980} proporciona el marco te\'orico m\'as general para interpretar estos hallazgos. Si los mercados fueran perfectamente eficientes, ninguna estrategia---independientemente de su DA---podr\'ia generar alfa de forma sistem\'atica. El hecho de que modelos con DA inferior al azar generen rendimientos superiores al mercado sugiere que la ineficiencia explotable no reside en la capacidad de predecir la direcci\'on diaria del mercado, sino en la identificaci\'on de momentos donde la relaci\'on riesgo-retorno es asim\'etricamente favorable. La compensaci\'on que el mercado otorga por procesar esta informaci\'on---conforme al equilibrio de Grossman-Stiglitz---se materializa no a trav\'es de aciertos frecuentes, sino a trav\'es de aciertos concentrados en los momentos de mayor impacto.
-
-Los hallazgos son tambi\'en consistentes con la evidencia de \citet{gu2020}, quienes muestran que m\'ultiples familias de modelos convergen en las mismas se\~nales predictivas dominantes. En el contexto de la paradoja del DA, esta convergencia adquiere un matiz adicional---tanto Ridge (modelo lineal) como LSTM+Attention (red neuronal profunda) exhiben DA inferior al 50\% y, sin embargo, ambos superan ampliamente al mercado. Esto sugiere que la se\~nal predictiva capturada por ambos modelos---pese a sus arquitecturas radicalmente distintas---no es de naturaleza direccional simple, sino que involucra la identificaci\'on de estados de mercado donde la exposici\'on produce retornos asim\'etricos.
-
-Desde la perspectiva de las finanzas conductuales, \citet{kahneman1979} documentaron que los agentes sistem\'aticamente sobrevaloran la frecuencia de aciertos frente a la magnitud de los resultados---un sesgo que la \textit{Prospect Theory} atribuye a la aversi\'on a las p\'erdidas. Esta tendencia cognitiva explica, al menos parcialmente, por qu\'e el DA persiste como m\'etrica dominante en la evaluaci\'on de modelos de \textit{trading} pese a su limitada capacidad predictiva---los inversores e investigadores tienden a favorecer estrategias que ``aciertan'' frecuentemente, aun cuando estrategias con menor frecuencia de aciertos pero mayor asimetr\'ia en las magnitudes produzcan resultados superiores.
-
-Finalmente, el concepto de selectividad temporal que emerge de la paradoja del DA se conecta directamente con la filosof\'ia del Triple Screen de \citet{elder1993}, cuya metodolog\'ia inspira la ingenier\'ia de caracter\'isticas de este estudio. Elder argumenta que las se\~nales m\'as fiables surgen cuando m\'ultiples marcos temporales se alinean, y que la disciplina de \textit{no} operar cuando la se\~nal es ambigua es tan importante como la precisi\'on de la se\~nal misma. El LSTM+Attention, al permanecer en efectivo el 55\% del tiempo y reservar la m\'axima exposici\'on para el 12\% de los d\'ias, implementa computacionalmente esta filosof\'ia de selectividad, dado que su ventaja no proviene de predecir mejor la direcci\'on del mercado, sino de identificar con mayor precisi\'on cu\'ando vale la pena asumir exposici\'on.
-
-\subsection{Resumen de la Secci\'on}
-\label{subsec:da_summary}
-
-El an\'alisis presentado en esta secci\'on revela que el \textit{Directional Accuracy} (DA) no constituye un predictor confiable de rentabilidad en estrategias de \textit{trading} basadas en modelos predictivos, como lo evidencia la correlaci\'on negativa observada ($\rho = -0.37$) entre la precisi\'on direccional y el retorno total. Los modelos con DA superior al 54\% generaron retornos modestos en relaci\'on con su aparente precisi\'on, mientras que los mejores resultados provinieron de modelos con DA en el rango de 45--47\%, lo que contradice la intuici\'on convencional de que mayor frecuencia de aciertos se traduce en mayor rentabilidad. Frente a esta paradoja, el indicador DA@3x---que mide el \textit{hit rate} exclusivamente en los d\'ias donde el modelo asigna la m\'axima exposici\'on apalancada---demuestra ser sustancialmente m\'as predictivo del desempe\~no real, dado que captura la calidad de las decisiones de alta convicci\'on en lugar de la frecuencia general de aciertos. En conjunto, estos hallazgos sugieren que los modelos rentables se caracterizan por su selectividad temporal y no por la frecuencia con la que predicen correctamente la direcci\'on del mercado, lo que implica que optimizar una estrategia de \textit{trading} maximizando el DA puede resultar contraproducente al favorecer modelos que aciertan frecuentemente pero con exposiciones sub\'optimas en los momentos de mayor oportunidad.
 

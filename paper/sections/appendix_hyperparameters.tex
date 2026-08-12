@@ -7,12 +7,36 @@
 
 A continuaci\'on se detallan los hiperpar\'ametros de cada uno de los 23 modelos evaluados. Para los modelos que emplean \textit{GridSearchCV}, se presenta el \textit{grid} de b\'usqueda explorado mediante validaci\'on cruzada temporal (\textit{TimeSeriesSplit} con 5 \textit{folds}) sobre el conjunto de entrenamiento, junto con los par\'ametros fijos establecidos en el constructor del modelo. Para los modelos restantes se documentan los par\'ametros expl\'icitamente configurados en el c\'odigo.
 
+\subsection{Esquema de Escalado por Familia}
+\label{app:scaling_detail}
+
+Cada familia de modelos requiere un preprocesamiento espec\'ifico seg\'un las restricciones de su arquitectura. Los modelos lineales regularizados necesitan normalizaci\'on para que las penalizaciones $L_1$/$L_2$ operen equitativamente sobre todas las caracter\'isticas. Los modelos de \textit{deep learning} requieren adem\'as escalar la variable objetivo, dado que los retornos diarios tienen magnitudes del orden de $10^{-3}$ y la funci\'on de p\'erdida MSE sobre valores tan peque\~nos produce gradientes insuficientes para un aprendizaje efectivo. Los modelos basados en \'arboles son te\'oricamente invariantes a la escala, ya que sus decisiones se basan en umbrales de orden. Los modelos univariados operan exclusivamente sobre la serie de retornos en exceso sin transformaci\'on adicional. La Tabla~\ref{tab:scaling_summary} sintetiza el esquema aplicado.
+
+\begin{table}[H]
+\centering
+\caption{Esquema de escalado por familia de modelos. Todos los escaladores se ajustan exclusivamente sobre el conjunto de entrenamiento.}
+\label{tab:scaling_summary}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Familia} & \textbf{Features} & \textbf{Target} & \textbf{Reescalado}$^{*}$ \\
+\midrule
+Tabulares (8) & \textit{StandardScaler} & sin escalar & no \\
+PyTorch custom (4) & \textit{StandardScaler} & \textit{StandardScaler} & s\'i \\
+Darts DL (5) & \textit{MinMaxScaler} $[0,1]$ & \textit{MinMaxScaler} $[0,1]$ & s\'i \\
+Univariados (6) & no usan & sin escalar & no \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+{\footnotesize $^{*}$Indica si las predicciones requieren transformaci\'on inversa para volver a la escala original de retornos antes de la evaluaci\'on.}
+\end{table}
+
 \subsection{Modelos de Regresi\'on Lineal Regularizada (\textit{GridSearchCV})}
 \label{app:ml_hyperparams}
 
 \begin{table}[H]
 \centering
-\caption{Ridge --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\caption{Ridge, par\'ametros fijos y \textit{grid} de b\'usqueda}
 \label{tab:hyper_ridge}
 \small
 \begin{tabular}{@{}llp{8cm}@{}}
@@ -28,7 +52,7 @@ Fijo & random\_state & 42 \\
 
 \begin{table}[H]
 \centering
-\caption{Lasso --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\caption{Lasso, par\'ametros fijos y \textit{grid} de b\'usqueda}
 \label{tab:hyper_lasso}
 \small
 \begin{tabular}{@{}llp{8cm}@{}}
@@ -45,7 +69,7 @@ Fijo & max\_iter & 5{,}000 \\
 
 \begin{table}[H]
 \centering
-\caption{ElasticNet --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\caption{ElasticNet, par\'ametros fijos y \textit{grid} de b\'usqueda}
 \label{tab:hyper_elasticnet}
 \small
 \begin{tabular}{@{}llp{8cm}@{}}
@@ -68,7 +92,7 @@ Fijo & selection & 'random' \\
 
 \begin{table}[H]
 \centering
-\caption{RandomForest --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\caption{RandomForest, par\'ametros fijos y \textit{grid} de b\'usqueda}
 \label{tab:hyper_rf}
 \small
 \begin{tabular}{@{}llp{8cm}@{}}
@@ -86,7 +110,7 @@ Fijo & n\_jobs & $-1$ (todos los n\'ucleos) \\
 
 \begin{table}[H]
 \centering
-\caption{GradientBoosting --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\caption{GradientBoosting, par\'ametros fijos y \textit{grid} de b\'usqueda}
 \label{tab:hyper_gb}
 \small
 \begin{tabular}{@{}llp{8cm}@{}}
@@ -108,7 +132,7 @@ Fijo & random\_state & 42 \\
 
 \begin{table}[H]
 \centering
-\caption{XGBoost (\textit{GridSearchCV}) --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\caption{XGBoost (\textit{GridSearchCV}), par\'ametros fijos y \textit{grid} de b\'usqueda}
 \label{tab:hyper_xgb}
 \small
 \begin{tabular}{@{}llp{8cm}@{}}
@@ -128,7 +152,7 @@ Fijo & tree\_method & 'hist' \\
 
 \begin{table}[H]
 \centering
-\caption{LightGBM (\textit{GridSearchCV}) --- par\'ametros fijos y \textit{grid} de b\'usqueda}
+\caption{LightGBM (\textit{GridSearchCV}), par\'ametros fijos y \textit{grid} de b\'usqueda}
 \label{tab:hyper_lgbm}
 \small
 \begin{tabular}{@{}llp{8cm}@{}}
@@ -148,7 +172,7 @@ Fijo & verbosity & $-1$ \\
 
 \begin{table}[H]
 \centering
-\caption{CatBoost --- par\'ametros expl\'icitos (sin \textit{GridSearchCV})}
+\caption{CatBoost, par\'ametros expl\'icitos (sin \textit{GridSearchCV})}
 \label{tab:hyper_catboost}
 \small
 \begin{tabular}{@{}lp{10cm}@{}}
@@ -186,7 +210,7 @@ Theta & --- & Par\'ametros por defecto de Darts (los valores negativos del \text
 Prophet & --- & Par\'ametros por defecto de Darts \\
 \midrule
 SeasonalNaive & K & 5 (rezago semanal en d\'ias h\'abiles) \\
- & & Modelo sin par\'ametros entrenables --- replica el valor observado $K$ per\'iodos atr\'as \\
+ & & Modelo sin par\'ametros entrenables, que replica el valor observado $K$ per\'iodos atr\'as \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -293,7 +317,7 @@ escalado del \textit{target} & StandardScaler (ajustado solo en \textit{train}) 
 
 \begin{table}[H]
 \centering
-\caption{CNN-LSTM --- arquitectura}
+\caption{CNN-LSTM, arquitectura}
 \label{tab:hyper_cnnlstm}
 \small
 \begin{tabular}{@{}llp{7cm}@{}}
@@ -319,7 +343,7 @@ Capa densa & Linear & hidden\_dim $\to$ 1 \\
 
 \begin{table}[H]
 \centering
-\caption{LSTM+Attention (Luong) --- arquitectura}
+\caption{LSTM+Attention (Luong), arquitectura}
 \label{tab:hyper_lstmattn}
 \small
 \begin{tabular}{@{}llp{7cm}@{}}
@@ -342,7 +366,7 @@ Capa densa & Linear & hidden\_dim $\times$ 2 $\to$ 1 \\
 
 \begin{table}[H]
 \centering
-\caption{BiLSTM --- arquitectura}
+\caption{BiLSTM, arquitectura}
 \label{tab:hyper_bilstm}
 \small
 \begin{tabular}{@{}llp{7cm}@{}}
@@ -362,7 +386,7 @@ Capa densa & Linear & hidden\_dim $\times$ 2 $\to$ 1 \\
 
 \begin{table}[H]
 \centering
-\caption{BiGRU --- arquitectura}
+\caption{BiGRU, arquitectura}
 \label{tab:hyper_bigru}
 \small
 \begin{tabular}{@{}llp{7cm}@{}}
@@ -391,16 +415,47 @@ Capa densa & Linear & hidden\_dim $\times$ 2 $\to$ 1 \\
 \toprule
 \textbf{Par\'ametro} & \textbf{Valor} \\
 \midrule
-Per\'iodo de entrenamiento & Enero 2000 -- Septiembre 2020 \\
-Per\'iodo de prueba & Octubre 2020 -- Diciembre 2025 \\
+Per\'iodo de entrenamiento & Enero 2000 a septiembre 2020 \\
+Per\'iodo de prueba & Octubre 2020 a diciembre 2025 \\
 Divisi\'on temporal & 80/20 sin \textit{shuffle}, estrictamente cronol\'ogica \\
 Validaci\'on cruzada & TimeSeriesSplit, 5 \textit{folds} (modelos con \textit{GridSearchCV}) \\
 Imputaci\'on & SimpleImputer(strategy='median') \\
 Normalizaci\'on & StandardScaler, ajustado solo en \textit{train} \\
 \textit{Early stopping} (Darts DL) & PLEarlyStopping, patience=5 \\
 \textit{Early stopping} (PyTorch \textit{custom}) & patience=10 \\
-Dispositivo de entrenamiento & GPU NVIDIA T4 16~GB (modelos DL, v\'ia CUDA) / CPU (modelos cl\'asicos) \\
 Semilla & 42 (NumPy, PyTorch, sklearn) \\
 \bottomrule
 \end{tabular}
+\end{table}
+
+\subsection{Entorno Computacional}
+\label{app:computational_env}
+
+\begin{table}[H]
+\centering
+\caption{Especificaciones del entorno computacional}
+\label{tab:computational_env}
+\small
+\begin{tabular}{@{}lp{10cm}@{}}
+\toprule
+\textbf{Componente} & \textbf{Especificaci\'on} \\
+\midrule
+Instancia & AWS EC2 \texttt{g4dn.xlarge} \\
+GPU & NVIDIA T4 (16~GB VRAM) \\
+CPU & 4 vCPUs (Intel Cascade Lake) \\
+RAM & 16~GB \\
+\midrule
+Python & 3.12 \\
+PyTorch & 2.6 (CUDA) \\
+Darts & 0.41 \\
+scikit-learn & 1.7.2 \\
+\midrule
+Formato modelos sklearn/\textit{boosting} & \texttt{.joblib} \\
+Formato modelos Darts & directorios nativos \\
+Formato modelos PyTorch & \texttt{.pt} \\
+Metadata y predicciones & \texttt{trained\_artifacts.pkl} \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\parbox{0.9\textwidth}{\footnotesize\textit{Nota: Todos los modelos se entrenaron en esta instancia. Los modelos de \textit{deep learning} aprovechan la aceleraci\'on GPU mediante CUDA, mientras que los modelos cl\'asicos utilizan CPU. Todas las dependencias se fijan con versiones exactas (\texttt{==}) en \texttt{requirements.txt} para garantizar reproducibilidad.}}
 \end{table}
