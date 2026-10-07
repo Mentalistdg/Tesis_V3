@@ -1,0 +1,13 @@
+# Entornos y caches
+.venv/
+__pycache__/
+*.pyc
+.idea/
+tools/
+
+# Datos crudos diarios de Bloomberg (auditoria local, no se versionan)
+data/*/descargas/
+
+# Frontend
+node_modules/
+app/frontend/dist/
