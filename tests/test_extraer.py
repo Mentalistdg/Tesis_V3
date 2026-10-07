@@ -7,7 +7,7 @@ import pytest
 from conftest import SPX
 from fakes import ClienteFalso
 from pipeline.configuracion import cargar_config, cargar_series
-from pipeline.extraer import extraer, guardar_descarga, modo_corrida
+from pipeline.extraer import extraer, guardar_descarga, ultimo_dia_oficial
 
 NY = ZoneInfo("America/New_York")
 CFG = cargar_config(SPX)
@@ -15,25 +15,25 @@ SERIES = cargar_series(SPX)
 HIST = pd.read_csv(SPX / "historia_congelada.csv")
 
 
-def test_modo_provisional_en_ventana():
-    assert modo_corrida(datetime(2026, 10, 7, 15, 35, tzinfo=NY), CFG) == ("provisional", date(2026, 10, 7))
+def test_antes_de_hora_final_es_ayer():
+    assert ultimo_dia_oficial(datetime(2026, 10, 7, 15, 35, tzinfo=NY), CFG) == date(2026, 10, 6)
 
 
-def test_modo_final_antes_de_hora_final_es_ayer():
-    assert modo_corrida(datetime(2026, 10, 7, 15, 0, tzinfo=NY), CFG) == ("final", date(2026, 10, 6))
+def test_despues_de_hora_final_es_hoy():
+    assert ultimo_dia_oficial(datetime(2026, 10, 7, 20, 30, tzinfo=NY), CFG) == date(2026, 10, 7)
 
 
-def test_modo_final_despues_de_hora_final_es_hoy():
-    assert modo_corrida(datetime(2026, 10, 7, 20, 30, tzinfo=NY), CFG) == ("final", date(2026, 10, 7))
+def test_fin_de_semana_es_viernes():
+    assert ultimo_dia_oficial(datetime(2026, 10, 10, 21, 0, tzinfo=NY), CFG) == date(2026, 10, 9)
 
 
-def test_modo_fin_de_semana_es_viernes():
-    assert modo_corrida(datetime(2026, 10, 10, 15, 35, tzinfo=NY), CFG) == ("final", date(2026, 10, 9))
+def test_lunes_temprano_es_viernes():
+    assert ultimo_dia_oficial(datetime(2026, 10, 12, 9, 30, tzinfo=NY), CFG) == date(2026, 10, 9)
 
 
-def test_modo_acepta_hora_de_chile():
-    chile = datetime(2026, 10, 7, 16, 35, tzinfo=ZoneInfo("America/Santiago"))  # = 15:35 NY
-    assert modo_corrida(chile, CFG)[0] == "provisional"
+def test_acepta_hora_de_chile():
+    chile = datetime(2026, 10, 7, 21, 30, tzinfo=ZoneInfo("America/Santiago"))  # = 20:30 NY
+    assert ultimo_dia_oficial(chile, CFG) == date(2026, 10, 7)
 
 
 def test_extraer_calendario_es_spy():

@@ -302,3 +302,21 @@ Hallazgos verificados que modifican el diseño (evidencia en `research/identific
   sí `logs/senales_emitidas.csv`. `.gitattributes`: `*.csv -text`, `*.bat eol=crlf`. Solo el clon de
   C: genera datos.
 - Prueba de regresión cacheada por hash de código + versiones (no en cada corrida).
+
+## 16. Corrección a la adenda (verificada durante la ejecución)
+
+`prepare_sequences` arma la secuencia de la fila *i* con las filas *i−30 … i−1*: **la predicción para
+el día t usa features hasta t−1** (verificado: alterar las features de t no cambia su predicción;
+alterar las de t−1 sí). El backtest de la tesis es, por lo tanto, operable tal cual: la señal del día
+t se calcula en la noche de t−1 con datos oficiales completos y se ejecuta con orden MOC al cierre de t.
+El escenario "+77%" de §15 corresponde a usar datos hasta t−2, y el "MOC/tardías" rezagaba un día más
+series ya publicadas a esa hora; ninguno representa la operación real. En consecuencia:
+
+- **Se elimina la señal provisional intradía.** Cada corrida usa solo días con datos oficiales y emite la
+  señal para el **día hábil siguiente** al último dato (fecha de ejecución).
+- Corridas programadas en horario de Chile que cubren noche y mañana de Nueva York en cualquier época
+  del año (19:30, 21:30, 23:30, 09:30, 11:30); cada corrida recalcula (cola mutable) y el log de
+  emitidas solo agrega cuando cambia la señal o hay fecha nueva. La señal debe quedar fija antes de
+  las 15:50 NY del día de ejecución.
+- El reporte muestra: ejecución según la tesis (señal de la noche anterior, MOC al cierre) y con un día
+  adicional de retraso (+1 día) como sensibilidad.

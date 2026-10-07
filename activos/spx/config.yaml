@@ -10,6 +10,5 @@ fin_entrenamiento: "2020-10-06"    # ultimo dia del set de entrenamiento (5.205 
 solapamiento_dias_habiles: 30
 cola_mutable_dias_habiles: 5
 umbral_salto_fundamental: 0.01
-ventana_provisional_ny: ["15:30", "15:45"]
 hora_final_ny: "20:00"
 calendario: {ticker: "SPY US Equity", campo: PX_LAST}

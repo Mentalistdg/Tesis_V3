@@ -34,16 +34,12 @@ def _hhmm(s: str) -> time:
     return time(int(h), int(m))
 
 
-def modo_corrida(ahora: datetime, config: dict) -> tuple[str, date]:
-    """("provisional", hoy) dentro de la ventana previa al cierre; si no, ("final", ultimo dia con datos oficiales)."""
+def ultimo_dia_oficial(ahora: datetime, config: dict) -> date:
+    """Ultimo dia habil cuyos datos de cierre ya son oficiales: hoy si en Nueva York ya paso hora_final_ny."""
     ny = ahora.astimezone(NY)
-    hoy, hora = ny.date(), ny.time()
-    v0, v1 = (_hhmm(x) for x in config["ventana_provisional_ny"])
-    if hoy.weekday() < 5 and v0 <= hora < v1:
-        return "provisional", hoy
-    if hoy.weekday() < 5 and hora >= _hhmm(config["hora_final_ny"]):
-        return "final", hoy
-    return "final", _habil_anterior(hoy)
+    if ny.date().weekday() < 5 and ny.time() >= _hhmm(config["hora_final_ny"]):
+        return ny.date()
+    return _habil_anterior(ny.date())
 
 
 def _ajuste_descarga(fila) -> str:
