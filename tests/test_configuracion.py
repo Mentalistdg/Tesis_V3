@@ -54,6 +54,6 @@ def test_cargar_series_rechaza_tipo_invalido(tmp_path):
 
 def test_config():
     c = cargar_config(SPX)
-    assert c["ancla_inicial"] == "2025-12-12" and c["fin_entrenamiento"] == "2020-10-06"
+    assert c["ancla_inicial"] == "2025-12-11" and c["fin_entrenamiento"] == "2020-10-06"
     assert c["cola_mutable_dias_habiles"] == 5 and c["hora_final_ny"] == "20:00"
     assert c["instrumentos"]["UPRO"]["expense_ratio"] == 0.0091

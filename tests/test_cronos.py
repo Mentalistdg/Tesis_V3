@@ -26,7 +26,7 @@ def raiz(tmp_path):
     shutil.copytree(SPX / "modelo", a / "modelo")
     for f in ("series.csv", "columnas_dataset.json"):
         shutil.copy(SPX / f, a / f)
-    cfg = (SPX / "config.yaml").read_text(encoding="utf-8").replace('ancla_inicial: "2025-12-12"', 'ancla_inicial: "2025-11-28"')
+    cfg = (SPX / "config.yaml").read_text(encoding="utf-8").replace('ancla_inicial: "2025-12-11"', 'ancla_inicial: "2025-11-28"')
     (a / "config.yaml").write_text(cfg, encoding="utf-8")
     HIST[HIST.date <= "2025-11-28"].to_csv(a / "historia_congelada.csv", index=False)
     (tmp_path / "app" / "backend" / "data").mkdir(parents=True)
