@@ -1,8 +1,21 @@
-# Paquete de produccion LSTM_Attention — versiones identicas al entorno de la tesis
-# Requiere Python 3.12 o superior, 64-bit (probado con 3.14). Instalar con:  pip install -r requirements.txt
-numpy==2.4.2
-pandas==3.0.1
+# CRONOS produccion — versiones identicas a las del entorno con que se entreno el modelo (Tesis_V3).
+# pandas 2.3.3 es obligatorio: build_dataset.py depende de su semantica de pct_change.
+# Instalacion (run.bat lo hace solo):
+#   uv pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu
+#     --extra-index-url https://pypi.org/simple
+#     --extra-index-url https://blpapi.bloomberg.com/repository/releases/python/simple/
+#     --index-strategy unsafe-best-match
+numpy==2.3.5
+pandas==2.3.3
 scipy==1.17.1
 scikit-learn==1.7.2
 joblib==1.5.3
-torch==2.10.0
+torch==2.6.0
+TA-Lib==0.6.8
+blpapi
+PyYAML
+tzdata
+pytest
+fastapi
+uvicorn
+httpx

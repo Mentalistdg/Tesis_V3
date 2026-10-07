@@ -1,0 +1,5 @@
+*.csv -text
+*.bat text eol=crlf
+*.vbs text eol=crlf
+*.pt binary
+*.joblib binary
