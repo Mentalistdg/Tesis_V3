@@ -1,4 +1,4 @@
-CRONOS - reporte del periodo en vivo desde 2025-12-11 (generado 2026-10-07T17:22:51)
+CRONOS - reporte del periodo en vivo desde 2025-12-11 (generado 2026-10-07T18:09:27)
   Version B (operativa): 204 dias (2025-12-11 a 2026-10-05) | Entradas: 15 | retorno +15.6% vs SPY +13.0% | Sharpe 0.72 | maxDD -21.6% | UPRO/SPY/CASH 18/54/28%
       con 1 dia de retraso: retorno +15.1%
   Version A (diagnostico): 204 dias (2025-12-11 a 2026-10-05) | Entradas: 14 | retorno -5.5% vs SPY +13.0% | Sharpe -0.58 | maxDD -23.0% | UPRO/SPY/CASH 19/52/29%
