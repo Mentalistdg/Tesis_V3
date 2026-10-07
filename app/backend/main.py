@@ -389,7 +389,17 @@ async def get_senales():
     """Senal del dia por activo (escrita por el pipeline en senales.json)."""
     if not os.path.exists(os.path.join(DATA_DIR, "senales.json")):
         raise HTTPException(status_code=503, detail="Aun no hay corridas del pipeline (falta senales.json)")
-    return load_json("senales.json")
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    hoy_ny = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+    datos = load_json("senales.json")
+    for a in datos.get("activos", []):
+        a["vencida"] = a.get("fecha", "") < hoy_ny      # la senal es para el cierre de 'fecha'
+    try:
+        datos["corrida"] = load_json("estado_corrida.json")
+    except HTTPException:
+        datos["corrida"] = None
+    return datos
 
 
 @app.get("/api/senales/{activo}/historial")

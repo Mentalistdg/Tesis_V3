@@ -3,7 +3,7 @@ import { createChart, IChartApi } from 'lightweight-charts';
 import { AlertTriangle, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { getHistorialVivo, getSenales } from '../services/api';
-import type { HistorialVivo, Senal, SenalActivo, EscenarioReporte } from '../types';
+import type { HistorialVivo, Senal, SenalActivo, EscenarioReporte, EstadoCorrida } from '../types';
 import LoadingScreen from '../components/LoadingScreen';
 
 const ETIQUETA: Record<Senal, string> = { CASH: 'CASH', SPY: 'SPY 1x', UPRO: 'UPRO 3x' };
@@ -78,6 +78,20 @@ function GraficoVivo({ historial }: { historial: HistorialVivo }) {
   return <div ref={ref} />;
 }
 
+function AvisoCorrida({ corrida }: { corrida: EstadoCorrida | null }) {
+  if (!corrida || (corrida.estado !== 'rojo' && corrida.estado !== 'error')) return null;
+  return (
+    <div className="flex items-start gap-3 bg-[#1a0a0d] border border-[#c41e3a] rounded-lg p-4 text-sm">
+      <XCircle className="w-5 h-5 text-[#c41e3a] shrink-0" />
+      <div>
+        <div className="text-white font-semibold">La última corrida del pipeline falló ({corrida.hora.replace('T', ' ')})</div>
+        <div className="text-[#a3a3a3]">{corrida.causa}</div>
+        <div className="text-[#737373] mt-1">La señal mostrada es la de la última corrida exitosa y puede estar vencida. Revisar la Terminal Bloomberg y logs\pipeline.log.</div>
+      </div>
+    </div>
+  );
+}
+
 function TarjetaActivo({ s }: { s: SenalActivo }) {
   const [historial, setHistorial] = useState<HistorialVivo | null>(null);
   useEffect(() => { getHistorialVivo(s.activo).then(setHistorial).catch(() => setHistorial({})); }, [s.activo]);
@@ -96,6 +110,11 @@ function TarjetaActivo({ s }: { s: SenalActivo }) {
               </span>
             )}
           </div>
+          {s.vencida && (
+            <div className="mt-2 px-2 py-1 inline-block text-xs font-semibold rounded bg-[#c41e3a] text-white">
+              SEÑAL VENCIDA: era para el cierre del {s.fecha}; no operar hasta la próxima actualización
+            </div>
+          )}
           {!s.senal_valida && <div className="mt-2 text-xs text-yellow-400">Señal degenerada (baja dispersión): CASH forzado</div>}
           <EstadoDatos estado={s.estado} advertencias={s.advertencias} />
         </div>
@@ -151,10 +170,11 @@ function TarjetaActivo({ s }: { s: SenalActivo }) {
 
 export default function SenalesPage() {
   const [datos, setDatos] = useState<SenalActivo[] | null>(null);
+  const [corrida, setCorrida] = useState<EstadoCorrida | null>(null);
   const [error, setError] = useState<string | null>(null);
   const cargar = () => {
     setError(null);
-    getSenales().then((r) => setDatos(r.activos)).catch((e) => setError(e?.response?.data?.detail ?? 'No se pudo cargar las señales'));
+    getSenales().then((r) => { setDatos(r.activos); setCorrida(r.corrida); }).catch((e) => setError(e?.response?.data?.detail ?? 'No se pudo cargar las señales'));
   };
   useEffect(() => {
     cargar();
@@ -171,6 +191,7 @@ export default function SenalesPage() {
           <RefreshCw className="w-4 h-4" /> Recargar
         </button>
       </div>
+      <AvisoCorrida corrida={corrida} />
       {datos.map((s) => <TarjetaActivo key={s.activo} s={s} />)}
     </div>
   );

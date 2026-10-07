@@ -68,3 +68,14 @@ def test_split_en_solapamiento_es_amarillo():
     previo.loc[m, "XLE US Equity"] = previo.loc[m, "XLE US Equity"] / 4   # IWF almacenado sin ajuste con split 4:1
     r, *_ = _correr(ClienteFalso(HIST, SERIES), previo)
     assert r.estado == "amarillo" and any("split" in m for m in r.mensajes)
+
+
+def test_solapamiento_valida_filas_inmutables_posteriores_al_ancla():
+    # segunda corrida: ancla congelada 2025-11-14, raw_previo ya extendido hasta 2025-12-12
+    cfg = {**CFG, "ancla_inicial": "2025-11-14"}
+    previo = HIST[HIST.date <= "2025-12-12"].reset_index(drop=True).copy()
+    previo.loc[previo.date.isin(["2025-11-24", "2025-11-25"]), "VIX Index"] = 50.0   # inmutable y equivocado
+    d = extraer(SERIES, pd.Timestamp("2025-11-03").date(), pd.Timestamp("2025-12-12").date(), ClienteFalso(HIST, SERIES))
+    nuevo = empalmar(previo, d, SERIES, pd.Timestamp("2025-11-14"), 5)
+    r = validar(previo, nuevo, d, SERIES, cfg)
+    assert r.estado == "rojo" and any("VIX Index" in m for m in r.mensajes)

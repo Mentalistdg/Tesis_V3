@@ -7,7 +7,7 @@ import type {
   MarketData,
   RegimeData,
   ModelMetrics,
-  SenalActivo,
+  SenalesResponse,
   HistorialVivo
 } from '../types';
 
@@ -144,7 +144,7 @@ export function clearCache(): void {
 export default api;
 
 // Senales de produccion (sin cache: cambian con cada corrida del pipeline)
-export async function getSenales(): Promise<{ activos: SenalActivo[] }> {
+export async function getSenales(): Promise<SenalesResponse> {
   const response = await api.get('/api/senales');
   return response.data;
 }

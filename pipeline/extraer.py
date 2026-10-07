@@ -7,6 +7,8 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
+from pipeline.calendario import es_habil_nyse, habil_anterior
+
 NY = ZoneInfo("America/New_York")
 INICIO_HISTORIA = date(1999, 12, 1)
 VENTANA_MACRO_DIAS = 150          # periodos macro anteriores al inicio cuya publicacion puede caer en la ventana
@@ -37,9 +39,9 @@ def _hhmm(s: str) -> time:
 def ultimo_dia_oficial(ahora: datetime, config: dict) -> date:
     """Ultimo dia habil cuyos datos de cierre ya son oficiales: hoy si en Nueva York ya paso hora_final_ny."""
     ny = ahora.astimezone(NY)
-    if ny.date().weekday() < 5 and ny.time() >= _hhmm(config["hora_final_ny"]):
+    if es_habil_nyse(ny.date()) and ny.time() >= _hhmm(config["hora_final_ny"]):
         return ny.date()
-    return _habil_anterior(ny.date())
+    return habil_anterior(ny.date())
 
 
 def _ajuste_descarga(fila) -> str:

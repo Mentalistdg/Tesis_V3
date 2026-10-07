@@ -62,12 +62,14 @@ def validar(raw_previo: pd.DataFrame, raw_nuevo: pd.DataFrame, d, series: pd.Dat
             if pd.isna(nuevo.at[f, c]):
                 r.amarillo(f"{c}: sin dato el {f.date()} (queda NaN, como en la historia)")
 
-    # Solapamiento con la historia congelada: calce exacto exigido solo en fechas <= ancla.
+    # Solapamiento: calce exigido en filas inmutables (historia congelada y filas posteriores fuera de la cola).
+    posteriores = int((previo.index > ancla).sum())
+    corte = previo.index[len(previo) - min(config["cola_mutable_dias_habiles"], posteriores) - 1]
     for c, s in d.valores.items():
         if c in disc:
             continue
         s = s[~s.index.duplicated(keep="last")]
-        comunes = s.index[(s.index <= ancla)].intersection(previo.index)
+        comunes = s.index[(s.index <= corte)].intersection(previo.index)
         if len(comunes) < 2:
             continue
         guardado, bbg = previo.loc[comunes, c].astype(float), s.loc[comunes].astype(float)
@@ -88,7 +90,8 @@ def validar(raw_previo: pd.DataFrame, raw_nuevo: pd.DataFrame, d, series: pd.Dat
             elif malos.sum() > 1:
                 r.rojo(f"{c}: retornos no calzan con la historia congelada en {int(malos.sum())} fechas")
         elif t == "fundamental":
-            salto = abs(bbg.iloc[-1] / guardado.iloc[-1] - 1)
+            razon = bbg / guardado                 # el encadenado fija un nivel; importa que la razon no cambie
+            salto = abs(razon.iloc[-1] / razon.iloc[0] - 1)
             if salto > config["umbral_salto_fundamental"]:
                 r.amarillo(f"{c}: diferencia de {salto:.1%} con la historia en {guardado.index[-1].date()} (revision; se encadena)")
     return r

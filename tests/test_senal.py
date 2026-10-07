@@ -69,3 +69,8 @@ def test_metricas_entradas_y_retraso():
     mt = metricas(s, CFG)
     assert mt["entradas"] == 2 and mt["dias"] == 7
     assert metricas(s, CFG, retraso=1)["entradas"] == 2
+
+
+def test_siguiente_dia_respeta_feriados_nyse():
+    from pipeline.senal import _siguiente_fecha
+    assert _siguiente_fecha("2026-11-25") == "2026-11-27"

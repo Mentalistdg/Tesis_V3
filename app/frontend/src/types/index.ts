@@ -194,7 +194,21 @@ export interface SenalActivo {
   advertencias: string[];
   reporte: ReporteVivo;
   actualizado: string;
+  vencida?: boolean;
   historial: { date: string; senal_b: Senal; senal_a: Senal; prediccion: number; percentil: number }[];
+}
+
+export interface EstadoCorrida {
+  hora: string;
+  estado: 'verde' | 'amarillo' | 'rojo' | 'error';
+  causa: string;
+  ultimo_dato?: string;
+  fecha_senal?: string;
+}
+
+export interface SenalesResponse {
+  activos: SenalActivo[];
+  corrida: EstadoCorrida | null;
 }
 
 export interface HistorialVivo {

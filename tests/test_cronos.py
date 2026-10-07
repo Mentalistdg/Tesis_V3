@@ -96,15 +96,50 @@ def test_ensayo_no_escribe(raiz):
 
 
 def test_lock_impide_corridas_simultaneas(raiz):
+    import os
     (raiz / "logs").mkdir()
-    (raiz / "logs/cronos.lock").write_text(json.dumps({"pid": 1, "ts": time.time()}), encoding="utf-8")
+    (raiz / "logs/cronos.lock").write_text(json.dumps({"pid": os.getpid(), "ts": time.time()}), encoding="utf-8")
     with pytest.raises(CorridaEnCurso):
         _correr(raiz)
+    assert "otra corrida en curso" in (raiz / "logs/pipeline.log").read_text(encoding="utf-8")
+
+
+def test_lock_de_proceso_muerto_se_reemplaza(raiz):
+    (raiz / "logs").mkdir()
+    (raiz / "logs/cronos.lock").write_text(json.dumps({"pid": 999999, "ts": time.time()}), encoding="utf-8")
+    res, _ = _correr(raiz, ClienteFalso(HIST, SERIES, vacio={"SPY US Equity"}))
+    assert res.estado == "rojo"
+
+
+def test_rojo_escribe_estado_corrida_para_la_app(raiz):
+    res, _ = _correr(raiz, ClienteFalso(HIST, SERIES, vacio={"SPY US Equity"}))
+    est = json.loads((raiz / "app/backend/data/estado_corrida.json").read_text(encoding="utf-8"))
+    assert est["estado"] == "rojo" and "SPY" in est["causa"]
+
+
+def test_falta_barra_spy_del_ultimo_dia_es_rojo(raiz):
+    h = HIST[HIST.date != "2025-12-12"]                                   # Bloomberg aun sin la barra del viernes
+    res, _ = _correr(raiz, ClienteFalso(h, SERIES))
+    assert res.estado == "rojo" and any("2025-12-12" in m for m in res.mensajes)
+    assert not (raiz / "app/backend/data/senales.json").exists()
+
+
+def test_macro_sin_historia_completa_es_rojo(raiz, monkeypatch):
+    from pipeline import cronos as c
+    real = c.extraer_publicaciones_completas
+    def sin_cpi(series, cliente, fin=None):
+        p = real(series, cliente, fin)
+        return p[p.columna_cruda != "RSTAMOM Index"]
+    monkeypatch.setattr(c, "extraer_publicaciones_completas", sin_cpi)
+    res, _ = _correr(raiz)
+    assert res.estado == "rojo" and any("RSTAMOM Index" in m for m in res.mensajes)
+    assert not (raiz / "data/spx/publicaciones_macro.csv").exists()
 
 
 def test_lock_vencido_se_reemplaza(raiz):
+    import os
     (raiz / "logs").mkdir()
-    (raiz / "logs/cronos.lock").write_text(json.dumps({"pid": 1, "ts": time.time() - 3 * 3600}), encoding="utf-8")
+    (raiz / "logs/cronos.lock").write_text(json.dumps({"pid": os.getpid(), "ts": time.time() - 3 * 3600}), encoding="utf-8")
     res, _ = _correr(raiz, ClienteFalso(HIST, SERIES, vacio={"SPY US Equity"}))
     assert res.estado == "rojo" and not (raiz / "logs/cronos.lock").exists()
 

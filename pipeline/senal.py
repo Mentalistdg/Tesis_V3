@@ -14,6 +14,7 @@ import torch
 from sklearn.preprocessing import StandardScaler
 
 from pipeline import modelo as M
+from pipeline.calendario import siguiente_habil
 
 POS_A_SENAL = {0: "CASH", 1: "SPY", 3: "UPRO"}
 
@@ -54,8 +55,12 @@ def predecir(m: ModeloCargado, dataset: pd.DataFrame) -> pd.Series:
     seq = M.prepare_sequences(np.vstack([X, X[-1:]]), M.LOOKBACK)   # la fila extra no entra en ninguna ventana
     p = m.y_scaler.inverse_transform(M.predict_in_batches(m.red, seq, "cpu").reshape(-1, 1)).ravel()
     fechas = list(_fechas(dataset).iloc[M.LOOKBACK:])
-    siguiente = (pd.Timestamp(fechas[-1]) + pd.offsets.BDay(1)).strftime("%Y-%m-%d")
-    return pd.Series(p, index=fechas + [siguiente])
+    return pd.Series(p, index=fechas + [_siguiente_fecha(fechas[-1])])
+
+
+def _siguiente_fecha(fecha: str) -> str:
+    """Dia habil NYSE siguiente (fecha de ejecucion de la senal)."""
+    return siguiente_habil(pd.Timestamp(fecha).date()).strftime("%Y-%m-%d")
 
 
 def entrenar_meta(m: ModeloCargado, dataset_a: pd.DataFrame, fin_entrenamiento: str) -> dict:

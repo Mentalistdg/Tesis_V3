@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from pipeline.calendario import siguiente_habil
 from pipeline.configuracion import cargar_config, cargar_series
 from pipeline.empalmar import empalmar, macro_a, version_b
 from pipeline.exportar import exportar_app, registrar_emision, reporte_periodo, reporte_texto
@@ -25,7 +26,7 @@ from pipeline.senal import POS_A_SENAL, cargar_modelo, entrenar_meta, generar_se
 from pipeline.validar import Resultado, validar
 
 RAIZ = Path(__file__).resolve().parents[1]
-LOCK_VENCE_S = 2 * 3600
+LOCK_VENCE_S = 30 * 60
 PRED_REFERENCIA = ("2025-12-11", -0.018574)   # prediccion de la tesis para validar la regresion
 
 
@@ -51,8 +52,12 @@ class _Lock:
                 ts = json.loads(self.path.read_text(encoding="utf-8"))["ts"]
             except Exception:
                 ts = 0
-            if time.time() - ts < LOCK_VENCE_S:
-                raise CorridaEnCurso(f"otra corrida en curso (lock {self.path})")
+            try:
+                pid = json.loads(self.path.read_text(encoding="utf-8"))["pid"]
+            except Exception:
+                pid = -1
+            if time.time() - ts < LOCK_VENCE_S and _pid_vivo(pid):
+                raise CorridaEnCurso(f"otra corrida en curso (pid {pid}, lock {self.path})")
             self.path.unlink()
         fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -62,6 +67,35 @@ class _Lock:
     def __exit__(self, *exc):
         if self.path.exists():
             self.path.unlink()
+
+
+def _pid_vivo(pid: int) -> bool:
+    """True si el proceso existe (Windows: OpenProcess + GetExitCodeProcess)."""
+    if not isinstance(pid, int) or pid <= 0:
+        return False
+    if os.name != "nt":
+        try:
+            os.kill(pid, 0)
+            return True
+        except OSError:
+            return False
+    import ctypes
+    k32 = ctypes.windll.kernel32
+    h = k32.OpenProcess(0x1000, False, pid)          # PROCESS_QUERY_LIMITED_INFORMATION
+    if not h:
+        return False
+    codigo = ctypes.c_ulong()
+    try:
+        return bool(k32.GetExitCodeProcess(h, ctypes.byref(codigo))) and codigo.value == 259   # STILL_ACTIVE
+    finally:
+        k32.CloseHandle(h)
+
+
+def _estado_corrida(dir_raiz: Path, estado: str, causa: str, info: dict) -> None:
+    """Estado de la ultima corrida para la app (se escribe siempre, tambien en rojo o error)."""
+    datos = {"hora": datetime.now().isoformat(timespec="seconds"), "estado": estado, "causa": causa, **info}
+    escribir_atomico(Path(dir_raiz) / "app" / "backend" / "data" / "estado_corrida.json",
+                     json.dumps(datos, ensure_ascii=False, indent=1))
 
 
 def _hash_entorno(dir_raiz: Path) -> str:
@@ -106,11 +140,26 @@ def verificar_regresion(dir_raiz: Path, cache: Path | None = None) -> tuple[bool
 def actualizar(dir_raiz: Path, activo: str, cliente, ahora: datetime, ensayo: bool = False,
                hasta: date | None = None, verificar: bool = True) -> tuple[Resultado, dict]:
     dir_raiz = Path(dir_raiz)
-    with _Lock(dir_raiz):
+    try:
+        lock = _Lock(dir_raiz).__enter__()
+    except CorridaEnCurso as e:
+        _log(dir_raiz, f"[{activo}] corrida omitida: {e}")
+        raise
+    try:
         _log(dir_raiz, f"[{activo}] inicio corrida{' (ensayo)' if ensayo else ''}")
-        res, info = _actualizar(dir_raiz, activo, cliente, ahora, ensayo, hasta, verificar)
+        try:
+            res, info = _actualizar(dir_raiz, activo, cliente, ahora, ensayo, hasta, verificar)
+        except Exception as e:
+            if not ensayo:
+                estado = "rojo" if type(e).__name__ == "ErrorBloomberg" else "error"
+                _estado_corrida(dir_raiz, estado, f"{type(e).__name__}: {e}", {"activo": activo})
+            raise
         _log(dir_raiz, f"[{activo}] estado={res.estado} {info} {' | '.join(res.mensajes)}")
+        if not ensayo:
+            _estado_corrida(dir_raiz, res.estado, " | ".join(res.mensajes), {"activo": activo, **info})
         return res, info
+    finally:
+        lock.__exit__(None, None, None)
 
 
 def _actualizar(dir_raiz, activo, cliente, ahora, ensayo, hasta, verificar):
@@ -136,8 +185,11 @@ def _actualizar(dir_raiz, activo, cliente, ahora, ensayo, hasta, verificar):
         guardar_descarga(d, datos / "descargas" / datetime.now().strftime("%Y-%m-%d_%H%M%S"))
     nuevo = empalmar(raw_previo, d, series, ancla, cfg["cola_mutable_dias_habiles"])
     res = validar(raw_previo, nuevo, d, series, cfg)
+    if len(d.calendario) and d.calendario[-1].date() < fin:
+        res.rojo(f"Bloomberg aun no publica la barra de SPY del {fin} (ultimo dato {d.calendario[-1].date()}); "
+                 "no se emite senal para no mostrar una vencida")
     if res.estado == "rojo":
-        return res, {"ultimo_dato": str(fin)}
+        return res, {"ultimo_dato": str(nuevo["date"].iloc[-1]), "fin_esperado": str(fin)}
 
     ruta_pub = datos / "publicaciones_macro.csv"
     if ruta_pub.exists():
@@ -146,6 +198,12 @@ def _actualizar(dir_raiz, activo, cliente, ahora, ensayo, hasta, verificar):
         previas = extraer_publicaciones_completas(series, cliente, fin)
     pubs = pd.concat([previas, d.publicaciones], ignore_index=True)
     pubs = pubs.drop_duplicates(["columna_cruda", "periodo"], keep="last").sort_values(["columna_cruda", "periodo"])
+    macro = series.loc[series.tipo == "macro", "columna_cruda"]
+    primera = pubs.groupby("columna_cruda").periodo.min()
+    sin_historia = [c for c in macro if c not in primera.index or primera[c] > ancla - pd.Timedelta(days=365 * 5)]
+    if sin_historia:
+        res.rojo(f"historia macro incompleta (no se guarda publicaciones_macro.csv): {sin_historia}")
+        return res, {"ultimo_dato": str(nuevo["date"].iloc[-1])}
 
     raw_a = macro_a(nuevo, pubs, series, ancla)
     raw_b = version_b(raw_a, pubs, series, ancla)
@@ -156,6 +214,11 @@ def _actualizar(dir_raiz, activo, cliente, ahora, ensayo, hasta, verificar):
     s_a = generar_senales(m, meta, ds_a, fin_ent, realista=True)
     s_b = generar_senales(m, meta, ds_b, fin_ent, realista=True)
     rep = reporte_periodo(s_a, s_b, cfg, desde=cfg["ancla_inicial"])
+    esperado = siguiente_habil(pd.Timestamp(nuevo["date"].iloc[-1]).date()).strftime("%Y-%m-%d")
+    if s_b.date.iloc[-1] != esperado or s_a.date.iloc[-1] != esperado:
+        res.rojo(f"la senal quedo para {s_b.date.iloc[-1]} y deberia ser para {esperado} "
+                 "(fila del ultimo dia descartada al construir features)")
+        return res, {"ultimo_dato": str(nuevo["date"].iloc[-1])}
     info = {"ultimo_dato": str(nuevo["date"].iloc[-1]), "fecha_senal": s_b.date.iloc[-1],
             "senal_b": POS_A_SENAL[int(s_b.posicion.iloc[-1])], "senal_a": POS_A_SENAL[int(s_a.posicion.iloc[-1])]}
     if ensayo:

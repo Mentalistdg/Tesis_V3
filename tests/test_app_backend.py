@@ -50,3 +50,14 @@ def test_models_incluye_vivo(tmp_path, monkeypatch):
 def test_sin_senales_json_responde_503(tmp_path, monkeypatch):
     r = _cliente(tmp_path, monkeypatch, con_senales=False).get("/api/senales")
     assert r.status_code == 503 and "corridas" in r.json()["detail"]
+
+
+def test_estado_corrida_y_senal_vencida(tmp_path, monkeypatch):
+    c = _cliente(tmp_path, monkeypatch)
+    datos = tmp_path / "data"
+    sj = json.loads((datos / "senales.json").read_text(encoding="utf-8"))
+    sj["activos"][0]["fecha"] = "2020-01-02"
+    (datos / "senales.json").write_text(json.dumps(sj), encoding="utf-8")
+    (datos / "estado_corrida.json").write_text(json.dumps({"estado": "rojo", "causa": "Terminal sin sesion", "hora": "x"}), encoding="utf-8")
+    r = c.get("/api/senales").json()
+    assert r["corrida"]["estado"] == "rojo" and r["activos"][0]["vencida"] is True
