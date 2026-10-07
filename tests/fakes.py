@@ -31,8 +31,10 @@ class ClienteFalso:
             if t in self.splits and fila.tipo == "precio":
                 f, factor = self.splits[t]
                 s = s.copy()
+                # mundo real: desde f el precio negociado cae por el factor; con ajuste split
+                # Bloomberg reexpresa toda la historia en la base nueva
                 if ajuste == "split":
-                    s[s.index < f] = s[s.index < f] / factor
+                    s = s / factor
                 else:
                     s[s.index >= f] = s[s.index >= f] / factor
             s = s[(s.index >= pd.Timestamp(inicio)) & (s.index <= pd.Timestamp(fin))]
