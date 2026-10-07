@@ -11,3 +11,14 @@ data/*/descargas/
 # Frontend
 node_modules/
 app/frontend/dist/
+
+# Espacio de trabajo de ejecucion de planes
+.superpowers/
+
+# Datos generados por el pipeline (reproducibles; las descargas quedan como auditoria local)
+data/*/
+logs/*
+!logs/senales_emitidas.csv
+!logs/reporte_*.txt
+app/backend/data/senales.json
+app/backend/data/vivo.json
