@@ -273,3 +273,32 @@ Bloomberg); acceso protegido con contraseña.
 | Splits o eventos corporativos nuevos | Encadenado de retornos + advertencia |
 | Revisiones de datos macro y fundamentales | Historia congelada; descargas diarias guardadas; diferencias reportadas |
 | Distribución de la macro B distinta a la del entrenamiento | Señal A en paralelo para medir el efecto |
+
+## 15. Adenda tras revisión previa a la ejecución (2026-10-07)
+
+Hallazgos verificados que modifican el diseño (evidencia en `research/identificacion_series/`):
+
+- **Momento de ejecución.** El backtest supone entrar al cierre de *t* con los datos del cierre de *t*.
+  Período de prueba de la tesis: ideal +395.4% (Sharpe 1.319); señal ~15:35 NY con las 9 series que
+  Bloomberg publica tarde rezagadas un día (escenario MOC) +149.9% (Sharpe 0.578); ejecución al cierre
+  de *t+1* +77.1% (Sharpe 0.384); SPY +101.3% (Sharpe 0.657). Por lo tanto:
+  - Se emiten **dos señales por día**: **provisional** (ventana 15:30–15:45 NY, precios intradía,
+    series aún no publicadas = último valor disponible; pensada para orden MOC) y **final** (desde
+    20:00 NY, datos oficiales). Ambas quedan en un log solo de agregado (`logs/senales_emitidas.csv`).
+  - El reporte muestra los tres escenarios (ideal, MOC, t+1) sobre la prueba de la tesis y el período en vivo.
+- **Cola mutable.** Las filas posteriores al ancla se re-descargan y reescriben durante 5 días hábiles
+  (valores provisorios de Bloomberg); después se congelan. El calce exacto se exige solo contra la
+  historia congelada (≤ 2025-12-12).
+- **Macro derivada en cada corrida.** Las columnas macro de A y B se reconstruyen en cada corrida desde
+  el historial completo de observaciones (período, publicación, valor): A en fecha de período (réplica
+  del entrenamiento, incluida la pérdida de fechas en fin de semana) y B en fecha de publicación. En el
+  tramo congelado se usan los valores de la historia.
+- **Rezago de publicación** con respaldo para todas las series macro (mediana observada); PIB siempre
+  período + 30 días (anticipo), LEI + 20; `ECO_RELEASE_DT` fuera de [−15, 120] días se descarta.
+- **Fundamentales SPX** se encadenan (sin salto en el ancla).
+- **Programación:** una tarea cada 15 minutos (lun–vie, 09:00–23:45 Chile, oculta); el pipeline decide
+  el modo por la hora de Nueva York; lock exclusivo con PID.
+- **Repositorio:** `data/<activo>/` no se versiona (datasets reproducibles; descargas como auditoría);
+  sí `logs/senales_emitidas.csv`. `.gitattributes`: `*.csv -text`, `*.bat eol=crlf`. Solo el clon de
+  C: genera datos.
+- Prueba de regresión cacheada por hash de código + versiones (no en cada corrida).
