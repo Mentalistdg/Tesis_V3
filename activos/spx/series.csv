@@ -1,0 +1,98 @@
+columna_cruda,codigo,ticker,campo,ajuste,tipo,relleno,fecha_pub,rezago_pub_dias,publica_tarde,notas
+SPY US Equity (CLOSE),SPY_CLOSE,SPY US Equity,PX_LAST,none,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+SPY US Equity (OPEN),SPY_OPEN,SPY US Equity,PX_OPEN,none,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+SPY US Equity (HIGH),SPY_HIGH,SPY US Equity,PX_HIGH,none,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+SPY US Equity (LOW),SPY_LOW,SPY US Equity,PX_LOW,none,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+SPY US Equity (VOLUME),SPY_VOLUME,SPY US Equity,PX_VOLUME,none,volumen,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+BIL US Equity (Risk Free),risk_free_rate_raw,FDTR Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+SPY US Equity,M1,NAPMPMI Index,PX_LAST,default,macro,ffill,eco,1,no,verificado 2026-10-07 contra historia 2000-2025
+QQQ US Equity,M2,NAPMNMI Index,PX_LAST,default,macro,ffill,eco,5,no,verificado 2026-10-07 contra historia 2000-2025
+IWM US Equity,M3,XLF US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+EFA US Equity,M4,XLK US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+EEM US Equity,M5,XLE US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+VGK US Equity,M6,XLV US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+EWJ US Equity,M7,XLI US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+FXI US Equity,M8,XLY US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+DXY Curncy,M9,XLP US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+EURUSD Curncy,M10,XLU US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+USDJPY Curncy,M11,XLB US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+FNERTR Index,M12,XLRE US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+XLF US Equity,M13,IWM US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+XLK US Equity,M14,IWD US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+XLE US Equity,M15,IWF US Equity,PX_LAST,none,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+XLV US Equity,M16,MDY US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+XLI US Equity,M17,DIA US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+XLU US Equity,M18,QQQ US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+GDP CQOQ Index,E1,GDP CQOQ Index,PX_LAST,default,macro,ffill,rezago,30,no,verificado 2026-10-07 contra historia 2000-2025
+NAPMPMI Index,E2,IP CHNG Index,PX_LAST,default,macro,ffill,eco,16,no,verificado 2026-10-07 contra historia 2000-2025
+CONSSENT Index,E3,CPMINDX Index,PX_LAST,default,macro,ffill,eco,0,no,verificado 2026-10-07 contra historia 2000-2025
+NFP TCH Index,E4,USURTOT Index,PX_LAST,default,macro,ffill,eco,5,no,verificado 2026-10-07 contra historia 2000-2025
+USURTOT Index,E5,NFP TCH Index,PX_LAST,default,macro,ffill,eco,5,no,verificado 2026-10-07 contra historia 2000-2025
+CPI YOY Index,E6,INJCJC Index,PX_LAST,default,macro,ffill,eco,6,no,verificado 2026-10-07 contra historia 2000-2025
+PCE CRCH Index,E7,INJCSP Index,PX_LAST,default,macro,ffill,eco,13,no,verificado 2026-10-07 contra historia 2000-2025
+RSTAMOM Index,E8,CPI YOY Index,PX_LAST,default,macro,ffill,eco,15,no,verificado 2026-10-07 contra historia 2000-2025
+LEI TOTL Index,E9,CPUPXCHG Index,PX_LAST,default,macro,ffill,eco,15,no,verificado 2026-10-07 contra historia 2000-2025
+INJCJC Index,E10,PCE CYOY Index,PX_LAST,default,macro,ffill,eco,29,no,verificado 2026-10-07 contra historia 2000-2025
+NHSPSTOT Index,E11,PPI YOY Index,PX_LAST,default,macro,ffill,eco,15,no,verificado 2026-10-07 contra historia 2000-2025
+IP CHNG Index,E12,RSTAMOM Index,PX_LAST,default,macro,ffill,eco,14,no,verificado 2026-10-07 contra historia 2000-2025
+CONCCONF Index,E13,CONCCONF Index,PX_LAST,default,macro,ffill,eco,-3,no,verificado 2026-10-07 contra historia 2000-2025
+NAPMNMI Index,E14,CONSSENT Index,PX_LAST,default,macro,ffill,eco,-3,no,verificado 2026-10-07 contra historia 2000-2025
+Extra E15,E15,NHSPSTOT Index,PX_LAST,default,macro,ffill,eco,18,no,verificado 2026-10-07 contra historia 2000-2025
+ETSLTOTL Index,E16,ETSLTOTL Index,PX_LAST,default,macro,ffill,eco,22,no,verificado 2026-10-07 contra historia 2000-2025
+GDP CYOY Index,E17,NHSPATOT Index,PX_LAST,default,macro,ffill,eco,18,no,verificado 2026-10-07 contra historia 2000-2025
+CPTICHNG Index,E18,LEI TOTL Index,PX_LAST,default,macro,ffill,rezago,20,no,verificado 2026-10-07 contra historia 2000-2025
+PITLCHNG Index,E19,DGNOXTCH Index,PX_LAST,default,macro,ffill,eco,28,no,verificado 2026-10-07 contra historia 2000-2025
+FDTR Index,I1,USGG3M Index,PX_LAST,default,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+GB3 Govt,I2,USGG2YR Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+GB6 Govt,I3,USGG5YR Index,PX_LAST,default,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+GB12 Govt,I4,USGG10YR Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+GT2 Govt,I5,USGG30YR Index,PX_LAST,default,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+GT5 Govt,I6,USYC2Y10 Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+GT10 Govt,I7,USYC3M10 Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+GT30 Govt,I8,LF98OAS Index,PX_LAST,none,nivel,no,,,si,verificado 2026-10-07 contra historia 2000-2025
+USGG10YR Index,I9,LUACOAS Index,PX_LAST,default,nivel,no,,,si,verificado 2026-10-07 contra historia 2000-2025
+CL1 Comdty,P1,SPX Index,PE_RATIO,default,fundamental,ffill,,,no,verificado 2026-10-07 contra historia 2000-2025
+HO1 Comdty,P2,SPX Index,PX_TO_BOOK_RATIO,default,fundamental,ffill,,,no,verificado 2026-10-07 contra historia 2000-2025
+GC1 Comdty,P3,SPX Index,EARN_YLD,default,fundamental,ffill,,,no,verificado 2026-10-07 contra historia 2000-2025
+SI1 Comdty,P4,SPX Index,BEST_PE_RATIO,default,fundamental,ffill,,,no,verificado 2026-10-07 contra historia 2000-2025
+GLD US Equity,P5,IVE US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+SLV US Equity,P6,IVW US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+USO US Equity,P7,GLD US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+DBC US Equity,P8,SLV US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+DBA US Equity,P9,DBC US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+BCOMTR Index,P10,USO US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+GSCITR Index,P11,UNG US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+VIX Index,V1,VIX Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+VIX3M Index,V2,VIX3M Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+VIX1M Index,V3,VIX6M Index,PX_LAST,default,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+VXV Index,V4,VIX1Y Index,PX_LAST,default,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+VXEEM Index,V5,VVIX Index,PX_LAST,default,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+VXEFA Index,V6,SKEW Index,PX_LAST,default,nivel,no,,,si,verificado 2026-10-07 contra historia 2000-2025
+GVZ Index,V7,UX1 Index,PX_LAST,default,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+OVX Index,V8,UX2 Index,PX_LAST,default,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+TYVIX Index,V9,MOVE Index,PX_LAST,none,nivel,no,,,si,verificado 2026-10-07 contra historia 2000-2025
+MOVE Index,V10,CVIX Index,PX_LAST,none,nivel,no,,,si,verificado 2026-10-07 contra historia 2000-2025
+CVIX Index,V11,OVX Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+VIY1 Index,V12,GVZ Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+V2X Index,V13,VXEEM Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+AAII BULLISH Index,S1,PCUSEQTR Index,PX_LAST,default,nivel,no,,,si,verificado 2026-10-07 contra historia 2000-2025
+PUT Index,S2,HYG US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+NYHL Index,S3,LQD US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+TICK Index,S4,TLT US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+TRIN Index,S5,IEF US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+ADD Index,S6,SHY US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+MCCL Index,S7,EFA US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+MCSU Index,S8,EEM US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+SRVOL Index,S9,FXI US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+PCUSEQUI Index,S10,DXY Curncy,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+USGG2YR Index,I10,USGG2YR Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+USYC2Y10 Index,I11,USYC2Y10 Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+USYC3M10 Index,I12,USYC3M10 Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+US0003M Index,I13,US0003M Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+USSWAP10 Index,I14,USSWAP10 Index,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+CDX IG CDSI GEN 5Y,I15,CDX IG CDSI GEN 5Y Corp,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+CDX HY CDSI GEN 5Y,I16,CDX HY CDSI GEN 5Y Corp,PX_LAST,none,nivel,no,,,no,verificado 2026-10-07 contra historia 2000-2025
+LF98TRUU Index,I17,LF98TRUU Index,PX_LAST,none,nivel,no,,,si,verificado 2026-10-07 contra historia 2000-2025
+LF98OAS Index,I18,LF98OAS Index,PX_LAST,none,nivel,no,,,si,verificado 2026-10-07 contra historia 2000-2025
+LUACTRUU Index,I19,LUACTRUU Index,PX_LAST,none,nivel,no,,,si,verificado 2026-10-07 contra historia 2000-2025
+LQD US Equity,I20,LQD US Equity,PX_LAST,split,precio,no,,,no,verificado 2026-10-07 contra historia 2000-2025
